@@ -1,21 +1,27 @@
 package com.inc.bb.smartcampus;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,29 +41,50 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
+import org.osmdroid.api.IMapController;
+import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.ItemizedIconOverlay;
+import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
+import org.osmdroid.views.overlay.OverlayItem;
+import org.osmdroid.views.overlay.mylocation.SimpleLocationOverlay;
+import org.osmdroid.views.util.constants.MapViewConstants;
+
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
-public class GpsActivity extends AppCompatActivity {
+
+public class GpsActivity extends AppCompatActivity implements MapViewConstants,okHttpPost.AsyncResponse{
 
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
     final FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference mDatabase;
     FirebaseAuth mAuth = FirebaseAuth.getInstance();
-    String TAG;
-    GoogleApiClient client;
+    String TAG = "GpsActivity";
     private FusedLocationProviderClient mFusedLocationClient;
     private TextView viewLatitude;
     private TextView viewLongitude;
     private TextView viewLocation;
+    private TextView viewSpeed;
     private Location mCurrentlocation;
     private LocationSettingsRequest mLocationSettingsRequest;
     private LocationCallback mLocationCallback;
@@ -65,10 +92,10 @@ public class GpsActivity extends AppCompatActivity {
     private String mLastUpdateTime;
     public  String longitude;
     public  String latitude;
+    public String speed;
     private final static String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private final static String KEY_LOCATION = "location";
     private final static String KEY_LAST_UPDATED_TIME_STRING = "last-updated-time-string";
-    private String studentnumber;
     private final static long UPDATE_INVTERVAL_IN_MILLISECONDS = 5000;
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private final static long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = 2500;
@@ -76,28 +103,54 @@ public class GpsActivity extends AppCompatActivity {
     private String intentString;
     private LocationRequest mLocationRequest;
     private Drawable drawable1;
-
+    int[] t= new int[2];
+    Integer k=0;
+    Integer timeDifferenceTotal = 0;
+    IMapController mapController;
+    private MapView map;
+    private Double carLat;
+    private Double carLng;
+    Integer i=0;
+    SimpleLocationOverlay personOverlay;
+    SimpleLocationOverlay carOverlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Context ctx = getApplicationContext();
+        Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
+        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
         setContentView(R.layout.activity_gps);
+        Drawable locButtondrawableBefore = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshapebefore);
+        Button locButton = (Button) findViewById(R.id.locButton);
+        locButton.setBackground(locButtondrawableBefore);
+
+        setupMap();
+        ///Git test
         FirebaseUser user = mAuth.getCurrentUser();
         userCheck(user);
         getUsername(user);
         drawable1 = ContextCompat.getDrawable(getApplicationContext(),R.drawable.snackbarshape);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         mDatabase = database.getReference();
+        getCarLocations();
         viewLatitude = (TextView) findViewById(R.id.latitude);
         viewLongitude = (TextView) findViewById(R.id.longitude);
         viewLocation = (TextView) findViewById(R.id.location);
+        viewSpeed = (TextView) findViewById(R.id.speed);
+
         updateValuesFromBundle(savedInstanceState);
         mFusedLocationClient= LocationServices.getFusedLocationProviderClient(this);
         mSettingsClient=LocationServices.getSettingsClient(this);
         createLocationCallback();
         createLocationRequest();
         buildLocationSettingsRequest();
+        String url = "https://5.189.138.232:8443/~/server/server/aeTestSmartCampus/cnUsers/";
+        String json = "{\"m2m:cin\": { \"con\": \"lat = 52.489, lng = 4.453\", \"cnf\": \"application/json\", \"rn\": \"s16310\"}}\r\n";
+        post(url,json);
+
         Boolean a = checkPermissions();
+        Boolean timerOn = false;
 
         if(a==false){
             requestPermission();
@@ -110,14 +163,263 @@ public class GpsActivity extends AppCompatActivity {
     }
 
     @Override
+    public void processFinish(String output) {
+        Toast.makeText(this, output, Toast.LENGTH_LONG).show();
+    } //Handler voor response van de asynctask post.
+
+    void post(String url, String json) {
+        okHttpPost post1 = new okHttpPost(this);
+        String[] string = new String[2];
+        string[0]=url;
+        string[1]=json;
+        post1.execute(string);
+        }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    private void getCarLocations() {
+        DatabaseReference carLat1 = FirebaseDatabase.getInstance().getReference("node-client").child("cars").child("vehicle").child("latitude");
+        DatabaseReference carLng1 = FirebaseDatabase.getInstance().getReference("node-client").child("cars").child("vehicle").child("longitude");
+        carLat1.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                carLat = dataSnapshot.getValue(Double.class);
+                if(carLng!=null)
+                {        locationIconUpdate();}
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
+        carLng1.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                carLng = dataSnapshot.getValue(Double.class);
+                if(carLat!=null){
+                    locationIconUpdate();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void setupMap() {
+        map = (MapView) findViewById(R.id.map);
+        map.setTileSource(TileSourceFactory.MAPNIK);
+        map.setBuiltInZoomControls(true);
+        map.setMultiTouchControls(true);
+        mapController = map.getController();
+        mapController.setZoom(16);
+        GeoPoint startPoint =  new GeoPoint(51.448765, 5.489602);
+        mapController.setCenter(startPoint);
+
+
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
+        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
         if(checkPermissions()){
             startLocationUpdates();
         }
         else if(!checkPermissions()){
             requestPermission();
         }
+    }
+
+    private void updateLocationUI() {
+        if(mCurrentlocation!=null){
+            userId = userId.replace("@random.com", "");
+            latitude = String.format(Locale.ENGLISH,"%f", mCurrentlocation.getLatitude());
+            longitude = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getLongitude());
+            longitude = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getLongitude());
+            if(mCurrentlocation.hasSpeed()){
+                Toast.makeText(this, "HAS a SPEED", Toast.LENGTH_SHORT).show();
+            }
+            speed = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getSpeed());
+            viewLatitude.setText(latitude);
+            viewLongitude.setText(longitude);
+            viewSpeed.setText(speed);
+
+
+            Integer timeDifference = 0;
+            timeDifference = mGetTimeDifference();
+            mDatabase= FirebaseDatabase.getInstance().getReference();
+            String timeDifferenceString = Integer.toString(timeDifference);
+            String firebaseString = latitude + "    " + longitude + "   " + timeDifferenceString;
+            String gpsCount = Integer.toString(k);
+            mDatabase.child("GPSTest").child(userId).child(gpsCount).setValue(firebaseString, new DatabaseReference.CompletionListener() {
+                        @Override
+                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                            k++;
+                        }
+                    });
+            mDatabase.child("users").child(userId).child("longitude").setValue(longitude);
+            mDatabase.child("users").child(userId).child("latitude").setValue(latitude);
+            mDatabase.child("users").child(userId).child("speed").setValue(speed);
+
+
+
+            Double Longitude = mCurrentlocation.getLongitude();
+            Double Latitude = mCurrentlocation.getLatitude();
+            GeoPoint loc = new GeoPoint(Latitude,Longitude);
+            String location = "lat: " + latitude + " lng: " + longitude;
+
+
+
+
+            Double bound1la = 51.445110;
+            Double bound2la= 51.452770;
+            Double bound1lo = 5.500690;
+            Double bound2lo = 5.481070;
+            personIconUpdate(loc);
+            onCampusTest(bound1la,bound2la,bound2lo,bound1lo, Longitude, Latitude);
+            locationIconUpdate();
+            myLocationButton(loc);
+        }
+
+
+    }
+
+    private void personIconUpdate(GeoPoint loc) {
+        if(personOverlay!=null){
+            map.getOverlays().remove(personOverlay);
+        }
+        Drawable vectorDrawable = ResourcesCompat.getDrawable(getApplicationContext().getResources(), R.drawable.locationicon, null);
+        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.locationicon);
+        Bitmap b=bitmapdraw.getBitmap();
+        Bitmap locationIcon = Bitmap.createScaledBitmap(b, 40, 40, false);
+        personOverlay= new SimpleLocationOverlay(locationIcon);
+        personOverlay.setLocation(loc);
+        map.getOverlays().add(personOverlay);
+        map.invalidate();
+    }
+
+    private void carUpdates() {
+        if(carLat !=null) {
+            if(carLng!=null){
+            String carLatString = String.valueOf(carLat);
+            String carLngString = String.valueOf(carLng);
+            Toast.makeText(this, carLatString, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, carLngString, Toast.LENGTH_SHORT).show();
+            locationIconUpdate();}}
+    }
+
+    private void onCarDataChange() {
+        DatabaseReference carLat1 = FirebaseDatabase.getInstance().getReference("node-client").child("cars").child("vehicle").child("latitude");
+        DatabaseReference carLng1 = FirebaseDatabase.getInstance().getReference("node-client").child("cars").child("vehicle").child("longitude");
+        carLat1.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                carLat = dataSnapshot.getValue(Double.class);
+                map.getOverlays().remove(0);
+                locationIconUpdate();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+        carLng1.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                carLng = dataSnapshot.getValue(Double.class);
+                map.getOverlays().remove(0);
+                locationIconUpdate();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void locationIconUpdate() {
+        if(carOverlay!=null){
+            map.getOverlays().remove(carOverlay);
+        }
+        Drawable vectorDrawable = ResourcesCompat.getDrawable(getApplicationContext().getResources(), R.drawable.locationicon, null);
+        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.locationicon);
+        Bitmap b=bitmapdraw.getBitmap();
+        Bitmap locationIcon = Bitmap.createScaledBitmap(b, 40, 40, false);
+        carOverlay = new SimpleLocationOverlay(locationIcon);
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        if (carLat != null){
+            if(carLng!=null){
+        GeoPoint loc = new GeoPoint(carLat,carLng);
+            carOverlay.setLocation(loc);
+            map.getOverlays().add(carOverlay);
+            map.invalidate();}}
+        }
+
+    private void onCampusTest(Double bound1la, Double bound2la, Double bound2lo, Double bound1lo, Double Longitude, Double Latitude) {
+        if(Latitude>bound1la && Latitude<bound2la && Longitude<bound1lo && Longitude>bound2lo){
+            viewLocation.setText("You are currently on Tu/e campus");
+            mDatabase.child("users").child(userId).child("onTue").setValue("yes");}
+        else{mDatabase.child("users").child(userId).child("onTue").setValue("no");
+            viewLocation.setText("You are currently not on Tu/e campus");}
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.d(TAG, "destroy");
+        FirebaseAuth.getInstance().signOut();
+
+        super.onDestroy();
+    }
+
+    private void createLocationRequest(){
+        mLocationRequest= new LocationRequest();
+        mLocationRequest.setInterval(UPDATE_INVTERVAL_IN_MILLISECONDS);
+        mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
+    }
+
+    private void myLocationButton(GeoPoint loc) {
+        final GeoPoint locf = loc;
+        Drawable locButtondrawableAfter = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshape);
+        Button locButton = (Button) findViewById(R.id.locButton);
+        if(locButton.getBackground()!=locButtondrawableAfter){
+        locButton.setBackground(locButtondrawableAfter);}
+        if(locButton.getBackground()==locButtondrawableAfter){
+            locButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    map.getController().setCenter(locf);
+
+                }
+            });
+        }
+    }
+
+    private void buildLocationSettingsRequest(){
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+        builder.addLocationRequest(mLocationRequest);
+        mLocationSettingsRequest= builder.build();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
+    public void onBackPressed() {
     }
 
     private void startLocationUpdates() {
@@ -127,6 +429,7 @@ public class GpsActivity extends AppCompatActivity {
                     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
                         mFusedLocationClient.requestLocationUpdates(mLocationRequest,
                                 mLocationCallback, Looper.myLooper());
+                        Log.d(TAG, "onSuccess:");
                         updateLocationUI();
 
                     }
@@ -147,7 +450,7 @@ public class GpsActivity extends AppCompatActivity {
 
                             case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                                 String errorMessage = "Location settings are inadequate, and cannot be fixed. Please fix in settings";
-                                Toast.makeText(getApplicationContext(),errorMessage,Toast.LENGTH_LONG).show();;
+                                Toast.makeText(getApplicationContext(),errorMessage,Toast.LENGTH_LONG).show();
                         }}
                 });
     }
@@ -162,10 +465,10 @@ public class GpsActivity extends AppCompatActivity {
                     Snackbar.LENGTH_INDEFINITE).setAction("OK", new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                  ActivityCompat.requestPermissions(GpsActivity.this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                          REQUEST_PERMISSIONS_REQUEST_CODE);
+                    ActivityCompat.requestPermissions(GpsActivity.this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            REQUEST_PERMISSIONS_REQUEST_CODE);
 
-            }});
+                }});
             int snackbarTextId= android.support.design.R.id.snackbar_text;
             TextView textView =(TextView) snackbar.getView().findViewById(snackbarTextId);
             textView.setTextColor(Color.WHITE);
@@ -227,7 +530,6 @@ public class GpsActivity extends AppCompatActivity {
 
     }
 
-
     private void createLocationCallback() {
         mLocationCallback=new LocationCallback(){
             @Override
@@ -242,35 +544,54 @@ public class GpsActivity extends AppCompatActivity {
 
     }
 
-    private void updateLocationUI() {
-        if(mCurrentlocation!=null){
-            userId = userId.replace("@random.com", "");
-            latitude = String.format(Locale.ENGLISH,"%f", mCurrentlocation.getLatitude());
-            longitude = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getLongitude());
-            viewLatitude.setText(latitude);
-            viewLongitude.setText(longitude);
-            Calendar c = Calendar.getInstance();
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-            String formattedDate = df.format(c.getTime());
-            formattedDate.trim();
-            mDatabase.child("users").child(userId).child("lastTimeUpdate").setValue(formattedDate);
-            mDatabase.child("users").child(userId).child("longitude").setValue(longitude);
-            mDatabase.child("users").child(userId).child("latitude").setValue(latitude);
-            Double Longitude = mCurrentlocation.getLongitude();
-            Double Latitude = mCurrentlocation.getLatitude();
-            Double bound1la = 51.445110;
-            Double bound2la= 51.452770;
-            Double bound1lo = 5.500690;
-            Double bound2lo = 5.481070;
-            if(Latitude>bound1la && Latitude<bound2la && Longitude<bound1lo && Longitude>bound2lo){
+    private void buildingIcon(GeoPoint loc) {
+        ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
+        OverlayItem locationIcon=new OverlayItem("Title", "Description", loc);
+        items.add(locationIcon);
+        ItemizedOverlayWithFocus mItemizedOverlay = new ItemizedOverlayWithFocus<OverlayItem>(items, new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
+            @Override
+            public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
+                return false;
+            }
 
-                viewLocation.setText("You are currently on Tu/e campus");
-            mDatabase.child("users").child(userId).child("onTue").setValue("yes");}
-            else{mDatabase.child("users").child(userId).child("onTue").setValue("no");
-            viewLocation.setText("You are currently not on Tu/e campus");}
+            @Override
+            public boolean onItemLongPress(final int index, final OverlayItem item) {
+                return false;
+            }
+        }, this);
+        items.add(locationIcon);
+        mItemizedOverlay.addItems(items);
+        //TODO Add the icon in the map
+    }
+
+    private int mGetTimeDifference() {
+        Integer timeInSeconds[] = new Integer[2];
+        Integer timeDifference = 0;
+        Calendar c = Calendar.getInstance();
+        SimpleDateFormat dh = new SimpleDateFormat("hh");
+        SimpleDateFormat dm = new SimpleDateFormat("mm");
+        SimpleDateFormat ds = new SimpleDateFormat("ss");
+        String formattedHours = dh.format(c.getTime());
+        String formattedMinutes = dm.format(c.getTime());
+        String formattedSeconds=  ds.format(c.getTime());
+        Integer timeInHours[] = new Integer[2];
+        Integer timeSeconds[]= new Integer[2];
+        Integer timeInMinutes[]= new Integer[2];
+        timeInHours[i] = Integer.parseInt(formattedHours);
+        timeSeconds[i]=Integer.parseInt(formattedSeconds);
+        timeInMinutes[i]=Integer.parseInt(formattedMinutes);
+        String timeDifferenceString = Integer.toString(i);
+
+
+
+        if(i==0){
+            timeInSeconds[0]= timeInHours[0]*3600 +timeInMinutes[0]*60 + timeSeconds[0];}
+        if(i==1){
+            timeInSeconds[1]= timeInHours[1]*3600 +timeInMinutes[1]*60 + timeSeconds[1];
         }
+        //timeDifference = timeInSeconds[1]-timeInSeconds[0];}
 
-
+        return timeInSeconds[i];
     }
 
     private void updateValuesFromBundle(Bundle savedInstanceState) {
@@ -284,35 +605,7 @@ public class GpsActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        Log.d(TAG, "destroy");
-        super.onDestroy();
-    }
-    private void createLocationRequest(){
-        mLocationRequest= new LocationRequest();
-        mLocationRequest.setInterval(UPDATE_INVTERVAL_IN_MILLISECONDS);
-        mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
-
-    }
-
-    private void buildLocationSettingsRequest(){
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
-        builder.addLocationRequest(mLocationRequest);
-        mLocationSettingsRequest= builder.build();
-    }
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-    }
-
-    @Override
-    public void onBackPressed() {
-
-    }
+    //TODO Button for my location perhaps
+    //TODO Better image for current location
+    //TODO Imageoverlay clickable for Tu campus
 }

@@ -10,7 +10,6 @@ public class User {
     public String latitude;
     public String longitude;
 
-    public User(){}
     public User(String studentnumber, String password, String latitude, String longitude){
         this.studentnumber = studentnumber;
         this.password = password;
