@@ -26,7 +26,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -47,6 +46,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.eclipse.paho.android.service.MqttAndroidClient;
+import org.eclipse.paho.client.mqttv3.IMqttActionListener;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
@@ -58,19 +63,13 @@ import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.mylocation.SimpleLocationOverlay;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
-import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
-
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants,okHttpPost.AsyncResponse{
@@ -113,6 +112,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     Integer i=0;
     SimpleLocationOverlay personOverlay;
     SimpleLocationOverlay carOverlay;
+    MqttAndroidClient onem2m;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +124,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         Drawable locButtondrawableBefore = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshapebefore);
         Button locButton = (Button) findViewById(R.id.locButton);
         locButton.setBackground(locButtondrawableBefore);
+        Log.d(TAG, "onCreate: ");
 
         setupMap();
         ///Git test
@@ -142,12 +143,18 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         updateValuesFromBundle(savedInstanceState);
         mFusedLocationClient= LocationServices.getFusedLocationProviderClient(this);
         mSettingsClient=LocationServices.getSettingsClient(this);
+
         createLocationCallback();
         createLocationRequest();
         buildLocationSettingsRequest();
+
         String url = "https://5.189.138.232:8443/~/server/server/aeTestSmartCampus/cnUsers/";
         String json = "{\"m2m:cin\": { \"con\": \"lat = 52.489, lng = 4.453\", \"cnf\": \"application/json\", \"rn\": \"s16310\"}}\r\n";
         post(url,json);
+
+        String topic = "/oneM2M/resp/server/cnt-8932258814086486326/json";
+        String mqttBrokerUrl = "tcp://vmi137365.contaboserver.net:1883";
+        onem2m = getMqttClient(getApplicationContext(),mqttBrokerUrl,userId);
 
         Boolean a = checkPermissions();
         Boolean timerOn = false;
@@ -161,6 +168,49 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
 
     }
+    public void publishMessage(@NonNull MqttAndroidClient client, @NonNull String msg, int qos, @NonNull String topic) throws MqttException, UnsupportedEncodingException {
+        byte[] encodedPayload = new byte[0];
+        encodedPayload = msg.getBytes("UTF-8");
+        MqttMessage message = new MqttMessage(encodedPayload);
+
+        message.setId(5866);
+        message.setRetained(true);
+        message.setQos(qos);
+        client.publish(topic, message);
+    }
+
+    public MqttAndroidClient getMqttClient(@NonNull Context context,@NonNull String brokerUrl, @NonNull String clientId) {
+        brokerUrl = brokerUrl.replace("@random.com", "");
+        MqttAndroidClient mqttClient = new MqttAndroidClient(context, brokerUrl, clientId);
+        try {
+            IMqttToken token = mqttClient.connect(getMqttConnectionOption());
+            if(token==null){Log.d(TAG, "token is null");}
+            token.setActionCallback(new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                   //TODO set custom disconnect options onem2m.setBufferOpts(getDisconnectedBufferOptions());
+                    Log.d(TAG, "getMqttClient: Success");
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    Log.d(TAG, "getMqttClient: Failure " + exception.toString());
+                }
+            });
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+        return mqttClient;
+    } // Initialize MQTT client
+
+    private MqttConnectOptions getMqttConnectionOption() {
+        MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
+        mqttConnectOptions.setCleanSession(false);
+        mqttConnectOptions.setAutomaticReconnect(true);
+        mqttConnectOptions.setUserName("autopilot");
+        mqttConnectOptions.setPassword("onem2m".toCharArray());
+        return mqttConnectOptions;
+    } //Opties voor mqtt
 
     @Override
     public void processFinish(String output) {
