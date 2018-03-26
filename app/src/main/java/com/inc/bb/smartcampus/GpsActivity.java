@@ -155,7 +155,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         String topic = "/oneM2M/resp/server/cnt-8932258814086486326/json";
         String mqttBrokerUrl = "tcp://vmi137365.contaboserver.net:1883";
         onem2m = getMqttClient(getApplicationContext(),mqttBrokerUrl,userId);
-
+//TESTESTESTSTWA
         Boolean a = checkPermissions();
         Boolean timerOn = false;
 
