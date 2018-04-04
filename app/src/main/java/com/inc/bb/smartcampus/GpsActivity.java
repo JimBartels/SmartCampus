@@ -152,7 +152,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         String json = "{\"m2m:cin\": { \"con\": \"lat = 52.489, lng = 4.453\", \"cnf\": \"application/json\", \"rn\": \"s16310\"}}\r\n";
         post(url,json);
 
-        String topic = "/oneM2M/resp/server/cnt-8932258814086486326/json";
+        String topic = "/oneM2M/resp/server/smartcampus1/json";
         String mqttBrokerUrl = "tcp://vmi137365.contaboserver.net:1883";
         onem2m = getMqttClient(getApplicationContext(),mqttBrokerUrl,userId);
 //TESTESTESTSTWA
@@ -180,7 +180,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     }
 
     public MqttAndroidClient getMqttClient(@NonNull Context context,@NonNull String brokerUrl, @NonNull String clientId) {
-        brokerUrl = brokerUrl.replace("@random.com", "");
+        userId = userId.replace("@random.com", "");
         MqttAndroidClient mqttClient = new MqttAndroidClient(context, brokerUrl, clientId);
         try {
             IMqttToken token = mqttClient.connect(getMqttConnectionOption());

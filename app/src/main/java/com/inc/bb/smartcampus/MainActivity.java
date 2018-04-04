@@ -1,9 +1,11 @@
 package com.inc.bb.smartcampus;
 
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -14,6 +16,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -23,7 +28,10 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+
+    public GoogleApiClient mApiClient;
+
 
 
     //Required for setting up the connection with the Database
@@ -53,6 +61,14 @@ public class MainActivity extends AppCompatActivity {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         mDatabase = database.getReference();
         mAuth = FirebaseAuth.getInstance();
+
+        //Classification of Road Users
+        mApiClient = new GoogleApiClient.Builder(MainActivity.this)
+                .addApi(ActivityRecognition.API)
+                .addConnectionCallbacks(MainActivity.this)
+                .addOnConnectionFailedListener(MainActivity.this)
+                .build();
+        mApiClient.connect();
 
         buttondrawable1 = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshape);
         buttondrawable2 = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshapebefore);
@@ -94,6 +110,23 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Intent intent = new Intent(MainActivity.this, ActivityRecognizedService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(MainActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 2000, pendingIntent);
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
 
     public void register(final String studentNumber, final String pass) {
         mAuth.createUserWithEmailAndPassword(studentNumber,pass)
