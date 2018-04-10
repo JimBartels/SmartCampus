@@ -1,8 +1,11 @@
 package com.inc.bb.smartcampus;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -17,6 +20,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -27,6 +31,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -70,6 +75,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+
+//Classifier
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants,okHttpPost.AsyncResponse{
@@ -166,9 +173,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
         }
 
+           }
 
-    }
-    public void publishMessage(@NonNull MqttAndroidClient client, @NonNull String msg, int qos, @NonNull String topic) throws MqttException, UnsupportedEncodingException {
+       public void publishMessage(@NonNull MqttAndroidClient client, @NonNull String msg, int qos, @NonNull String topic) throws MqttException, UnsupportedEncodingException {
         byte[] encodedPayload = new byte[0];
         encodedPayload = msg.getBytes("UTF-8");
         MqttMessage message = new MqttMessage(encodedPayload);
@@ -277,7 +284,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     @Override
     protected void onResume() {
         super.onResume();
-        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
+       Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
         if(checkPermissions()){
             startLocationUpdates();
         }
@@ -564,7 +571,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
     private void userCheck(FirebaseUser user) {
         if (user == null) {
-            Intent loginIntent = new Intent(GpsActivity.this, MainActivity.class);
+            Intent loginIntent = new Intent(GpsActivity.this, GpsActivity.class);
             startActivity(loginIntent);
         }
     }
