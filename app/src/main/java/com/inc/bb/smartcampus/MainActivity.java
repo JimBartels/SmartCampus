@@ -23,7 +23,10 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  {
+
+
+
 
 
     //Required for setting up the connection with the Database
@@ -54,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         mDatabase = database.getReference();
         mAuth = FirebaseAuth.getInstance();
 
-        buttondrawable1 = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshape);
+              buttondrawable1 = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshape);
         buttondrawable2 = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshapebefore);
 
         mFirebaseBtn = (Button) findViewById(R.id.firebase_btn);
