@@ -491,27 +491,27 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
         switch(type){
             case DetectedActivity.IN_VEHICLE: {
-                return "Driving";
+                return "driving";
             }
             case DetectedActivity.ON_BICYCLE:{
-                return "Bicycling";
+                return "bicycling";
             }
             case DetectedActivity.ON_FOOT:{
-                return  "On foot";
+                return  "on foot";
             }
             case DetectedActivity.RUNNING:{
-                return "Running";
+                return "running";
             }
             case DetectedActivity.WALKING:{
-                return "Walking";
+                return "walking";
             }
             case DetectedActivity.UNKNOWN:{
-                return "Uknown";
+                return "unknown";
             }
             case DetectedActivity.STILL:{
-                return "Still";
+                return "still";
             }
-            default:{ return "Unknown";}
+            default:{ return "unknown";}
         }
     }
 
