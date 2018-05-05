@@ -26,6 +26,7 @@
             android:exported="false" />
 
         <service android:name=".BackgroundDetectedActivitiesService"></service>
+        <service android:name=".MQTTPublishService" />
 
         <activity android:name=".MainActivity"
             android:windowSoftInputMode="adjustResize|stateHidden">

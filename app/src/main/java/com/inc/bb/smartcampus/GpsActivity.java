@@ -33,7 +33,6 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -108,9 +107,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private final static String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private final static String KEY_LOCATION = "location";
     private final static String KEY_LAST_UPDATED_TIME_STRING = "last-updated-time-string";
-    private final static long UPDATE_INVTERVAL_IN_MILLISECONDS = 5000;
+    private final static long UPDATE_INVTERVAL_IN_MILLISECONDS = 500;
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
-    private final static long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = 2500;
+    private final static long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = 1;
     private String userId;
     private String intentString;
     private LocationRequest mLocationRequest;
@@ -128,7 +127,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private PendingIntent mActivityRecognitionPendingIntent;
 
     //MQTT String and variables
-    MqttAndroidClient onem2m;
+    MqttAndroidClient onem2m,onem2m2;
     String oneM2MVRUAeRi = "Csmartcampus";
     String oneM2MVRUAeRn = "aeSmartCampus1";
     String oneM2MVRUAePass = "smartcampuspassword";
@@ -141,13 +140,18 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 ;
     BroadcastReceiver broadcastReceiver;
     UserActivity userActivity = new UserActivity();
-    int userActivityType =20;
+    String userActivityType;
     int userConfidence = 100;
+    String mActivityRecognitionTimestamp;
+    SimpleDateFormat df;
+    OneM2MMqttJson VRUgps;
+    JSONObject contentCreateGPS, contentCreateUserStatus;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         Context ctx = getApplicationContext();
         Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
@@ -162,6 +166,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         FirebaseUser user = mAuth.getCurrentUser();
         userCheck(user);
         getUsername(user);
+
+        createVRUJSONS();
         drawable1 = ContextCompat.getDrawable(getApplicationContext(), R.drawable.snackbarshape);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         mDatabase = database.getReference();
@@ -184,14 +190,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         //UserActivityRecognition
         startTracking();
         setBroadcastReceiver();
-
+        df = new SimpleDateFormat("yyyyMMddHHmmssSS");
         //GPS functionality
         createLocationCallback();
         createLocationRequest();
         buildLocationSettingsRequest();
 
         //OneM2M MQTT client
-        buildOneM2MVRU();
+        onem2m = buildOneM2MVRU(onem2m,userId);
+        String userId2 = "2nd" + userId;
+        onem2m2 = buildOneM2MVRU(onem2m2,userId2);
 
         Boolean a = checkPermissions();
             Boolean timerOn = false;
@@ -200,9 +208,18 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                 requestPermission();
             }
             if (a == true) {
-                ;
 
             }
+    }
+
+    private void createVRUJSONS() {
+         VRUgps = new OneM2MMqttJson(oneM2MVRUAeRi,oneM2MVRUAePass,oneM2MVRUAeRn,userId);
+        try {
+            contentCreateGPS = VRUgps.CreateContentInstanceGps(null,null,null,null);
+            contentCreateUserStatus = VRUgps.CreateContentInstanceStatus(null ,null,0);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     private void setBroadcastReceiver(){
@@ -210,11 +227,22 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction().equals(ConstantsClassifier.BROADCAST_DETECTED_ACTIVITY)) {
-                    userActivityType = intent.getIntExtra("type", -1);
+                    userActivityType = intent.getStringExtra("type");
                     userConfidence= intent.getIntExtra("confidence", 0);
-                    String type1 = Integer.toString(userActivityType);
-                    String confidence1 = Integer.toString(userConfidence);
+                    Long Timestamp = intent.getLongExtra("timestamp",0);
+
+                    mActivityRecognitionTimestamp = df.format(Timestamp);
+                    //TODO make container for GPS and Activity seperately
                     Log.d(TAG, userActivityType + "From broadcast " + userConfidence);
+                    try {
+                        publishUserStatus(userActivityType,mActivityRecognitionTimestamp,userConfidence);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    } catch (MqttException e) {
+                        e.printStackTrace();
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         };
@@ -229,11 +257,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         startService(intent1);
     } // Starts the tracking of UserActivity via BackgroundDetectedAcitiviesService, which sends activities list to DetectedActivitiesIntentService, this gets the highest confidense activity type and broadcasts to setBroadcastReceiver
 
-    private void buildOneM2MVRU() {
+    private MqttAndroidClient buildOneM2MVRU(MqttAndroidClient mMqttAndroidClient, String userId) {
         String mqttBrokerUrl = "tcp://vmi137365.contaboserver.net:1883";
         userId=userId.replace("@random.com", "");
-        onem2m = getMqttClient(getApplicationContext(), mqttBrokerUrl, userId);
-        onem2m.setCallback(new MqttCallbackExtended() {
+        mMqttAndroidClient = getMqttClient(getApplicationContext(), mqttBrokerUrl, userId);
+        mMqttAndroidClient.setCallback(new MqttCallbackExtended() {
             @Override
             public void connectComplete(boolean reconnect, String serverURI) {
 
@@ -260,7 +288,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                 Log.d(TAG, "delivery completed");
             }
         });
-
+    return mMqttAndroidClient;
     } // Builds the OneM2M broker connection, subscribes to the VRU ae Response topic and creates UserID container.
 
     public void subscribeToTopic() {
@@ -304,13 +332,19 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                 public void onSuccess(IMqttToken asyncActionToken) {
                    //TODO set custom disconnect options onem2m.setBufferOpts(getDisconnectedBufferOptions());
                     Log.d(TAG, "getMqttClient: Success");
-
-                    OneM2MMqttJson VRU = new OneM2MMqttJson(oneM2MVRUAeRi, oneM2MVRUAePass, oneM2MVRUAeRn);
+                    userId = userId.replace("@random.com","");
+                    OneM2MMqttJson VRU = new OneM2MMqttJson(oneM2MVRUAeRi, oneM2MVRUAePass, oneM2MVRUAeRn,userId);
                     subscribeToTopic();
                     try {
                         JSONObject createContainerJSON = VRU.CreateContainer(userId);
                         String createContainer = createContainerJSON.toString();
                         publishMessage(onem2m,createContainer,1,oneM2MVRUReqTopic);
+                        JSONObject createContainerGpsJSON = VRU.CreateUserContainer("Gps");
+                        String createContainerGps = createContainerGpsJSON.toString();
+                        publishMessage(onem2m,createContainerGps,1,oneM2MVRUReqTopic);
+                        JSONObject createContainerStatusJSON = VRU.CreateUserContainer("Status");
+                        String createContainerStatus = createContainerStatusJSON.toString();
+                        publishMessage(onem2m,createContainerStatus,1,oneM2MVRUReqTopic);
                     } catch (JSONException e) {
                         e.printStackTrace();}
                     catch (UnsupportedEncodingException e) {
@@ -415,7 +449,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
     private void updateLocationUI() {
         if(mCurrentlocation!=null){
-            SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+            SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssSS");
             String formattedDate = df.format(mCurrentlocation.getTime());
 
             Float Accuracy = mCurrentlocation.getAccuracy();
@@ -454,7 +488,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             mDatabase.child("users").child(userId).child("speed").setValue(speed);
 
             try {
-                publishGPSData(Latitude,Longitude,Accuracy, formattedDate);
+                publishGpsData(Latitude,Longitude,Accuracy, formattedDate);
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (MqttException e) {
@@ -477,43 +511,24 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         }
     }
 
-    private void publishGPSData(Double latitude, Double longitude, Float Accuracy, String formattedDate) throws JSONException, MqttException, UnsupportedEncodingException {
-        OneM2MMqttJson VRUgps = new OneM2MMqttJson(oneM2MVRUAeRi,oneM2MVRUAePass,oneM2MVRUAeRn);
-        String Activity = recognizeUserActivity();
-        if(userActivityType!=20){
-        JSONObject contentCreate = VRUgps.CreateContentInstance(formattedDate,latitude,longitude,userId,Accuracy,Activity, userConfidence);
-        String contentCreateGPS = contentCreate.toString();
-        publishMessage(onem2m,contentCreateGPS,1,oneM2MVRUReqTopic);}
+    private void publishUserStatus(String activity, String timeStamp, int confidence) throws JSONException, MqttException, UnsupportedEncodingException {
+        userId = userId.replace("@random.com","");
+        String con = "activity: " + activity +  "," +  " activity confidence: " + confidence;
+        contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
+        contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", timeStamp);
+        String contentCreateStatus = contentCreateUserStatus.toString();
+        publishMessage(onem2m2,contentCreateStatus,1,oneM2MVRUReqTopic);}
+
+    private void publishGpsData(Double latitude, Double longitude, Float Accuracy, String formattedDate) throws JSONException, MqttException, UnsupportedEncodingException {
+        userId = userId.replace("@random.com","");
+        String con = "lat: " + latitude + "," + " long: " + longitude + "," + " accuracy: " + Accuracy;
+        contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
+        contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", formattedDate);
+        String contentCreate = contentCreateGPS.toString();
+        publishMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic);
     }
 
-    private String recognizeUserActivity() {
-        int type = userActivityType;
 
-        switch(type){
-            case DetectedActivity.IN_VEHICLE: {
-                return "driving";
-            }
-            case DetectedActivity.ON_BICYCLE:{
-                return "bicycling";
-            }
-            case DetectedActivity.ON_FOOT:{
-                return  "on foot";
-            }
-            case DetectedActivity.RUNNING:{
-                return "running";
-            }
-            case DetectedActivity.WALKING:{
-                return "walking";
-            }
-            case DetectedActivity.UNKNOWN:{
-                return "unknown";
-            }
-            case DetectedActivity.STILL:{
-                return "still";
-            }
-            default:{ return "unknown";}
-        }
-    }
 
     private void personIconUpdate(GeoPoint loc) {
         if(personOverlay!=null){
@@ -606,7 +621,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     }
 
     private void createLocationRequest(){
-        mLocationRequest= new LocationRequest();
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(UPDATE_INVTERVAL_IN_MILLISECONDS);
         mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
     }
@@ -758,6 +774,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
     private void createLocationCallback() {
         mLocationCallback=new LocationCallback(){
+
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
@@ -839,4 +856,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     //TODO Button for my location perhaps
     //TODO Better image for current location
     //TODO Imageoverlay clickable for Tu campus
+
+    //TODO !Optimize the functions so that the JSONobjects are not newly made every function call, OneM2Mmessaging is becoming slow.
 }

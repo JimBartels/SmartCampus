@@ -165,7 +165,8 @@ public class MainActivity extends AppCompatActivity  {
         if(currentUser!=null ){
             //De app kijkt altijd eerst naar onstart na dat de onclicklistener is neergezet. Als dus de Currentuser niet null is dan gaat die gelijk door naar de andere activity omdat je al ingelogd bent.Hier kom je vanuit Onstart, vanuit register en login methods.
             Intent intentgps=new Intent(this, GpsActivity.class);
-            intentgps.putExtra("userId",name);
+            String intentName = name.replace("@random.com","");
+            intentgps.putExtra("userId",intentName);
             startActivity(intentgps);
         }
         if (currentUser==null){

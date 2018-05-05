@@ -3,6 +3,7 @@ package com.inc.bb.smartcampus;
 import android.app.IntentService;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
@@ -27,6 +28,7 @@ public class DetectedActivitiesIntentService  extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
+        Long ActivityTimeStamp = result.getTime();
 
         // Get the list of the probable activities associated with the current state of the
         // device. Each activity is associated with a confidence level, which is an int between
@@ -45,13 +47,47 @@ public class DetectedActivitiesIntentService  extends IntentService {
             Log.i(TAG, "Detected activity: " + activity.getType() + ", " + activity.getConfidence());
             broadcastActivity(activity);*/
         }
-        broadcastActivity(maxConfActivity);
+        int type = maxConfActivity.getType();
+        String activityString;
+        switch(type){
+            case DetectedActivity.IN_VEHICLE: {
+                activityString =  "driving";
+                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
+            }
+            case DetectedActivity.ON_BICYCLE:{
+                activityString = "bicycling";
+                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
+            }
+            case DetectedActivity.ON_FOOT:{
+                activityString =  "on foot";
+                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
+            }
+            case DetectedActivity.RUNNING:{
+                activityString = "running";
+                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
+            }
+            case DetectedActivity.WALKING:{
+                activityString =  "walking";
+                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
+            }
+            case DetectedActivity.UNKNOWN:{
+                activityString = "unknown";
+                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
+            }
+            case DetectedActivity.STILL:{
+                activityString = "still";
+                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
+            }
+            default:{ activityString = "unknown";}
+        }
     }
 
-    private void broadcastActivity(DetectedActivity activity) {
+    private void broadcastActivity(String activityString, long activityTimestamp, int confidence) {
         Intent intent = new Intent(ConstantsClassifier.BROADCAST_DETECTED_ACTIVITY);
-        intent.putExtra("type", activity.getType());
-        intent.putExtra("confidence", activity.getConfidence());
+        Log.d(TAG, "broadcastActivity: " + activityString + "   " + activityTimestamp + "   " + confidence);
+        intent.putExtra("timestamp", activityTimestamp);
+        intent.putExtra("type", activityString);
+        intent.putExtra("confidence", confidence);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 }

@@ -14,14 +14,20 @@ public class OneM2MMqttJson {
     private final static int UPDATE_OP = 3;
     private final static int DELETE_OP = 4;
 
-    String oneM2MAeRi;
-    String oneM2MAeRn;
-    String oneM2MAePass;
+    private String oneM2MAeRi;
+    private String oneM2MAeRn;
+    private String oneM2MAePass;
+    private String userId;
+    JSONObject payload = new JSONObject();
+    JSONObject m2mrequester = new JSONObject();
+    JSONObject contentinstancecontent = new JSONObject();
+    JSONObject m2mcntrequester = new JSONObject();
 
-    OneM2MMqttJson(String AeRI, String AeKey, String AeRN){
+    OneM2MMqttJson(String AeRI, String AeKey, String AeRN, String UserId){
         this.oneM2MAeRi = AeRI;
         this.oneM2MAePass = AeKey;
         this.oneM2MAeRn = AeRN;
+        this.userId = UserId;
     }
 
     public JSONObject RetrieveAe() throws JSONException {
@@ -30,7 +36,7 @@ public class OneM2MMqttJson {
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);
 
-        payload.put("rqi",123456);
+        payload.put("rqi",userId);
         String topic = "/server/server/" + oneM2MAeRn;
         payload.put("to",topic);
 
@@ -45,7 +51,7 @@ public class OneM2MMqttJson {
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);
 
-        payload.put("rqi",123456);
+        payload.put("rqi",userId);
         String topic = "/server/server/" + oneM2MAeRn + "/" + RnContainer;
         payload.put("to",topic);
 
@@ -60,7 +66,7 @@ public class OneM2MMqttJson {
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);
 
-        payload.put("rqi",123456);
+        payload.put("rqi",userId);
         String topic = "/server/server/" + oneM2MAeRn + "/" + RnContainer + "/" + RnContentInstance;
         payload.put("to",topic);
 
@@ -86,7 +92,7 @@ public class OneM2MMqttJson {
         String topic = "/server/server/" + oneM2MAeRn + "/Users";
         payload.put("to",topic);
 
-        payload.put("rqi",123456);
+        payload.put("rqi",userId);
         payload.put("op", CREATE_OP);
         payload.put("ty", 3);
 
@@ -95,33 +101,74 @@ public class OneM2MMqttJson {
         payload.put("pc", m2mcntrequester);
         m2mrequester.put("m2m:rqp",payload);
         return m2mrequester;
-    } // Creates a container create JSON request for OneM2M
+    }
+    public JSONObject CreateUserContainer(String RnContainer) throws JSONException{
+        JSONObject payload = new JSONObject();
+        JSONObject m2mrequester = new JSONObject();
+        JSONObject containercontent = new JSONObject();
+        JSONObject m2mcntrequester = new JSONObject();
+        payload.put("fr",oneM2MAeRi);
+        payload.put("key",oneM2MAePass);
 
-    public JSONObject CreateContentInstance(String RnContentInstance, Double lat, Double lng, String RnContainer, Float Accuracy, String type, int confidence) throws JSONException{
+        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId;
+        payload.put("to",topic);
+
+        payload.put("rqi",userId);
+        payload.put("op", CREATE_OP);
+        payload.put("ty", 3);
+
+        containercontent.put("rn", RnContainer);
+        m2mcntrequester.put("m2m:cnt", containercontent);
+        payload.put("pc", m2mcntrequester);
+        m2mrequester.put("m2m:rqp",payload);
+        return m2mrequester;
+    }// Creates a container create JSON request for OneM2M
+
+
+    public JSONObject CreateContentInstanceStatus(String RnContentInstance,String type, int confidence) throws JSONException{
         JSONObject payload = new JSONObject();
         JSONObject m2mrequester = new JSONObject();
         JSONObject contentinstancecontent = new JSONObject();
         JSONObject m2mcntrequester = new JSONObject();
-        JSONObject contentgps = new JSONObject();
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);
 
-        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + RnContainer;
+        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId + "/status";
         payload.put("to",topic);
 
-        payload.put("rqi",123456);
+        payload.put("rqi",userId);
         payload.put("op", CREATE_OP);
         payload.put("ty", 4);
 
         contentinstancecontent.put("rn", RnContentInstance);
-        contentgps.put("lat", lat);
-        contentgps.put("lng",lng);
-        contentinstancecontent.put("con", "lat: " + lat + " long: " + lng + " accuracy: " + Accuracy + " activity: " + type + " activity confidence: " + confidence);
+        contentinstancecontent.put("con", "activity: " + type +  "," +  " activity confidence: " + confidence);
         m2mcntrequester.put("m2m:cin", contentinstancecontent);
         payload.put("pc", m2mcntrequester);
         m2mrequester.put("m2m:rqp",payload);
         return m2mrequester;
-    } //Creates a content instance create JSON request for OneM2M  //TODO add bearing heading classifier etc
+    }
+    public JSONObject CreateContentInstanceGps(String RnContentInstance, Double lat, Double lng, Float Accuracy) throws JSONException{
+        payload.put("fr",oneM2MAeRi);
+        payload.put("key",oneM2MAePass);
+
+        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId + "/gps";
+        payload.put("to",topic);
+
+        payload.put("rqi",userId);
+        payload.put("op", CREATE_OP);
+        payload.put("ty", 4);
+
+        contentinstancecontent.put("rn", RnContentInstance);
+        contentinstancecontent.put("con", "lat: " + lat + "," + " long: " + lng  + "," + " accuracy: " + Accuracy);
+        m2mcntrequester.put("m2m:cin", contentinstancecontent);
+        payload.put("pc", m2mcntrequester);
+        m2mrequester.put("m2m:rqp",payload);
+        return m2mrequester;
+    }
+
+
+
+    //Creates a content instance create JSON request for OneM2M  //TODO add bearing heading etc
 
     //TODO update functions
 
