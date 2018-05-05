@@ -14,10 +14,14 @@ public class OneM2MMqttJson {
     private final static int UPDATE_OP = 3;
     private final static int DELETE_OP = 4;
 
-    String oneM2MAeRi;
-    String oneM2MAeRn;
-    String oneM2MAePass;
-    String userId;
+    private String oneM2MAeRi;
+    private String oneM2MAeRn;
+    private String oneM2MAePass;
+    private String userId;
+    JSONObject payload = new JSONObject();
+    JSONObject m2mrequester = new JSONObject();
+    JSONObject contentinstancecontent = new JSONObject();
+    JSONObject m2mcntrequester = new JSONObject();
 
     OneM2MMqttJson(String AeRI, String AeKey, String AeRN, String UserId){
         this.oneM2MAeRi = AeRI;
@@ -144,10 +148,6 @@ public class OneM2MMqttJson {
         return m2mrequester;
     }
     public JSONObject CreateContentInstanceGps(String RnContentInstance, Double lat, Double lng, Float Accuracy) throws JSONException{
-        JSONObject payload = new JSONObject();
-        JSONObject m2mrequester = new JSONObject();
-        JSONObject contentinstancecontent = new JSONObject();
-        JSONObject m2mcntrequester = new JSONObject();
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);
 
@@ -165,6 +165,7 @@ public class OneM2MMqttJson {
         m2mrequester.put("m2m:rqp",payload);
         return m2mrequester;
     }
+
 
 
     //Creates a content instance create JSON request for OneM2M  //TODO add bearing heading etc
