@@ -20,6 +20,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -108,7 +109,8 @@ public class MainActivity extends AppCompatActivity  {
                             toast.show();
                             // Hier gaat die heen als de user nog niet geregistreerd is. Is die wel geregistreerd dan is de task niet succesfull, dan krijg je een exception togestuurd. Deze pak ik hieronder aan!
                             FirebaseUser user = mAuth.getCurrentUser();
-                            userId=studentNumber;
+                            userId=studentNumber.replace("@random.com", "");
+                            updateDisplayName(user);
                             writeNewUser(userId,studentNumber, pass, longitude,latitude);
                             updateUI(user);
                         }
@@ -127,6 +129,23 @@ public class MainActivity extends AppCompatActivity  {
                     }
                 });
     }
+
+    private void updateDisplayName(FirebaseUser user) {
+
+        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                .setDisplayName(userId)
+                .build();
+        user.updateProfile(profileUpdates)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "User profile updated.");
+                        }
+                    }
+                });
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -165,12 +184,11 @@ public class MainActivity extends AppCompatActivity  {
         if(currentUser!=null ){
             //De app kijkt altijd eerst naar onstart na dat de onclicklistener is neergezet. Als dus de Currentuser niet null is dan gaat die gelijk door naar de andere activity omdat je al ingelogd bent.Hier kom je vanuit Onstart, vanuit register en login methods.
             Intent intentgps=new Intent(this, GpsActivity.class);
-            String intentName = name.replace("@random.com","");
-            intentgps.putExtra("userId",intentName);
+            intentgps.putExtra("userId",userId);
             startActivity(intentgps);
         }
         if (currentUser==null){
-            //Dit hoeft niks te zijn
+
 
 
         }}
