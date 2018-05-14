@@ -33,6 +33,7 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -125,6 +126,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     SimpleLocationOverlay personOverlay;
     SimpleLocationOverlay carOverlay;
     private PendingIntent mActivityRecognitionPendingIntent;
+    Thread oneM2MGPSThread;
 
     //MQTT String and variables
     MqttAndroidClient onem2m,onem2m2;
@@ -136,11 +138,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private final static int RETRIEVE = 2;
     private final static int UPDATE = 3;
     private final static int DELETE = 4;
-
-;
+    String CsmartcampusSubscriptionTopic = "/oneM2M/resp/server/Csmartcampus/json";
+    String CsmartCampusCarsSubscriptionTopic = "";
     BroadcastReceiver broadcastReceiver;
-    UserActivity userActivity = new UserActivity();
     String userActivityType;
+    int userActivityTypeInt=20;
     int userConfidence = 100;
     String mActivityRecognitionTimestamp;
     SimpleDateFormat df;
@@ -151,6 +153,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        FirebaseUser user = mAuth.getCurrentUser();
+        userCheck(user);
+        getUsername(user);
+        Log.d(TAG, "onCreate: " + userId);
 
         Context ctx = getApplicationContext();
         Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
@@ -161,11 +167,32 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         locButton.setBackground(locButtondrawableBefore);
         Log.d(TAG, "onCreate: ");
 
+
+    // GPS functionality, maybe in thread, maybe not, APP keeps doing thread after App quits.
+        //TODO fix GPS function continueing after onDestroy when in thead
+        createLocationRequest();
+        buildLocationSettingsRequest();
+        createLocationCallback();
+
+        oneM2MGPSThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                setBroadcastReceiver();
+                subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
+                onem2m = buildOneM2MVRU(onem2m,userId);
+                startTracking();
+
+
+            }
+        });
+        oneM2MGPSThread.start();
+
+
+
+
         setupMap();
         ///Git test
-        FirebaseUser user = mAuth.getCurrentUser();
-        userCheck(user);
-        getUsername(user);
+
 
         createVRUJSONS();
         drawable1 = ContextCompat.getDrawable(getApplicationContext(), R.drawable.snackbarshape);
@@ -188,18 +215,18 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         mGoogleApiClient.connect();
 
         //UserActivityRecognition
-        startTracking();
-        setBroadcastReceiver();
+
+
+
         df = new SimpleDateFormat("yyyyMMddHHmmssSS");
         //GPS functionality
-        createLocationCallback();
-        createLocationRequest();
-        buildLocationSettingsRequest();
+
+
+
+
 
         //OneM2M MQTT client
-        onem2m = buildOneM2MVRU(onem2m,userId);
-        String userId2 = "2nd" + userId;
-        onem2m2 = buildOneM2MVRU(onem2m2,userId2);
+
 
         Boolean a = checkPermissions();
             Boolean timerOn = false;
@@ -227,13 +254,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction().equals(ConstantsClassifier.BROADCAST_DETECTED_ACTIVITY)) {
-                    userActivityType = intent.getStringExtra("type");
+                    userActivityTypeInt = intent.getIntExtra("type",20);
                     userConfidence= intent.getIntExtra("confidence", 0);
                     Long Timestamp = intent.getLongExtra("timestamp",0);
 
+                    userActivityType = checkActivityType(userActivityTypeInt);
                     mActivityRecognitionTimestamp = df.format(Timestamp);
                     //TODO make container for GPS and Activity seperately
                     Log.d(TAG, userActivityType + "From broadcast " + userConfidence);
+                    if(userActivityTypeInt!=20){
                     try {
                         publishUserStatus(userActivityType,mActivityRecognitionTimestamp,userConfidence);
                     } catch (JSONException e) {
@@ -243,13 +272,40 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }
-                }
+                }}
             }
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 broadcastReceiver, new IntentFilter("activity_intent"));
-    } // Recieves broadcast from DetectedActivitiesIntentService, which sends only highest confidens UserActivity
+    } // Recieves broadcast from DetectedActivitiesIntentService, which sends only highest confidence UserActivity
 
+    private String checkActivityType(int type){
+        switch(type){
+            case DetectedActivity.IN_VEHICLE: {
+                return "driving";
+            }
+            case DetectedActivity.ON_BICYCLE:{
+                return "bicycling";
+            }
+            case DetectedActivity.ON_FOOT:{
+                return "on foot";
+            }
+            case DetectedActivity.RUNNING:{
+                return "running";
+            }
+            case DetectedActivity.WALKING:{
+                return "walking";
+            }
+            case DetectedActivity.UNKNOWN:{
+                return "unknown";
+            }
+            case DetectedActivity.STILL:{
+                return "still";
+            }
+            default:{ return "unknown";}
+        }
+
+    }
 
     private void startTracking(){
         Intent intent1 = new Intent(GpsActivity.this, BackgroundDetectedActivitiesService.class);
@@ -257,9 +313,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         startService(intent1);
     } // Starts the tracking of UserActivity via BackgroundDetectedAcitiviesService, which sends activities list to DetectedActivitiesIntentService, this gets the highest confidense activity type and broadcasts to setBroadcastReceiver
 
-    private MqttAndroidClient buildOneM2MVRU(MqttAndroidClient mMqttAndroidClient, String userId) {
+    private MqttAndroidClient buildOneM2MVRU(MqttAndroidClient mMqttAndroidClient, String userId1) {
+        userId1 = userId1.replace("s","suser");
         String mqttBrokerUrl = "tcp://vmi137365.contaboserver.net:1883";
-        userId=userId.replace("@random.com", "");
         mMqttAndroidClient = getMqttClient(getApplicationContext(), mqttBrokerUrl, userId);
         mMqttAndroidClient.setCallback(new MqttCallbackExtended() {
             @Override
@@ -267,7 +323,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
                 if (reconnect) {
                     Log.d(TAG, ("Reconnected to : " + serverURI));
-                    subscribeToTopic();
+                    subscribeToTopic(CsmartcampusSubscriptionTopic);
                 } else {
                     Log.d(TAG,"Connected to: " + serverURI);
                 }
@@ -291,9 +347,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     return mMqttAndroidClient;
     } // Builds the OneM2M broker connection, subscribes to the VRU ae Response topic and creates UserID container.
 
-    public void subscribeToTopic() {
+    public void subscribeToTopic(String subscription) {
                 try {
-                    onem2m.subscribe("/oneM2M/resp/server/Csmartcampus/json", 0, null, new IMqttActionListener() {
+                    onem2m.subscribe(subscription, 0, null, new IMqttActionListener() {
                         @Override
                         public void onSuccess(IMqttToken asyncActionToken) {
                             Log.d(TAG,"Subscribed!");
@@ -322,7 +378,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     } // Publishes message to VRU ae
 
     public MqttAndroidClient getMqttClient(@NonNull Context context,@NonNull String brokerUrl, @NonNull String clientId) {
-        clientId = clientId.replace("@random.com", "");
         final MqttAndroidClient mqttClient = new MqttAndroidClient(context, brokerUrl, clientId);
         try {
             IMqttToken token = mqttClient.connect(getMqttConnectionOption());
@@ -332,9 +387,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                 public void onSuccess(IMqttToken asyncActionToken) {
                    //TODO set custom disconnect options onem2m.setBufferOpts(getDisconnectedBufferOptions());
                     Log.d(TAG, "getMqttClient: Success");
-                    userId = userId.replace("@random.com","");
                     OneM2MMqttJson VRU = new OneM2MMqttJson(oneM2MVRUAeRi, oneM2MVRUAePass, oneM2MVRUAeRn,userId);
-                    subscribeToTopic();
+                    subscribeToTopic(CsmartcampusSubscriptionTopic);
                     try {
                         JSONObject createContainerJSON = VRU.CreateContainer(userId);
                         String createContainer = createContainerJSON.toString();
@@ -446,7 +500,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             requestPermission();
         }
     }
-
     private void updateLocationUI() {
         if(mCurrentlocation!=null){
             SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssSS");
@@ -456,7 +509,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             String Bearing = Double.toString(mCurrentlocation.getBearing());
             Log.d(TAG, "Accuracy: " + Accuracy + " Bearing: " + Bearing);
 
-            userId = userId.replace("@random.com", "");
             latitude = String.format(Locale.ENGLISH,"%f", mCurrentlocation.getLatitude());
             longitude = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getLongitude());
             longitude = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getLongitude());
@@ -504,6 +556,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             Double bound2la= 51.452770;
             Double bound1lo = 5.500690;
             Double bound2lo = 5.481070;
+            Toast.makeText(this, Float.toString(mCurrentlocation.getSpeed()), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, Float.toString(mCurrentlocation.getBearing()), Toast.LENGTH_SHORT).show();
             personIconUpdate(loc);
             onCampusTest(bound1la,bound2la,bound2lo,bound1lo, Longitude, Latitude);
             locationIconUpdate();
@@ -512,16 +566,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     }
 
     private void publishUserStatus(String activity, String timeStamp, int confidence) throws JSONException, MqttException, UnsupportedEncodingException {
-        userId = userId.replace("@random.com","");
         String con = "activity: " + activity +  "," +  " activity confidence: " + confidence;
         contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
         contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", timeStamp);
         String contentCreateStatus = contentCreateUserStatus.toString();
-        publishMessage(onem2m2,contentCreateStatus,1,oneM2MVRUReqTopic);}
+        publishMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic);}
 
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy, String formattedDate) throws JSONException, MqttException, UnsupportedEncodingException {
-        userId = userId.replace("@random.com","");
-        String con = "lat: " + latitude + "," + " long: " + longitude + "," + " accuracy: " + Accuracy;
+        String con = "{\"type\":5,\"id\":" + userId + ", \"time\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":0, \"heading\":0}";
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", formattedDate);
         String contentCreate = contentCreateGPS.toString();
@@ -645,9 +697,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     }
 
     private void buildLocationSettingsRequest(){
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
-        builder.addLocationRequest(mLocationRequest);
-        mLocationSettingsRequest= builder.build();
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(this.mLocationRequest);
+         mLocationSettingsRequest= builder.build();
     }
 
     @Override
@@ -669,7 +720,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                 .addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
                     @Override
                     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-                        mFusedLocationClient.requestLocationUpdates(mLocationRequest,
+                        mFusedLocationClient.requestLocationUpdates(GpsActivity.this.mLocationRequest,
                                 mLocationCallback, Looper.myLooper());
                         Log.d(TAG, "onSuccess:");
                         updateLocationUI();
@@ -762,19 +813,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     } //Checks if user is still logged in via Firebase
 
     private void getUsername(FirebaseUser user) {
-        intentString = getIntent().getStringExtra("userId");
-        if(intentString!=null){
-            userId=intentString;
-        }else{
-            userId= user.getEmail();
-            userId = userId.replace("@Random.com", "");
-        }
-
-    }// Gets the username from Firebase
+        String userEmail = user.getEmail();
+        userId = userEmail.replace("@random.com","");
+    }
+        // Gets the username from Firebase
 
     private void createLocationCallback() {
         mLocationCallback=new LocationCallback(){
-
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);

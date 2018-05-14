@@ -27,6 +27,7 @@ public class DetectedActivitiesIntentService  extends IntentService {
     @SuppressWarnings("unchecked")
     @Override
     protected void onHandleIntent(Intent intent) {
+        Log.d(TAG, "onHandleIntent:");
         ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
         Long ActivityTimeStamp = result.getTime();
 
@@ -36,58 +37,22 @@ public class DetectedActivitiesIntentService  extends IntentService {
         ArrayList<DetectedActivity> detectedActivities = (ArrayList) result.getProbableActivities();
 
         int maxConf = Integer.MIN_VALUE;
-        DetectedActivity maxConfActivity = null;
+        int maxConfType=0;
 
         for (DetectedActivity activity : detectedActivities) {
             if(activity.getConfidence() > maxConf){
                 maxConf = activity.getConfidence();
-                maxConfActivity = activity;
+                maxConfType = activity.getType();
             }
             /*activity.g
             Log.i(TAG, "Detected activity: " + activity.getType() + ", " + activity.getConfidence());
             broadcastActivity(activity);*/
         }
-        int type = maxConfActivity.getType();
-        String activityString;
-        switch(type){
-            case DetectedActivity.IN_VEHICLE: {
-                activityString =  "driving";
-                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
-            }
-            case DetectedActivity.ON_BICYCLE:{
-                activityString = "bicycling";
-                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
-            }
-            case DetectedActivity.ON_FOOT:{
-                activityString =  "on foot";
-                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
-            }
-            case DetectedActivity.RUNNING:{
-                activityString = "running";
-                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
-            }
-            case DetectedActivity.WALKING:{
-                activityString =  "walking";
-                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
-            }
-            case DetectedActivity.UNKNOWN:{
-                activityString = "unknown";
-                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
-            }
-            case DetectedActivity.STILL:{
-                activityString = "still";
-                broadcastActivity(activityString,ActivityTimeStamp,maxConf);
-            }
-            default:{ activityString = "unknown";}
-        }
-    }
-
-    private void broadcastActivity(String activityString, long activityTimestamp, int confidence) {
-        Intent intent = new Intent(ConstantsClassifier.BROADCAST_DETECTED_ACTIVITY);
-        Log.d(TAG, "broadcastActivity: " + activityString + "   " + activityTimestamp + "   " + confidence);
-        intent.putExtra("timestamp", activityTimestamp);
-        intent.putExtra("type", activityString);
-        intent.putExtra("confidence", confidence);
+        Log.d(TAG, "onHandleIntent: nearbroadcast");
+        intent.putExtra("confidence", maxConf);
+        intent.putExtra("type", maxConfType);
+        intent.putExtra("timestamp", ActivityTimeStamp);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+
     }
 }
