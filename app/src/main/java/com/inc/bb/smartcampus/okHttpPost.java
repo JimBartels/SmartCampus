@@ -28,17 +28,17 @@ public class okHttpPost extends AsyncTask<String,Void,String> {
     protected String doInBackground(String... strings) {
         try{
         OkHttpClient client = new OkHttpClient();
-        MediaType mediaType = MediaType.parse("application/json;ty=4");
+        MediaType mediaType = MediaType.parse("application/json");
         RequestBody body = RequestBody.create(mediaType, strings[1]);
         Request request = new Request.Builder()
                 .url(strings[0])
                 .post(body)
-                .addHeader("Content-Type", "application/json;ty=4")
-                .addHeader("X-M2M-Origin", "Cae-guest")
-                .addHeader("X-M2M-Key", "guestguest")
-                .addHeader("Accept", "application/json")
-                .addHeader("Cache-Control", "no-cache")
-                .addHeader("Postman-Token", "8036b953-7456-48d3-b446-77702913fd82")
+                .addHeader("Content-Type", "application/json")
+               // .addHeader("X-M2M-Origin", "Cae-guest")
+               // .addHeader("X-M2M-Key", "guestguest")
+               // .addHeader("Accept", "application/json")
+               // .addHeader("Cache-Control", "no-cache")
+               // .addHeader("Postman-Token", "8036b953-7456-48d3-b446-77702913fd82")
                 .build();
         Response response = client.newCall(request).execute();
         if(response.isSuccessful()){

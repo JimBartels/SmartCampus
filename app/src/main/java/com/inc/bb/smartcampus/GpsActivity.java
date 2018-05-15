@@ -122,6 +122,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private MapView map;
     private Double carLat;
     private Double carLng;
+    Double lastLat=0.00;
+    Double lastLon=0.00;
+    String lastTime;
     Integer i=0;
     SimpleLocationOverlay personOverlay;
     SimpleLocationOverlay carOverlay;
@@ -147,6 +150,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     String mActivityRecognitionTimestamp;
     SimpleDateFormat df;
     OneM2MMqttJson VRUgps;
+    String huaweiUrl = "http://217.110.131.79:2020/mobile/dataapp";
     JSONObject contentCreateGPS, contentCreateUserStatus;
 
 
@@ -169,20 +173,19 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
 
     // GPS functionality, maybe in thread, maybe not, APP keeps doing thread after App quits.
-        //TODO fix GPS function continueing after onDestroy when in thead
-        createLocationRequest();
-        buildLocationSettingsRequest();
-        createLocationCallback();
+        //TODO fix GPS function continueing after onDestroy when in thread
 
         oneM2MGPSThread = new Thread(new Runnable() {
             @Override
             public void run() {
+                createLocationRequest();
+                buildLocationSettingsRequest();
+                createLocationCallback();
+
                 setBroadcastReceiver();
-                subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
+                //subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
                 onem2m = buildOneM2MVRU(onem2m,userId);
                 startTracking();
-
-
             }
         });
         oneM2MGPSThread.start();
@@ -432,7 +435,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     public void processFinish(String output) {
     } //Handler voor response van de asynctask post OkHTTP
 
-    void post(String url, String json) {
+    void okHTTPPost(String url, String json) {
         okHttpPost post1 = new okHttpPost(this);
         String[] string = new String[2];
         string[0]=url;
@@ -506,6 +509,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             String formattedDate = df.format(mCurrentlocation.getTime());
 
             Float Accuracy = mCurrentlocation.getAccuracy();
+
             String Bearing = Double.toString(mCurrentlocation.getBearing());
             Log.d(TAG, "Accuracy: " + Accuracy + " Bearing: " + Bearing);
 
@@ -517,7 +521,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             speed = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getSpeed());
             viewLatitude.setText(latitude);
             viewLongitude.setText(longitude);
-            viewSpeed.setText(speed);
+
 
 
             Integer timeDifference = 0;
@@ -532,15 +536,22 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                             k++;
                         }
                     });
+
             Double Longitude = mCurrentlocation.getLongitude();
             Double Latitude = mCurrentlocation.getLatitude();
 
-            mDatabase.child("users").child(userId).child("longitude").setValue(longitude);
-            mDatabase.child("users").child(userId).child("latitude").setValue(latitude);
-            mDatabase.child("users").child(userId).child("speed").setValue(speed);
+            //Speed implementation
+            String speedGPS = calculateSpeed(Latitude,Longitude,formattedDate);
+            viewSpeed.setText(speedGPS);
 
+            //Data to Firebase, not needed atm
+            /*mDatabase.child("users").child(userId).child("longitude").setValue(longitude);
+            mDatabase.child("users").child(userId).child("latitude").setValue(latitude);
+            mDatabase.child("users").child(userId).child("speed").setValue(speed);*/
+
+            //Publishing gps to onem2m
             try {
-                publishGpsData(Latitude,Longitude,Accuracy, formattedDate);
+                publishGpsData(Latitude,Longitude,Accuracy, formattedDate,speedGPS);
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (MqttException e) {
@@ -549,15 +560,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                 e.printStackTrace();
             }
 
+            //UI buttons and on campus test
             GeoPoint loc = new GeoPoint(Latitude,Longitude);
             String location = "lat: " + latitude + " lng: " + longitude;
-
             Double bound1la = 51.445110;
             Double bound2la= 51.452770;
             Double bound1lo = 5.500690;
             Double bound2lo = 5.481070;
-            Toast.makeText(this, Float.toString(mCurrentlocation.getSpeed()), Toast.LENGTH_SHORT).show();
-            Toast.makeText(this, Float.toString(mCurrentlocation.getBearing()), Toast.LENGTH_SHORT).show();
             personIconUpdate(loc);
             onCampusTest(bound1la,bound2la,bound2lo,bound1lo, Longitude, Latitude);
             locationIconUpdate();
@@ -572,14 +581,59 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         String contentCreateStatus = contentCreateUserStatus.toString();
         publishMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic);}
 
-    private void publishGpsData(Double latitude, Double longitude, Float Accuracy, String formattedDate) throws JSONException, MqttException, UnsupportedEncodingException {
-        String con = "{\"type\":5,\"id\":" + userId + ", \"time\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":0, \"heading\":0}";
+    private void publishGpsData(Double latitude, Double longitude, Float Accuracy, String formattedDate, String speedGPS) throws JSONException, MqttException, UnsupportedEncodingException {
+        String con = "{\"type\":5,\"id\":" + userId + ", \"time\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":0}";
+        okHTTPPost(huaweiUrl,con);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", formattedDate);
         String contentCreate = contentCreateGPS.toString();
         publishMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic);
-    }
+    } //Publishes messages to onem2m broker by MQTT and posts to Huawei set up server via HTTP
+    private String calculateSpeed(Double latitude, Double longitude,String timeStamp){
+        String speedGPS;
+        StringBuilder sb = new StringBuilder();
+        if(lastLat == 0.00){
+            lastLat=latitude;
+            lastLon=longitude;
+            lastTime = timeStamp;
+            speedGPS="0.00";
+        }
+        else{
+            Double deltaSeconds = DifferenceUTCtoSeconds(timeStamp,lastTime);
+            Double deltaMeters = DifferenceInMeters(lastLat,lastLon,latitude,longitude);
+            speedGPS = Double.toString(deltaMeters/deltaSeconds);
+            //TODO add a realistic threshold to prevent huge speeds at delta t goes to zero
+            lastLat=latitude;
+            lastLon=longitude;
+            lastTime=timeStamp;
 
+        }
+        return speedGPS;
+    }
+    private double DifferenceUTCtoSeconds(String timeStamp, String timeStamp2){
+        Double deltaseconds = Double.parseDouble(new String(new char[]{timeStamp.charAt(12),timeStamp.charAt(13)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(12),timeStamp2.charAt(13)}));
+        Double deltamiliseconds = Double.parseDouble(new String(new char[]{timeStamp.charAt(14),timeStamp.charAt(15)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(14),timeStamp2.charAt(15)}));
+        Double deltaminutes = Double.parseDouble(new String(new char[]{timeStamp.charAt(10),timeStamp.charAt(11)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(10),timeStamp2.charAt(11)}));
+        Double deltahours = Double.parseDouble(new String(new char[]{timeStamp.charAt(8),timeStamp.charAt(9)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(8),timeStamp2.charAt(9)}));
+        Double deltadays = Double.parseDouble(new String(new char[]{timeStamp.charAt(6),timeStamp.charAt(7)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(6),timeStamp2.charAt(7)}));
+        Double deltamonths = Double.parseDouble(new String(new char[]{timeStamp.charAt(4),timeStamp.charAt(5)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(4),timeStamp2.charAt(5)}));
+        Double deltayears = Double.parseDouble(new String(new char[]{timeStamp.charAt(0),timeStamp.charAt(1), timeStamp.charAt(2),timeStamp.charAt(3)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(0),timeStamp2.charAt(1),timeStamp2.charAt(2),timeStamp2.charAt(3)}));
+        Double totalDeltaInMiliSeconds = deltaseconds*1000 + deltamiliseconds + deltaminutes * 60 * 1000 + deltahours *60*60*1000 + deltadays*24*60*60*1000; //This does not include difference in months since that is irrelevant for two gps time points
+        return totalDeltaInMiliSeconds;
+    }
+    private double DifferenceInMeters(Double lastLat,Double lastLon,Double lat,Double lon){
+        Double deltaPhiLon = (lon - lastLon)*180/Math.PI;
+        Double deltaPhilat = (lat - lastLat)*180/Math.PI;
+        lastLat = lastLat*180/Math.PI;
+        lat = lat*180/Math.PI;
+
+        Double earth = 6371e3;
+
+        Double a  = Math.sin(deltaPhilat/2)*Math.sin(deltaPhilat/2)+Math.cos(lastLat)*Math.cos(lat)*Math.sin(deltaPhiLon)*Math.sin(deltaPhiLon);
+        Double c  = 2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+        Double d = earth*c;
+        return d;
+    } // Difference in meters (birds flight) using 'haversine' formula
 
 
     private void personIconUpdate(GeoPoint loc) {
@@ -713,6 +767,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
     @Override
     public void onBackPressed() {
+        FirebaseAuth.getInstance().signOut();
+        stopTracking();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+        this.finishAffinity();
+
+
     }
 
     private void startLocationUpdates() {
