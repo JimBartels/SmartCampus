@@ -433,6 +433,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
     @Override
     public void processFinish(String output) {
+        Log.d(TAG, "processFinish: "+ output);
     } //Handler voor response van de asynctask post OkHTTP
 
     void okHTTPPost(String url, String json) {
