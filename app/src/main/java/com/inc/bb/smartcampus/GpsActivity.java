@@ -98,6 +98,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private TextView viewLongitude;
     private TextView viewLocation;
     private TextView viewBearing;
+    private TextView viewmanualBearing;
     private TextView viewBearingAccuracy;
     private TextView viewSpeed;
     private Location mCurrentlocation;
@@ -212,6 +213,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         viewBearing = (TextView) findViewById(R.id.bearing);
         viewBearingAccuracy = (TextView) findViewById(R.id.bearingAccuracy);
         viewLocation = (TextView) findViewById(R.id.location);
+        viewSpeed = (TextView) findViewById(R.id.speed);
+        viewmanualBearing = (TextView) findViewById(R.id.manualbearing);
         viewSpeed = (TextView) findViewById(R.id.speed);
 
 
@@ -528,13 +531,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             if(Build.VERSION.SDK_INT>=26){
             bearingAccuracy = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getBearingAccuracyDegrees());}
             Log.d(TAG, "bearing: " + bearing + " bearingAccuracy: " + bearingAccuracy);
-            if(mCurrentlocation.hasSpeed()){
-            }
             speed = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getSpeed());
             viewLatitude.setText(latitude);
             viewLongitude.setText(longitude);
             viewBearing.setText(bearing);
             viewBearingAccuracy.setText(bearingAccuracy);
+            viewGoogleSpeed.setText(speed);
 
 
 
@@ -559,6 +561,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             String speedGPS = speedGPSandBearing[0];
             String manualBearing = speedGPSandBearing[1];
             viewSpeed.setText(speedGPS);
+            viewmanualBearing.setText(manualBearing);
+
 
             //Data to Firebase, not needed atm
             /*mDatabase.child("users").child(userId).child("longitude").setValue(longitude);
@@ -623,15 +627,17 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             Double deltaSeconds = DifferenceUTCtoSeconds(timeStamp,lastTime)/1000;
             Double deltaMeters = DifferenceInMeters(lastLat,lastLon,latitude,longitude);
             speedGPS = Double.toString(deltaMeters/deltaSeconds);
+            String bearingGPS = Double.toString(ManualBearing(lastLat,lastLon,latitude,longitude));
+            Log.d(TAG, "manualbearing: " + bearingGPS);
+            speedandBearing = new String[2];
+            speedandBearing[0] = speedGPS;
+            speedandBearing[1] = bearingGPS;
 
             //TODO add a realistic threshold to prevent huge speeds at delta t goes to zero
             lastLat=latitude;
             lastLon=longitude;
             lastTime=timeStamp;
-            String bearingGPS = Double.toString(ManualBearing(lastLat,lastLon,latitude,longitude));
-            speedandBearing = new String[2];
-            speedandBearing[0] = speedGPS;
-            speedandBearing[1] = bearingGPS;
+
 
         }
         return speedandBearing;
@@ -650,6 +656,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     }
     private double DifferenceInMeters(Double lastLat,Double lastLon,Double lat,Double lon){
         Double deltaPhiLon = (lon - lastLon)*Math.PI/180;
+        Log.d(TAG, "DiffMetersdeltaphilon: " + deltaPhiLon);
         Double deltaPhilat = (lat - lastLat)*Math.PI/180;
         lastLat = lastLat*Math.PI/180;
         lat = lat*Math.PI/180;
@@ -666,10 +673,23 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         //phi = lat, lambda = long
         Double deltaPhiLon = (lon - lastLon) * Math.PI/180;
         Double deltaPhilat = (lat - lastLat) * Math.PI/180;
-        Double a = Math.sin(deltaPhiLon)*Math.cos(lon);;
-        Double b = Math.cos(lastLon) * Math.sin(lon) - Math.sin(lastLon) * Math.cos(lon) * Math.cos(deltaPhiLon);
+        lastLon = lastLon*Math.PI/180;
+        lon = lon*Math.PI/180;
+        lastLat = lastLat*Math.PI/180;
+        lat = lat*Math.PI/180;
+
+        Double a = Math.sin(deltaPhiLon)*Math.cos(lat);;
+        Double b = Math.cos(lastLat) * Math.sin(lat) - Math.sin(lastLat) * Math.cos(lat) * Math.cos(deltaPhiLon);
         Double c = Math.atan2(a, b)*180/Math.PI;
-        return c;
+        Double d;
+        if(c<0){
+            d = c + 360;
+
+        }
+        else {
+            d = c;
+        }
+        return d;
     };
 
 
