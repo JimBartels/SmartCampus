@@ -72,6 +72,7 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
 import org.osmdroid.views.overlay.OverlayItem;
+import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.mylocation.SimpleLocationOverlay;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
@@ -81,6 +82,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -135,6 +137,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     Integer i=0;
     SimpleLocationOverlay personOverlay;
     SimpleLocationOverlay carOverlay;
+    Polyline headingLine;
     private PendingIntent mActivityRecognitionPendingIntent;
     Thread oneM2MGPSThread;
 
@@ -537,7 +540,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             viewLongitude.setText(longitude);
             viewBearing.setText(bearing);
             viewBearingAccuracy.setText(bearingAccuracy);
-            viewGoogleSpeed.setText(speed);
 
 
 
@@ -558,7 +560,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             Double Latitude = mCurrentlocation.getLatitude();
 
             //Speed implementation
-            String[] speedGPSandBearing = calculateSpeedandBearing(Latitude,Longitude,timestampUTC);
+            String[] speedGPSandBearing = calculateSpeedandBearingandImplementPolyline(Latitude,Longitude,timestampUTC);
             String speedGPS = speedGPSandBearing[0];
             String manualBearing = speedGPSandBearing[1];
             viewSpeed.setText(speedGPS);
@@ -596,6 +598,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         }
     }
 
+    private void makePolyline(List<GeoPoint> geoPoints,Polyline polyline) {
+        if(headingLine!=null){
+            map.getOverlays().remove(headingLine);
+        }
+        polyline= new Polyline();
+        polyline.setPoints(geoPoints);
+        map.getOverlayManager().add(polyline);
+        map.invalidate();
+    }
+
     private void publishUserStatus(String activity, String timeStamp, int confidence) throws JSONException, MqttException, UnsupportedEncodingException {
         String con = "activity: " + activity +  "," +  " activity confidence: " + confidence;
         contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
@@ -605,6 +617,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy, Long formattedDate, String speedGPS, String manualBearing) throws JSONException, MqttException, UnsupportedEncodingException {
         String formattedDateString = "UTC"+ Long.toString(formattedDate) ;
+        if(manualBearing==null){
+            manualBearing="0";
+        }
         String con = "{\"type\":5,\"id\":" + userId + ", \"timestampUtc\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":"+manualBearing+"}";
         String conHuawei = "{\"type\":5,\"id\":" + userId + ", \"timestampUtc\":" + formattedDateString + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":"+manualBearing+"}";
         okHTTPPost(huaweiUrl,conHuawei);
@@ -614,7 +629,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         publishMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic);
     } //Publishes messages to onem2m broker by MQTT and posts to Huawei set up server via HTTP
 
-    private String[] calculateSpeedandBearing(Double latitude, Double longitude, Long timeStamp){
+    private String[] calculateSpeedandBearingandImplementPolyline(Double latitude, Double longitude, Long timeStamp){
         String speedGPS;
         String[] speedandBearing = new String[2];
         StringBuilder sb = new StringBuilder();
@@ -633,16 +648,22 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             speedandBearing = new String[2];
             speedandBearing[0] = speedGPS;
             speedandBearing[1] = bearingGPS;
-
-            //TODO add a realistic threshold to prevent huge speeds at delta t goes to zero
+            GeoPoint lastGeo = new GeoPoint(lastLat,lastLon);
+            GeoPoint newGeo = new GeoPoint(latitude,longitude);
+            List<GeoPoint> Geopoints = new ArrayList<>();
+            Geopoints.add(lastGeo);
+            Geopoints.add(newGeo);
+            makePolyline(Geopoints,headingLine);
             lastLat=latitude;
             lastLon=longitude;
             lastTime=timeStamp;
 
-
         }
+            //TODO add a realistic threshold to prevent huge speeds at delta t goes to zero
+
         return speedandBearing;
-    }
+        }
+
     private double DifferenceUTCtoSeconds(Long timeStamp, Long timeStamp2){
         /*Double deltaseconds = Double.parseDouble(new String(new char[]{timeStamp.charAt(12),timeStamp.charAt(13)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(12),timeStamp2.charAt(13)}));
         Double deltamiliseconds = Double.parseDouble(new String(new char[]{timeStamp.charAt(14),timeStamp.charAt(15)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(14),timeStamp2.charAt(15)}));
