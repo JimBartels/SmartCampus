@@ -101,6 +101,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private TextView viewmanualBearing;
     private TextView viewBearingAccuracy;
     private TextView viewSpeed;
+    private TextView viewGoogleSpeed;
     private Location mCurrentlocation;
     private LocationSettingsRequest mLocationSettingsRequest;
     private LocationCallback mLocationCallback;
@@ -215,7 +216,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         viewLocation = (TextView) findViewById(R.id.location);
         viewSpeed = (TextView) findViewById(R.id.speed);
         viewmanualBearing = (TextView) findViewById(R.id.manualbearing);
-        viewSpeed = (TextView) findViewById(R.id.speed);
+        viewGoogleSpeed = (TextView) findViewById(R.id.Googlespeed);
 
 
         updateValuesFromBundle(savedInstanceState);
