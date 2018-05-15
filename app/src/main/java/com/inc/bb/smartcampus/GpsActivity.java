@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -524,7 +525,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             longitude = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getLongitude());
             longitude = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getLongitude());
             bearing = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getBearing());
-            bearingAccuracy = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getBearingAccuracyDegrees());
+            if(Build.VERSION.SDK_INT>=26){
+            bearingAccuracy = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getBearingAccuracyDegrees());}
             Log.d(TAG, "bearing: " + bearing + " bearingAccuracy: " + bearingAccuracy);
             if(mCurrentlocation.hasSpeed()){
             }
