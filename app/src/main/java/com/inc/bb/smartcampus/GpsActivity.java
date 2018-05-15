@@ -57,6 +57,7 @@ import com.google.firebase.database.ValueEventListener;
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -77,6 +78,7 @@ import org.osmdroid.views.overlay.mylocation.SimpleLocationOverlay;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -129,14 +131,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     Integer timeDifferenceTotal = 0;
     IMapController mapController;
     private MapView map;
-    private Double carLat;
-    private Double carLng;
+
     Double lastLat=0.00;
     Double lastLon=0.00;
     Long lastTime;
     Integer i=0;
     SimpleLocationOverlay personOverlay;
     SimpleLocationOverlay carOverlay;
+    SimpleLocationOverlay BuildingMarker;
     Polyline headingLine;
     private PendingIntent mActivityRecognitionPendingIntent;
     Thread oneM2MGPSThread;
@@ -152,7 +154,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private final static int UPDATE = 3;
     private final static int DELETE = 4;
     String CsmartcampusSubscriptionTopic = "/oneM2M/resp/server/Csmartcampus/json";
-    String CsmartCampusCarsSubscriptionTopic = "";
+    String CsmartCampusCarsSubscriptionTopic = "/oneM2m/resp/server/Ctechnolution/json";
     BroadcastReceiver broadcastReceiver;
     String userActivityType;
     int userActivityTypeInt=20;
@@ -193,9 +195,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                 createLocationCallback();
 
                 setBroadcastReceiver();
-                //subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
                 onem2m = buildOneM2MVRU(onem2m,userId);
                 startTracking();
+
             }
         });
         oneM2MGPSThread.start();
@@ -211,7 +213,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         drawable1 = ContextCompat.getDrawable(getApplicationContext(), R.drawable.snackbarshape);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         mDatabase = database.getReference();
-        getCarLocations();
+
         viewLatitude = (TextView) findViewById(R.id.latitude);
         viewLongitude = (TextView) findViewById(R.id.longitude);
         viewBearing = (TextView) findViewById(R.id.bearing);
@@ -340,7 +342,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
                 if (reconnect) {
                     Log.d(TAG, ("Reconnected to : " + serverURI));
-                    subscribeToTopic(CsmartcampusSubscriptionTopic);
+                    //subscribeToTopic(CsmartcampusSubscriptionTopic);
+                    subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
                 } else {
                     Log.d(TAG,"Connected to: " + serverURI);
                 }
@@ -354,6 +357,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
                 Log.d(TAG,"Incoming message: " + new String(message.getPayload()));
+
             }
 
             @Override
@@ -369,12 +373,35 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                     onem2m.subscribe(subscription, 0, null, new IMqttActionListener() {
                         @Override
                         public void onSuccess(IMqttToken asyncActionToken) {
-                            Log.d(TAG,"Subscribed!");
+                            Log.d(TAG, "Subscribed!");
                         }
 
                         @Override
                         public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                            Log.d(TAG,"Failed to subscribe");
+                            Log.d(TAG, "Failed to subscribe");
+                        }
+
+                    }, new IMqttMessageListener() {
+                        @Override
+                        public void messageArrived(String topic, MqttMessage message) throws Exception {
+                            Log.d(TAG,"Incoming messagecar: " + new String(message.getPayload()));
+
+                            JSONObject messageCar = new JSONObject(new String(message.getPayload()));
+                            String contentCar = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
+                            String[] separated = contentCar.split(",");
+
+                            String LongitudeCar = separated[3];
+                            String[] carLonseparated = LongitudeCar.split(":");
+                            String carLonstring = carLonseparated[1];
+                            Double carLon = Double.parseDouble(carLonstring);
+
+                            String LatitudeCar = (separated[4]);
+                            String[] carLatseparated = LatitudeCar.split(":");
+                            String carLatstring = carLatseparated[1];
+                            Double carLat = Double.parseDouble(carLatstring);
+
+                            locationIconUpdate(carLat,carLon);
+
                         }
                     });
                 } catch (MqttException ex){
@@ -405,7 +432,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                    //TODO set custom disconnect options onem2m.setBufferOpts(getDisconnectedBufferOptions());
                     Log.d(TAG, "getMqttClient: Success");
                     OneM2MMqttJson VRU = new OneM2MMqttJson(oneM2MVRUAeRi, oneM2MVRUAePass, oneM2MVRUAeRn,userId);
-                    subscribeToTopic(CsmartcampusSubscriptionTopic);
+                    subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
                     try {
                         JSONObject createContainerJSON = VRU.CreateContainer(userId);
                         String createContainer = createContainerJSON.toString();
@@ -461,37 +488,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     @Override
     protected void onStart() {
         super.onStart();
-    }
-
-    private void getCarLocations() {
-        DatabaseReference carLat1 = FirebaseDatabase.getInstance().getReference("node-client").child("cars").child("vehicle").child("latitude");
-        DatabaseReference carLng1 = FirebaseDatabase.getInstance().getReference("node-client").child("cars").child("vehicle").child("longitude");
-        carLat1.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                carLat = dataSnapshot.getValue(Double.class);
-                if(carLng!=null)
-                {        locationIconUpdate();}
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });
-        carLng1.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                carLng = dataSnapshot.getValue(Double.class);
-                if(carLat!=null){
-                    locationIconUpdate();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
     }
 
     private void setupMap() {
@@ -592,13 +588,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             Double bound2lo = 5.481070;
             personIconUpdate(loc);
             onCampusTest(bound1la,bound2la,bound2lo,bound1lo, Longitude, Latitude);
-            locationIconUpdate();
             myLocationButton(loc);
+            buildingIcon(loc);
 
         }
     }
 
-    private void makePolyline(List<GeoPoint> geoPoints,Polyline polyline) {
+    /*private void makePolyline(List<GeoPoint> geoPoints,Polyline polyline) {
         if(headingLine!=null){
             map.getOverlays().remove(headingLine);
         }
@@ -607,7 +603,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         map.getOverlayManager().add(polyline);
         map.invalidate();
     }
-
+*/
     private void publishUserStatus(String activity, String timeStamp, int confidence) throws JSONException, MqttException, UnsupportedEncodingException {
         String con = "activity: " + activity +  "," +  " activity confidence: " + confidence;
         contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
@@ -653,7 +649,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             List<GeoPoint> Geopoints = new ArrayList<>();
             Geopoints.add(lastGeo);
             Geopoints.add(newGeo);
-            makePolyline(Geopoints,headingLine);
+           // makePolyline(Geopoints,headingLine);
             lastLat=latitude;
             lastLon=longitude;
             lastTime=timeStamp;
@@ -729,63 +725,21 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         map.invalidate();
     }
 
-    private void carUpdates() {
-        if(carLat !=null) {
-            if(carLng!=null){
-            String carLatString = String.valueOf(carLat);
-            String carLngString = String.valueOf(carLng);
-            Toast.makeText(this, carLatString, Toast.LENGTH_SHORT).show();
-            Toast.makeText(this, carLngString, Toast.LENGTH_SHORT).show();
-            locationIconUpdate();}}
-    }
 
-    private void onCarDataChange() {
-        DatabaseReference carLat1 = FirebaseDatabase.getInstance().getReference("node-client").child("cars").child("vehicle").child("latitude");
-        DatabaseReference carLng1 = FirebaseDatabase.getInstance().getReference("node-client").child("cars").child("vehicle").child("longitude");
-        carLat1.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                carLat = dataSnapshot.getValue(Double.class);
-                map.getOverlays().remove(0);
-                locationIconUpdate();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-        carLng1.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                carLng = dataSnapshot.getValue(Double.class);
-                map.getOverlays().remove(0);
-                locationIconUpdate();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-    }
-
-    private void locationIconUpdate() {
+    private void locationIconUpdate(Double carLat, Double carLon) {
         if(carOverlay!=null){
             map.getOverlays().remove(carOverlay);
         }
-        Drawable vectorDrawable = ResourcesCompat.getDrawable(getApplicationContext().getResources(), R.drawable.locationicon, null);
         BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.locationicon);
         Bitmap b=bitmapdraw.getBitmap();
         Bitmap locationIcon = Bitmap.createScaledBitmap(b, 40, 40, false);
         carOverlay = new SimpleLocationOverlay(locationIcon);
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        if (carLat != null){
-            if(carLng!=null){
-        GeoPoint loc = new GeoPoint(carLat,carLng);
-            carOverlay.setLocation(loc);
-            map.getOverlays().add(carOverlay);
-            map.invalidate();}}
+        GeoPoint loc = new GeoPoint(carLat, carLon);
+        carOverlay.setLocation(loc);
+        map.getOverlays().add(carOverlay);
+        map.invalidate();
+        map.getController().setCenter(loc);
+
         }
 
     private void onCampusTest(Double bound1la, Double bound2la, Double bound2lo, Double bound1lo, Double Longitude, Double Latitude) {
@@ -958,7 +912,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         // Gets the username from Firebase
 
     private void createLocationCallback() {
-        mLocationCallback=new LocationCallback(){
+        mLocationCallback = new LocationCallback(){
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
@@ -975,6 +929,24 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
         OverlayItem locationIcon=new OverlayItem("Title", "Description", loc);
         items.add(locationIcon);
+
+        /*BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.buildingicon);
+        Bitmap b=bitmapdraw.getBitmap();
+        Bitmap buildingIcon = Bitmap.createScaledBitmap(b, 60, 60, false);
+        BuildingMarker = new SimpleLocationOverlay(buildingIcon);
+        GeoPoint startPoint = new GeoPoint(51.447500, 5.491267);
+        BuildingMarker.setLocation(startPoint);
+        map.getOverlays().add(BuildingMarker);
+        map.invalidate();
+
+        Marker startMarker = new Marker(map);
+        GeoPoint startPoint = new GeoPoint(51.447000, 5.491267);
+        startMarker.setPosition(startPoint);
+        startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        map.getOverlays().add(startMarker);
+        startMarker.setIcon(getResources().getDrawable(R.drawable.buildingicon));
+        startMarker.setTitle("Flux"); */
+
         ItemizedOverlayWithFocus mItemizedOverlay = new ItemizedOverlayWithFocus<OverlayItem>(items, new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
             @Override
             public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
