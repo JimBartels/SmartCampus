@@ -97,6 +97,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private TextView viewLongitude;
     private TextView viewLocation;
     private TextView viewBearing;
+    private TextView viewBearingAccuracy;
     private TextView viewSpeed;
     private Location mCurrentlocation;
     private LocationSettingsRequest mLocationSettingsRequest;
@@ -106,6 +107,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     public  String longitude;
     public  String latitude;
     public  String bearing;
+    public  String bearingAccuracy;
     public String speed;
     private final static String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private final static String KEY_LOCATION = "location";
@@ -207,6 +209,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         viewLatitude = (TextView) findViewById(R.id.latitude);
         viewLongitude = (TextView) findViewById(R.id.longitude);
         viewBearing = (TextView) findViewById(R.id.bearing);
+        viewBearingAccuracy = (TextView) findViewById(R.id.bearingAccuracy);
         viewLocation = (TextView) findViewById(R.id.location);
         viewSpeed = (TextView) findViewById(R.id.speed);
 
@@ -521,13 +524,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             longitude = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getLongitude());
             longitude = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getLongitude());
             bearing = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getBearing());
-            Log.d(TAG, "bearing:" + bearing);
+            bearingAccuracy = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getBearingAccuracyDegrees());
+            Log.d(TAG, "bearing: " + bearing + " bearingAccuracy: " + bearingAccuracy);
             if(mCurrentlocation.hasSpeed()){
             }
             speed = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getSpeed());
             viewLatitude.setText(latitude);
             viewLongitude.setText(longitude);
             viewBearing.setText(bearing);
+            viewBearingAccuracy.setText(bearingAccuracy);
 
 
 
@@ -548,7 +553,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             Double Latitude = mCurrentlocation.getLatitude();
 
             //Speed implementation
-            String speedGPS = calculateSpeed(Latitude,Longitude,formattedDate);
+            String[] speedGPSandBearing = calculateSpeedandBearing(Latitude,Longitude,formattedDate);
+            String speedGPS = speedGPSandBearing[0];
+            String manualBearing = speedGPSandBearing[1];
             viewSpeed.setText(speedGPS);
 
             //Data to Firebase, not needed atm
@@ -558,7 +565,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
             //Publishing gps to onem2m
             try {
-                publishGpsData(Latitude,Longitude,Accuracy, formattedDate,speedGPS);
+                publishGpsData(Latitude,Longitude,Accuracy, formattedDate,speedGPS,manualBearing);
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (MqttException e) {
@@ -578,6 +585,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             onCampusTest(bound1la,bound2la,bound2lo,bound1lo, Longitude, Latitude);
             locationIconUpdate();
             myLocationButton(loc);
+
         }
     }
 
@@ -588,8 +596,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         String contentCreateStatus = contentCreateUserStatus.toString();
         publishMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic);}
 
-    private void publishGpsData(Double latitude, Double longitude, Float Accuracy, String formattedDate, String speedGPS) throws JSONException, MqttException, UnsupportedEncodingException {
-        String con = "{\"type\":5,\"id\":" + userId + ", \"time\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":0}";
+    private void publishGpsData(Double latitude, Double longitude, Float Accuracy, String formattedDate, String speedGPS,String manualBearing) throws JSONException, MqttException, UnsupportedEncodingException {
+        String con = "{\"type\":5,\"id\":" + userId + ", \"time\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":}";
         okHTTPPost(huaweiUrl,con);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", formattedDate);
@@ -597,8 +605,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         publishMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic);
     } //Publishes messages to onem2m broker by MQTT and posts to Huawei set up server via HTTP
 
-    private String calculateSpeed(Double latitude, Double longitude,String timeStamp){
+    private String[] calculateSpeedandBearing(Double latitude, Double longitude,String timeStamp){
         String speedGPS;
+        String[] speedandBearing = new String[2];
         StringBuilder sb = new StringBuilder();
         if(lastLat == 0.00){
             lastLat=latitude;
@@ -610,13 +619,18 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             Double deltaSeconds = DifferenceUTCtoSeconds(timeStamp,lastTime)/1000;
             Double deltaMeters = DifferenceInMeters(lastLat,lastLon,latitude,longitude);
             speedGPS = Double.toString(deltaMeters/deltaSeconds);
+
             //TODO add a realistic threshold to prevent huge speeds at delta t goes to zero
             lastLat=latitude;
             lastLon=longitude;
             lastTime=timeStamp;
+            String bearingGPS = Double.toString(ManualBearing(lastLat,lastLon,latitude,longitude));
+            speedandBearing = new String[2];
+            speedandBearing[0] = speedGPS;
+            speedandBearing[1] = bearingGPS;
 
         }
-        return speedGPS;
+        return speedandBearing;
     }
     private double DifferenceUTCtoSeconds(String timeStamp, String timeStamp2){
         Double deltaseconds = Double.parseDouble(new String(new char[]{timeStamp.charAt(12),timeStamp.charAt(13)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(12),timeStamp2.charAt(13)}));
@@ -642,6 +656,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         Double d = earth*c;
         return d;
     } // Difference in meters (birds flight) using 'haversine' formula
+
+    private double ManualBearing(Double lastLat,Double lastLon,Double lat,Double lon){
+        //phi = lat, lambda = long
+        Double deltaPhiLon = (lon - lastLon) * Math.PI/180;
+        Double deltaPhilat = (lat - lastLat) * Math.PI/180;
+        Double a = Math.sin(deltaPhiLon)*Math.cos(lon);;
+        Double b = Math.cos(lastLon) * Math.sin(lon) - Math.sin(lastLon) * Math.cos(lon) * Math.cos(deltaPhiLon);
+        Double c = Math.atan2(a, b)*180/Math.PI;
+        return c;
+    };
 
 
     private void personIconUpdate(GeoPoint loc) {
