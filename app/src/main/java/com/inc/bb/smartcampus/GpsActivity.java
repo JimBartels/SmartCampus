@@ -128,7 +128,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private Double carLng;
     Double lastLat=0.00;
     Double lastLon=0.00;
-    String lastTime;
+    Long lastTime;
     Integer i=0;
     SimpleLocationOverlay personOverlay;
     SimpleLocationOverlay carOverlay;
@@ -513,7 +513,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private void updateLocationUI() {
         if(mCurrentlocation!=null){
             SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssSS");
-            String formattedDate = df.format(mCurrentlocation.getTime());
+            Long timestampUTC = mCurrentlocation.getTime();
 
             Float Accuracy = mCurrentlocation.getAccuracy();
 
@@ -553,7 +553,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             Double Latitude = mCurrentlocation.getLatitude();
 
             //Speed implementation
-            String[] speedGPSandBearing = calculateSpeedandBearing(Latitude,Longitude,formattedDate);
+            String[] speedGPSandBearing = calculateSpeedandBearing(Latitude,Longitude,timestampUTC);
             String speedGPS = speedGPSandBearing[0];
             String manualBearing = speedGPSandBearing[1];
             viewSpeed.setText(speedGPS);
@@ -565,7 +565,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
             //Publishing gps to onem2m
             try {
-                publishGpsData(Latitude,Longitude,Accuracy, formattedDate,speedGPS,manualBearing);
+                publishGpsData(Latitude,Longitude,Accuracy, timestampUTC,speedGPS,manualBearing);
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (MqttException e) {
@@ -596,16 +596,18 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         String contentCreateStatus = contentCreateUserStatus.toString();
         publishMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic);}
 
-    private void publishGpsData(Double latitude, Double longitude, Float Accuracy, String formattedDate, String speedGPS,String manualBearing) throws JSONException, MqttException, UnsupportedEncodingException {
-        String con = "{\"type\":5,\"id\":" + userId + ", \"time\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":" + manualBearing+"}";
-        okHTTPPost(huaweiUrl,con);
+    private void publishGpsData(Double latitude, Double longitude, Float Accuracy, Long formattedDate, String speedGPS, String manualBearing) throws JSONException, MqttException, UnsupportedEncodingException {
+        String formattedDateString = "UTC"+ Long.toString(formattedDate) ;
+        String con = "{\"type\":5,\"id\":" + userId + ", \"timestampUtc\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":"+manualBearing+"}";
+        String conHuawei = "{\"type\":5,\"id\":" + userId + ", \"timestampUtc\":" + formattedDateString + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":"+manualBearing+"}";
+        okHTTPPost(huaweiUrl,conHuawei);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", formattedDate);
         String contentCreate = contentCreateGPS.toString();
         publishMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic);
     } //Publishes messages to onem2m broker by MQTT and posts to Huawei set up server via HTTP
 
-    private String[] calculateSpeedandBearing(Double latitude, Double longitude,String timeStamp){
+    private String[] calculateSpeedandBearing(Double latitude, Double longitude, Long timeStamp){
         String speedGPS;
         String[] speedandBearing = new String[2];
         StringBuilder sb = new StringBuilder();
@@ -632,8 +634,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         }
         return speedandBearing;
     }
-    private double DifferenceUTCtoSeconds(String timeStamp, String timeStamp2){
-        Double deltaseconds = Double.parseDouble(new String(new char[]{timeStamp.charAt(12),timeStamp.charAt(13)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(12),timeStamp2.charAt(13)}));
+    private double DifferenceUTCtoSeconds(Long timeStamp, Long timeStamp2){
+        /*Double deltaseconds = Double.parseDouble(new String(new char[]{timeStamp.charAt(12),timeStamp.charAt(13)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(12),timeStamp2.charAt(13)}));
         Double deltamiliseconds = Double.parseDouble(new String(new char[]{timeStamp.charAt(14),timeStamp.charAt(15)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(14),timeStamp2.charAt(15)}));
         Double deltaminutes = Double.parseDouble(new String(new char[]{timeStamp.charAt(10),timeStamp.charAt(11)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(10),timeStamp2.charAt(11)}));
         Double deltahours = Double.parseDouble(new String(new char[]{timeStamp.charAt(8),timeStamp.charAt(9)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(8),timeStamp2.charAt(9)}));
@@ -641,7 +643,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         Double deltamonths = Double.parseDouble(new String(new char[]{timeStamp.charAt(4),timeStamp.charAt(5)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(4),timeStamp2.charAt(5)}));
         Double deltayears = Double.parseDouble(new String(new char[]{timeStamp.charAt(0),timeStamp.charAt(1), timeStamp.charAt(2),timeStamp.charAt(3)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(0),timeStamp2.charAt(1),timeStamp2.charAt(2),timeStamp2.charAt(3)}));
         Double totalDeltaInMiliSeconds = deltaseconds*1000 + deltamiliseconds + deltaminutes * 60 * 1000 + deltahours *60*60*1000 + deltadays*24*60*60*1000; //This does not include difference in months since that is irrelevant for two gps time points
-        return totalDeltaInMiliSeconds;
+        return totalDeltaInMiliSeconds;*/
+        return timeStamp-timeStamp2;
     }
     private double DifferenceInMeters(Double lastLat,Double lastLon,Double lat,Double lon){
         Double deltaPhiLon = (lon - lastLon)*Math.PI/180;
