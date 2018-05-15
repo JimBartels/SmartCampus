@@ -96,6 +96,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private TextView viewLatitude;
     private TextView viewLongitude;
     private TextView viewLocation;
+    private TextView viewBearing;
     private TextView viewSpeed;
     private Location mCurrentlocation;
     private LocationSettingsRequest mLocationSettingsRequest;
@@ -104,6 +105,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     private String mLastUpdateTime;
     public  String longitude;
     public  String latitude;
+    public  String bearing;
     public String speed;
     private final static String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private final static String KEY_LOCATION = "location";
@@ -204,6 +206,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         getCarLocations();
         viewLatitude = (TextView) findViewById(R.id.latitude);
         viewLongitude = (TextView) findViewById(R.id.longitude);
+        viewBearing = (TextView) findViewById(R.id.bearing);
         viewLocation = (TextView) findViewById(R.id.location);
         viewSpeed = (TextView) findViewById(R.id.speed);
 
@@ -517,11 +520,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             latitude = String.format(Locale.ENGLISH,"%f", mCurrentlocation.getLatitude());
             longitude = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getLongitude());
             longitude = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getLongitude());
+            bearing = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getBearing());
+            Log.d(TAG, "bearing:" + bearing);
             if(mCurrentlocation.hasSpeed()){
             }
             speed = String.format(Locale.ENGLISH, "%f", mCurrentlocation.getSpeed());
             viewLatitude.setText(latitude);
             viewLongitude.setText(longitude);
+            viewBearing.setText(bearing);
 
 
 
@@ -590,6 +596,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         String contentCreate = contentCreateGPS.toString();
         publishMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic);
     } //Publishes messages to onem2m broker by MQTT and posts to Huawei set up server via HTTP
+
     private String calculateSpeed(Double latitude, Double longitude,String timeStamp){
         String speedGPS;
         StringBuilder sb = new StringBuilder();
@@ -600,7 +607,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             speedGPS="0.00";
         }
         else{
-            Double deltaSeconds = DifferenceUTCtoSeconds(timeStamp,lastTime);
+            Double deltaSeconds = DifferenceUTCtoSeconds(timeStamp,lastTime)/1000;
             Double deltaMeters = DifferenceInMeters(lastLat,lastLon,latitude,longitude);
             speedGPS = Double.toString(deltaMeters/deltaSeconds);
             //TODO add a realistic threshold to prevent huge speeds at delta t goes to zero
@@ -623,10 +630,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         return totalDeltaInMiliSeconds;
     }
     private double DifferenceInMeters(Double lastLat,Double lastLon,Double lat,Double lon){
-        Double deltaPhiLon = (lon - lastLon)*180/Math.PI;
-        Double deltaPhilat = (lat - lastLat)*180/Math.PI;
-        lastLat = lastLat*180/Math.PI;
-        lat = lat*180/Math.PI;
+        Double deltaPhiLon = (lon - lastLon)*Math.PI/180;
+        Double deltaPhilat = (lat - lastLat)*Math.PI/180;
+        lastLat = lastLat*Math.PI/180;
+        lat = lat*Math.PI/180;
 
         Double earth = 6371e3;
 
