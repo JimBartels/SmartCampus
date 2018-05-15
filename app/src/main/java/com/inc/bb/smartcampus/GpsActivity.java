@@ -597,7 +597,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         publishMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic);}
 
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy, String formattedDate, String speedGPS,String manualBearing) throws JSONException, MqttException, UnsupportedEncodingException {
-        String con = "{\"type\":5,\"id\":" + userId + ", \"time\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":}";
+        String con = "{\"type\":5,\"id\":" + userId + ", \"time\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":" + manualBearing+"}";
         okHTTPPost(huaweiUrl,con);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", formattedDate);
