@@ -167,6 +167,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     JSONObject contentCreateGPS, contentCreateUserStatus;
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -344,6 +345,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                 if (reconnect) {
                     Log.d(TAG, ("Reconnected to : " + serverURI));
                     //subscribeToTopic(CsmartcampusSubscriptionTopic);
+
                     subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
                 } else {
                     Log.d(TAG,"Connected to: " + serverURI);
@@ -399,10 +401,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         JSONObject messageCar = new JSONObject(new String(message.getPayload()));
         Log.d(TAG, "messageArrived: " + messageCar);
         if(topic.equals(CsmartCampusCarsSubscriptionTopic)){
-            JSONObject contentCar = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev").getJSONObject("rep").getJSONObject("m2m:cin").getJSONObject("con");
+            String contentCar = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev").getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
 
-            Log.d(TAG, "carlon" + contentCar.toString());
-            String contentCarString = contentCar.toString();
+            String contentCarString = contentCar;
             String[] separated = contentCarString.split(",");
 
             String longitudeCarString = separated[3];
@@ -419,18 +420,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
 
             String latitudeCar = (separated[4]);
             String[] carLatseparated = latitudeCar.split(":");
-            String carLatstring = carLatseparated[1];
-            Double carLat = Double.parseDouble(carLatstring);
-            Log.d(TAG, "carlat" + carLatstring);
+            Double carLat = Double.parseDouble(carLatseparated[1]);
+            GeoPoint carLoc = new GeoPoint(carLat,carLon);
+            locationIconUpdate(carLoc);
 
             if(mCurrentlocation!=null){
                 Double deltaMeters;
                 deltaMeters = DifferenceInMeters(carLat,carLon,mCurrentlocation.getLatitude(),mCurrentlocation.getLongitude());
             }
-            locationIconUpdate(51.475883,5.624171);
 
         }
-        locationIconUpdate(51.475883,5.624171);
     }
 
     public void publishMessage(@NonNull MqttAndroidClient client, @NonNull String msg, int qos, @NonNull String topic) throws MqttException, UnsupportedEncodingException {
@@ -455,6 +454,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
                    //TODO set custom disconnect options onem2m.setBufferOpts(getDisconnectedBufferOptions());
                     Log.d(TAG, "getMqttClient: Success");
                     OneM2MMqttJson VRU = new OneM2MMqttJson(oneM2MVRUAeRi, oneM2MVRUAePass, oneM2MVRUAeRn,userId);
+
                     subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
                     try {
                         JSONObject createContainerJSON = VRU.CreateContainer(userId);
@@ -756,20 +756,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     }
 
 
-    private void locationIconUpdate(Double carLat, Double carLon) {
-            if(carOverlay!=null){
-                map.getOverlays().remove(carOverlay);
-            }
-            Drawable vectorDrawable = ResourcesCompat.getDrawable(getApplicationContext().getResources(), R.drawable.locationicon, null);
-            BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.locationicon);
-            Bitmap b=bitmapdraw.getBitmap();
-            Bitmap locationIcon = Bitmap.createScaledBitmap(b, 40, 40, false);
-            carOverlay= new SimpleLocationOverlay(locationIcon);
-            GeoPoint loc = new GeoPoint(carLat,carLon);
-            carOverlay.setLocation(loc);
-            map.getOverlays().add(carOverlay);
-            map.invalidate();
+    private void locationIconUpdate(GeoPoint loc) {
+        if (carOverlay != null) {
+            map.getOverlays().remove(carOverlay);
         }
+        Bitmap locationIcon = Bitmap.createScaledBitmap(((BitmapDrawable) getResources().getDrawable(R.drawable.locationicon)).getBitmap(), 40, 40, false);
+        carOverlay = new SimpleLocationOverlay(locationIcon);
+        carOverlay.setLocation(loc);
+        map.getOverlays().add(carOverlay);
+        map.invalidate();
+    }
 
     private void onCampusTest(Double bound1la, Double bound2la, Double bound2lo, Double bound1lo, Double Longitude, Double Latitude) {
         if(Latitude>bound1la && Latitude<bound2la && Longitude<bound1lo && Longitude>bound2lo){
