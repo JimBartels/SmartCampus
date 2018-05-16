@@ -179,7 +179,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setContentView(R.layout.activity_gps);
         //Maps
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -193,7 +193,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         Context ctx = getApplicationContext();
         Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        setContentView(R.layout.activity_gps);
+
         Drawable locButtondrawableBefore = ContextCompat.getDrawable(getApplicationContext(), R.drawable.buttonshapebefore);
         Button locButton = (Button) findViewById(R.id.locButton);
         locButton.setBackground(locButtondrawableBefore);
@@ -221,7 +221,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
 
 
-        setupMap();
+        //setupMap();
         ///Git test
 
 
@@ -279,6 +279,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+
+        mMap.addCircle(new CircleOptions().center(new LatLng(51,5)).fillColor(1).radius(5));
 
 
     }
@@ -445,7 +447,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             String[] carLatseparated = latitudeCar.split(":");
             Double carLat = Double.parseDouble(carLatseparated[1]);
             GeoPoint carLoc = new GeoPoint(carLat,carLon);
-            locationIconUpdate(carLoc);
+            //locationIconUpdate(carLoc);
 
             if(mCurrentlocation!=null){
                 Double deltaMeters;
@@ -561,7 +563,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             requestPermission();
         }
     }
-    private void updateLocationUI() {
+ /*   private void updateLocationUI() {
         if(mCurrentlocation!=null){
             SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssSS");
             Long timestampUTC = mCurrentlocation.getTime();
@@ -619,7 +621,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             //Data to Firebase, not needed atm
             /*mDatabase.child("users").child(userId).child("longitude").setValue(longitude);
             mDatabase.child("users").child(userId).child("latitude").setValue(latitude);
-            mDatabase.child("users").child(userId).child("speed").setValue(speed);*/
+            mDatabase.child("users").child(userId).child("speed").setValue(speed);
 
             //Publishing gps to onem2m
             try {
@@ -645,7 +647,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             buildingIcon(loc);
 
         }
-    }
+    } */
 
     /*private void makePolyline(List<GeoPoint> geoPoints,Polyline polyline) {
         if(headingLine!=null){
@@ -779,7 +781,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
 
-    private void locationIconUpdate(GeoPoint loc) {
+  /*  private void locationIconUpdate(GeoPoint loc) {
         if (carOverlay != null) {
             map.getOverlays().remove(carOverlay);
         }
@@ -788,7 +790,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         carOverlay.setLocation(loc);
         map.getOverlays().add(carOverlay);
         map.invalidate();
-    }
+    }*/
 
     private void onCampusTest(Double bound1la, Double bound2la, Double bound2lo, Double bound1lo, Double Longitude, Double Latitude) {
         if(Latitude>bound1la && Latitude<bound2la && Longitude<bound1lo && Longitude>bound2lo){
@@ -864,7 +866,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         mFusedLocationClient.requestLocationUpdates(GpsActivity.this.mLocationRequest,
                                 mLocationCallback, Looper.myLooper());
                         Log.d(TAG, "onSuccess:");
-                        updateLocationUI();
+                      //  updateLocationUI();
 
                     }
                 })
@@ -966,7 +968,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 super.onLocationResult(locationResult);
                 mCurrentlocation= locationResult.getLastLocation();
                 mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
-                updateLocationUI();
+                //updateLocationUI();
 
             }
         };
