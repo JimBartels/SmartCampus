@@ -44,15 +44,19 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -63,7 +67,6 @@ import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osmdroid.api.IMapController;
@@ -79,7 +82,6 @@ import org.osmdroid.views.overlay.mylocation.SimpleLocationOverlay;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -89,9 +91,14 @@ import java.util.List;
 import java.util.Locale;
 
 
-public class GpsActivity extends AppCompatActivity implements MapViewConstants,okHttpPost.AsyncResponse{
+
+
+public class GpsActivity extends AppCompatActivity implements MapViewConstants, okHttpPost.AsyncResponse, OnMapReadyCallback {
 
     GoogleApiClient mGoogleApiClient;
+
+    //Maps
+    private GoogleMap mMap;
 
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
     final FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -170,6 +177,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Maps
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
         FirebaseUser user = mAuth.getCurrentUser();
         userCheck(user);
         getUsername(user);
@@ -257,6 +270,17 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             if (a == true) {
 
             }
+    }
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+        // Add a marker in Sydney and move the camera
+        LatLng sydney = new LatLng(-34, 151);
+        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+
+
     }
 
     private void createVRUJSONS() {
@@ -726,11 +750,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
         lastLat = lastLat*Math.PI/180;
         lat = lat*Math.PI/180;
 
-        Double a = Math.sin(deltaPhiLon)*Math.cos(lat);;
+        Double a = Math.sin(deltaPhiLon)*Math.cos(lat);
         Double b = Math.cos(lastLat) * Math.sin(lat) - Math.sin(lastLat) * Math.cos(lat) * Math.cos(deltaPhiLon);
         Double c = Math.atan2(a, b)*180/Math.PI;
         Double d;
-        if(c<0){
+        if(c < 0){
             d = c + 360;
 
         }
@@ -738,7 +762,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants,o
             d = c;
         }
         return d;
-    };
+    }
 
 
     private void personIconUpdate(GeoPoint loc) {
