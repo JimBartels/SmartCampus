@@ -1,6 +1,8 @@
 package com.inc.bb.smartcampus;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,6 +15,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
@@ -20,6 +23,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.content.res.ResourcesCompat;
@@ -47,7 +51,6 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -57,6 +60,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.hypertrack.hyperlog.HyperLog;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -81,16 +85,19 @@ import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.mylocation.SimpleLocationOverlay;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
-
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants, okHttpPost.AsyncResponse, OnMapReadyCallback {
@@ -173,16 +180,43 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     String huaweiUrl = "http://217.110.131.79:2020/mobile/dataapp";
     JSONObject contentCreateGPS, contentCreateUserStatus;
 
+    //Notification global variables
+    NotificationManager mNotificationManager;
+    NotificationCompat.Builder mBuilder;
+    int carNotificationConstant=0;
+    int carNotificationConstant2 =0;
+    Double carLon = 5.623863;
+    Double carLat = 51.475792;
+
+    //Logging
+    private StringBuilder log;
+    File logFile;
+    File file;
+
+
+
+    Uri AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND;
+    private final static String AUTONOMOUS_CAR_25M_NOTIFICATION = "There is an autonomous car driving with 25m of your location!";
+    private final static String AUTONOMOUS_CAR_50M_NOTIFICATION = "There is an autonomous car driving with 50m of your location!";
+    private final static String AUTONOMOUS_CAR_100M_NOTIFICATION = "There is an autonomous car driving with 100m of your location!";
+    private final static String AUTONOMOUS_CAR_NOTIFICATION_TITLE = "Autonomous car warning";
+    private final static int AUTONOMOUS_CAR_25M_NOTIFICATION_ID = 0;
+    private final static int AUTONOMOUS_CAR_50M_NOTIFICATION_ID = 1;
+    Boolean[] notificationArray = new Boolean[10];
+
+    
+
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND =  Uri.parse("android.resource://"+ getPackageName() + "/" + R.raw.translate_tts);
+        Arrays.fill(notificationArray,false);
+
         super.onCreate(savedInstanceState);
 
         //Maps
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
 
         FirebaseUser user = mAuth.getCurrentUser();
         userCheck(user);
@@ -202,6 +236,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // GPS functionality, maybe in thread, maybe not, APP keeps doing thread after App quits.
         //TODO fix GPS function continueing after onDestroy when in thread
 
+        //Hyperlog
+        HyperLog.initialize(this);
+        HyperLog.setLogLevel(Log.DEBUG);
+        file = HyperLog.getDeviceLogsInFile(this);
+        File path = getApplicationContext().getFilesDir();
+        logFile = new File(path,"log.txt");
+
+
         oneM2MGPSThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -217,12 +259,18 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         });
         oneM2MGPSThread.start();
 
-
-
+        //Notification builder
+        buildCarNotification(AUTONOMOUS_CAR_NOTIFICATION_TITLE);
 
         setupMap();
         ///Git test
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                createLogFile();
 
+            }
+        }).run();
 
         createVRUJSONS();
         drawable1 = ContextCompat.getDrawable(getApplicationContext(), R.drawable.snackbarshape);
@@ -248,20 +296,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .build();
         mGoogleApiClient.connect();
 
-        //UserActivityRecognition
-
-
-
         df = new SimpleDateFormat("yyyyMMddHHmmssSS");
         //GPS functionality
 
-
-
-
-
         //OneM2M MQTT client
-
-
         Boolean a = checkPermissions();
             Boolean timerOn = false;
 
@@ -272,6 +310,135 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             }
     }
+
+    private void createLogFile() {
+
+        File logFolder = new File("/storage/emulated/0", "logcat");
+        Toast.makeText(this, logFolder.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+        if (!logFolder.exists()) {
+            logFolder.mkdir();
+        }
+
+        String filename = "logs.txt";
+        logFile = new File(this.getFilesDir(), filename);
+        try {
+            logFile.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+     /*   try {
+            Process process = Runtime.getRuntime().exec("logcat -d");
+            BufferedReader bufferedReader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()));
+
+            log=new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                log.append(line);
+            }
+        } catch (IOException e) {
+        }
+        //convert log to string
+        final String logString = new String(log.toString());
+        //create text file in SDCard
+        File dataStorage = Environment.getDataDirectory();
+        File dir = new File (dataStorage.getAbsolutePath() + "/myLogcat");
+        dir.mkdirs();
+        File file = new File(dir, "logcat.txt");
+
+        try {
+            //to write logcat in text file
+            FileOutputStream fOut = new FileOutputStream(file);
+            OutputStreamWriter osw = new OutputStreamWriter(fOut);
+
+            // Write the string to the file
+            osw.write(logString);
+            osw.flush();
+            osw.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }*/
+
+    private void buildCarNotification(String title) {
+        long[] vibrationPattern = {Long.valueOf(0),Long.valueOf(500)};
+        mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                NotificationChannel channel = new NotificationChannel("default",
+                        "YOUR_CHANNEL_NAME",
+                        NotificationManager.IMPORTANCE_DEFAULT);
+                channel.setDescription("YOUR_NOTIFICATION_CHANNEL_DISCRIPTION");
+                mNotificationManager.createNotificationChannel(channel);
+            }
+            mBuilder = new NotificationCompat.Builder(getApplicationContext(), "default")
+                    .setSmallIcon(R.mipmap.ic_launcher) // notification icon
+                    .setContentTitle(title) // title for notification
+                    .setVibrate(vibrationPattern)
+                    .setOngoing(true);// notification cannot be removed user
+            Intent intent = new Intent(getApplicationContext(), GpsActivity.class);
+            PendingIntent pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            mBuilder.setContentIntent(pi);
+
+    }
+
+    private void handleCarNotification(Double deltaMeters) {
+        if (deltaMeters <= 40 && !notificationArray[AUTONOMOUS_CAR_25M_NOTIFICATION_ID]) {
+            cancelNotification(AUTONOMOUS_CAR_50M_NOTIFICATION_ID);
+            if(carNotificationConstant==0){
+            mBuilder.setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setSound(AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND)
+                    .setStyle(new NotificationCompat.BigTextStyle().bigText(AUTONOMOUS_CAR_25M_NOTIFICATION));
+            mNotificationManager.notify(AUTONOMOUS_CAR_25M_NOTIFICATION_ID, mBuilder.build());
+            notificationArray[AUTONOMOUS_CAR_25M_NOTIFICATION_ID] = true;
+            carNotificationConstant=1;}
+            else if(carNotificationConstant==1){
+                mBuilder.setPriority(NotificationCompat.PRIORITY_MAX)
+                        .setVibrate(null)
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(AUTONOMOUS_CAR_25M_NOTIFICATION));
+                mNotificationManager.notify(AUTONOMOUS_CAR_25M_NOTIFICATION_ID, mBuilder.build());
+                notificationArray[AUTONOMOUS_CAR_25M_NOTIFICATION_ID] = true;
+            }
+        }
+        if(deltaMeters >= 40 && deltaMeters <= 100 && !notificationArray[1]) {
+            cancelNotification(AUTONOMOUS_CAR_25M_NOTIFICATION_ID);
+            if(carNotificationConstant2==0){
+            mBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+            mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(AUTONOMOUS_CAR_50M_NOTIFICATION));
+            mBuilder.setSound(null);
+            mNotificationManager.notify(AUTONOMOUS_CAR_50M_NOTIFICATION_ID, mBuilder.build());
+            notificationArray[AUTONOMOUS_CAR_50M_NOTIFICATION_ID]=true;}
+            else if(carNotificationConstant2==1){
+                mBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(AUTONOMOUS_CAR_50M_NOTIFICATION));
+                mBuilder.setSound(null);
+                mNotificationManager.notify(AUTONOMOUS_CAR_50M_NOTIFICATION_ID, mBuilder.build());
+                notificationArray[AUTONOMOUS_CAR_50M_NOTIFICATION_ID]=true;}
+        }
+        if(deltaMeters>100) {
+            cancelNotification(AUTONOMOUS_CAR_25M_NOTIFICATION_ID);
+            cancelNotification(AUTONOMOUS_CAR_50M_NOTIFICATION_ID);
+        }
+        if(deltaMeters>48){
+            carNotificationConstant=0;
+        }
+        if(deltaMeters>100){
+            carNotificationConstant2=0;
+        }
+    }
+
+    public void cancelNotification(int id) {
+        if(notificationArray[id]){
+            mNotificationManager.cancel(id);
+            notificationArray[id]=false;}
+    }
+
+
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -423,6 +590,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     private void vehicleIconandParse(String topic, MqttMessage message) throws JSONException {
         JSONObject messageCar = new JSONObject(new String(message.getPayload()));
+        HyperLog.d(TAG,"Message arrived:" + messageCar);
+        writeToLogFile(messageCar.toString());
         Log.d(TAG, "messageArrived: " + messageCar);
         if(topic.equals(CsmartCampusCarsSubscriptionTopic)){
             String contentCar = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev").getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
@@ -432,7 +601,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             String longitudeCarString = separated[3];
             String[] carLonseparated = longitudeCarString.split(":");
-            Double carLon = Double.parseDouble(carLonseparated[1]);
+            carLon = Double.parseDouble(carLonseparated[1]);
 
             String speedCarString = separated[5];
             String[] speedCarSep = speedCarString.split(":");
@@ -444,17 +613,20 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             String latitudeCar = (separated[4]);
             String[] carLatseparated = latitudeCar.split(":");
-            Double carLat = Double.parseDouble(carLatseparated[1]);
+            carLat = Double.parseDouble(carLatseparated[1]);
             GeoPoint carLoc = new GeoPoint(carLat,carLon);
             locationIconUpdate(carLoc);
-
             if(mCurrentlocation!=null){
                 Double deltaMeters;
                 deltaMeters = DifferenceInMeters(carLat,carLon,mCurrentlocation.getLatitude(),mCurrentlocation.getLongitude());
+                Log.d(TAG, "Deltameter:" + deltaMeters);
+                handleCarNotification(deltaMeters);
+
             }
 
         }
     }
+
 
     public void publishMessage(@NonNull MqttAndroidClient client, @NonNull String msg, int qos, @NonNull String topic) throws MqttException, UnsupportedEncodingException {
         byte[] encodedPayload = new byte[0];
@@ -463,9 +635,31 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         message.setId(5866);
         message.setRetained(true);
         message.setQos(qos);
+        HyperLog.d(TAG, "Sent message: " + new String(message.getPayload()));
+        writeToLogFile(new String(message.getPayload()));
         Log.d(TAG, "Sent message: " + new String(message.getPayload()));
         client.publish(topic, message);
     } // Publishes message to VRU ae
+
+    private void writeToLogFile(String s) {
+        FileWriter writer = new FileWriter(logFile,true);
+        BufferedWriter bufferedWriter = new BufferedWriter(writer, 4 * (int) MEGA);
+        Utils.write(data, bufferedWriter);
+
+
+
+
+
+       /* try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(getApplicationContext().openFileOutput(file.getName(),Context.MODE_PRIVATE);
+            outputStreamWriter.write(s);
+            outputStreamWriter.close();
+        }
+        catch (IOException e) {
+            Toast.makeText(this, "File write failed: " + e.toString(), Toast.LENGTH_SHORT).show();
+            Log.e("Exception", "File write failed: " + e.toString());
+        }*/
+    }
 
     public MqttAndroidClient getMqttClient(@NonNull Context context,@NonNull String brokerUrl, @NonNull String clientId) {
         final MqttAndroidClient mqttClient = new MqttAndroidClient(context, brokerUrl, clientId);
@@ -566,6 +760,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(mCurrentlocation!=null){
             SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssSS");
             Long timestampUTC = mCurrentlocation.getTime();
+
+            Double deltaMeters;
+
+            deltaMeters = DifferenceInMeters(carLat,carLon,mCurrentlocation.getLatitude(),mCurrentlocation.getLongitude());
+            Log.d(TAG, "Deltameter:" + deltaMeters);
+            handleCarNotification(deltaMeters);
 
             Float Accuracy = mCurrentlocation.getAccuracy();
 
@@ -805,8 +1005,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         FirebaseAuth.getInstance().signOut();
         stopTracking();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+        mNotificationManager.cancelAll();
+
+
         super.onDestroy();
     }
+
+
 
     private void createLocationRequest(){
         mLocationRequest = new LocationRequest();
@@ -1058,9 +1263,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         stopService(intent);
     } // Stops tracking of UserActivity (Called in OnDestroy)
 
-    //TODO Button for my location perhaps
-    //TODO Better image for current location
     //TODO Imageoverlay clickable for Tu campus
-
-    //TODO !Optimize the functions so that the JSONobjects are not newly made every function call, OneM2Mmessaging is becoming slow.
+    //TODO Car data receive timestamp and warning display timestamp
+    //TODO Extrapolating the vehicle speed heading if time is too long/delay
+    //TODO randomize the ID (crossguid)  java.util.UUID id = UUID.randomUUID();
 }
