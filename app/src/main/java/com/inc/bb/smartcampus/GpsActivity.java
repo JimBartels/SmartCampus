@@ -610,8 +610,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             String strTemp = string + ',';
             stringBuilder.append(strTemp);
         }
-        String entryFileTabs = "GPSTimestamp, Latency, packetLosses" + "\n";
-        String entryFile = entryFileTabs + stringBuilder.toString() + "\n";
+        String entryFile = stringBuilder.toString() + "\n";
         try {
             FileOutputStream out = openFileOutput(FILENAME,Context.MODE_APPEND);
             out.write(entryFile.getBytes());
