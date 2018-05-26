@@ -696,6 +696,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onStart();
     }
 
+    @Override
+    protected void onStop() {
+        uploadFileFirebase();
+        super.onStop();
+    }
+
     private void setupMap() {
         map = (MapView) findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
