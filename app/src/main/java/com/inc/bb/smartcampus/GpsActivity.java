@@ -87,6 +87,8 @@ import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -578,7 +580,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     }, new IMqttMessageListener() {
                         @Override
                         public void messageArrived(String topic, MqttMessage message) throws Exception {
-                            vehicleIconandParse(topic,message);
+                            Long timeUnix = System.currentTimeMillis();
+                            vehicleIconandParse(topic,message,timeUnix);
 
                         }
                     });
@@ -588,28 +591,24 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
     }//Subscribes to response topic
 
-    private void vehicleIconandParse(String topic, MqttMessage message) throws JSONException {
+    private void vehicleIconandParse(String topic, MqttMessage message, Long timeUnix) throws JSONException {
         JSONObject messageCar = new JSONObject(new String(message.getPayload()));
         HyperLog.d(TAG,"Message arrived:" + messageCar);
         writeToLogFile(messageCar.toString());
         Log.d(TAG, "messageArrived: " + messageCar);
         if(topic.equals(CsmartCampusCarsSubscriptionTopic)){
-            String contentCar = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev").getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
+            String contentCarString = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev").getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
 
-            String contentCarString = contentCar;
             String[] separated = contentCarString.split(",");
 
             String longitudeCarString = separated[3];
             String[] carLonseparated = longitudeCarString.split(":");
             carLon = Double.parseDouble(carLonseparated[1]);
 
-            String speedCarString = separated[5];
-            String[] speedCarSep = speedCarString.split(":");
-            Double speedCar = Double.parseDouble(speedCarSep[1]);
-
-
-
-            String headingCar = separated[6];
+            //String speedCarString = separated[5];
+            //String[] speedCarSep = speedCarString.split(":");
+            //Double speedCar = Double.parseDouble(speedCarSep[1]);
+            // String headingCar = separated[6];
 
             String latitudeCar = (separated[4]);
             String[] carLatseparated = latitudeCar.split(":");
@@ -621,12 +620,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 deltaMeters = DifferenceInMeters(carLat,carLon,mCurrentlocation.getLatitude(),mCurrentlocation.getLongitude());
                 Log.d(TAG, "Deltameter:" + deltaMeters);
                 handleCarNotification(deltaMeters);
-
             }
-
+        }
+        else if(topic.equals(CsmartcampusSubscriptionTopic)){
+            String contentTimeString = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:cin").getJSONObject(0).getString("rn");
+            Long timeGps = Long.getLong(contentTimeString);
+            String latencyFromGPSTillReceive = Long.toString((timeUnix - timeGps));
+            writeToLogFile(latencyFromGPSTillReceive);
         }
     }
-
 
     public void publishMessage(@NonNull MqttAndroidClient client, @NonNull String msg, int qos, @NonNull String topic) throws MqttException, UnsupportedEncodingException {
         byte[] encodedPayload = new byte[0];
@@ -636,15 +638,24 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         message.setRetained(true);
         message.setQos(qos);
         HyperLog.d(TAG, "Sent message: " + new String(message.getPayload()));
-        writeToLogFile(new String(message.getPayload()));
         Log.d(TAG, "Sent message: " + new String(message.getPayload()));
         client.publish(topic, message);
     } // Publishes message to VRU ae
 
     private void writeToLogFile(String s) {
-        FileWriter writer = new FileWriter(logFile,true);
-        BufferedWriter bufferedWriter = new BufferedWriter(writer, 4 * (int) MEGA);
-        Utils.write(data, bufferedWriter);
+        String FILENAME = "OneM2MReceiveTimeMinusGPSTime.csv";
+        try {
+            FileOutputStream out = openFileOutput(FILENAME,Context.MODE_APPEND);
+            out.write(s.getBytes());
+            out.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            Log.d(TAG,"writeToLogFile" + e.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "writeToLogFile" + e.toString());
+        }
+    }
 
 
 
