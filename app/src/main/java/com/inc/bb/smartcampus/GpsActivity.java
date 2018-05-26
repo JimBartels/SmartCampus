@@ -51,13 +51,20 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.GroundOverlay;
+import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
@@ -155,7 +162,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     Long lastTime;
     Integer i=0;
     SimpleLocationOverlay personOverlay;
-    SimpleLocationOverlay carOverlay;
     SimpleLocationOverlay BuildingMarker;
     Polyline headingLine;
     private PendingIntent mActivityRecognitionPendingIntent;
@@ -198,22 +204,23 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     String UTCPacketLossCheck;
     int packetLosses;
 
-
-
-
+    //Car notifications
     Uri AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND;
-    private final static String AUTONOMOUS_CAR_25M_NOTIFICATION = "There is an autonomous car driving with 25m of your location!";
-    private final static String AUTONOMOUS_CAR_50M_NOTIFICATION = "There is an autonomous car driving with 50m of your location!";
-    private final static String AUTONOMOUS_CAR_100M_NOTIFICATION = "There is an autonomous car driving with 100m of your location!";
+    private final static String AUTONOMOUS_CAR_40M_NOTIFICATION = "There is an autonomous car driving within 40 meters of your location!";
+    private final static String AUTONOMOUS_CAR_100M_NOTIFICATION = "There is an autonomous car driving within 100 meters of your location!";
     private final static String AUTONOMOUS_CAR_NOTIFICATION_TITLE = "Autonomous car warning";
-    private final static int AUTONOMOUS_CAR_25M_NOTIFICATION_ID = 0;
-    private final static int AUTONOMOUS_CAR_50M_NOTIFICATION_ID = 1;
+    private final static int AUTONOMOUS_CAR_40M_NOTIFICATION_ID = 0;
+    private final static int AUTONOMOUS_CAR_100M_NOTIFICATION_ID = 1;
     Boolean[] notificationArray = new Boolean[10];
+
+    //Car marker
+    GroundOverlay carOverlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND =  Uri.parse("android.resource://"+ getPackageName() + "/" + R.raw.translate_tts);
         Arrays.fill(notificationArray,false);
+
 
         super.onCreate(savedInstanceState);
 
@@ -229,9 +236,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
         setContentView(R.layout.activity_gps);
         Drawable locButtondrawableBefore = ContextCompat.getDrawable(getApplicationContext(), R.drawable.buttonshapebefore);
-        Button locButton = (Button) findViewById(R.id.locButton);
-        locButton.setBackground(locButtondrawableBefore);
+        //Button locButton = (Button) findViewById(R.id.locButton);
+        // locButton.setBackground(locButtondrawableBefore);
         Log.d(TAG, "onCreate: ");
+        //Google maps
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
 
     // GPS functionality, maybe in thread, maybe not, APP keeps doing thread after App quits.
@@ -263,7 +274,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         //Notification builder
         buildCarNotification(AUTONOMOUS_CAR_NOTIFICATION_TITLE);
 
-        setupMap();
+        //setupMap();
 
         createVRUJSONS();
         drawable1 = ContextCompat.getDrawable(getApplicationContext(), R.drawable.snackbarshape);
@@ -273,11 +284,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         viewLatitude = (TextView) findViewById(R.id.latitude);
         viewLongitude = (TextView) findViewById(R.id.longitude);
         viewBearing = (TextView) findViewById(R.id.bearing);
-        viewBearingAccuracy = (TextView) findViewById(R.id.bearingAccuracy);
+        //viewBearingAccuracy = (TextView) findViewById(R.id.bearingAccuracy);
         viewLocation = (TextView) findViewById(R.id.location);
         viewSpeed = (TextView) findViewById(R.id.speed);
-        viewmanualBearing = (TextView) findViewById(R.id.manualbearing);
-        viewGoogleSpeed = (TextView) findViewById(R.id.Googlespeed);
+        //viewmanualBearing = (TextView) findViewById(R.id.manualbearing);
+        //viewGoogleSpeed = (TextView) findViewById(R.id.Googlespeed);
 
 
         updateValuesFromBundle(savedInstanceState);
@@ -304,11 +315,38 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
     }
 
+    private void setupCarOverlay() {
+        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.caricon);
+        Bitmap b=bitmapdraw.getBitmap();
+        carOverlay = mMap.addGroundOverlay(new GroundOverlayOptions()
+                .position(new LatLng(50.967455, 5.943757),4)
+                .image(BitmapDescriptorFactory.fromBitmap(b))
+        .bearing(315));
+        handleCarNotification(0.00000);
+
+
+      /*  Bitmap carIcon = Bitmap.createScaledBitmap(b, 60, 120, false);
+        carMarker = mMap.addMarker(new MarkerOptions().alpha(0.7f)
+                .position(new LatLng(51.448531, 5.489687))
+        .icon(BitmapDescriptorFactory.fromBitmap(carIcon))
+        .title("Autonomous toyota prius"));*/
+    }
+
     @Override
     protected void onPause() {
         uploadFileFirebase();
         super.onPause();
     }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.setMyLocationEnabled(true);
+
+        // Add a marker in Sydney and move the camera
+        setupCarOverlay();
+    }
+
 
     private void buildCarNotification(String title) {
         long[] vibrationPattern = {Long.valueOf(0),Long.valueOf(500)};
@@ -333,41 +371,44 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
     private void handleCarNotification(Double deltaMeters) {
-        if (deltaMeters <= 40 && !notificationArray[AUTONOMOUS_CAR_25M_NOTIFICATION_ID]) {
-            cancelNotification(AUTONOMOUS_CAR_50M_NOTIFICATION_ID);
+        deltaMeters = Double.valueOf(30);
+        if (deltaMeters <= 40 && !notificationArray[AUTONOMOUS_CAR_40M_NOTIFICATION_ID]) {
+            cancelNotification(AUTONOMOUS_CAR_100M_NOTIFICATION_ID);
             if(carNotificationConstant==0){
-            mBuilder.setPriority(NotificationCompat.PRIORITY_MAX)
+            mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
                     .setSound(AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND)
-                    .setStyle(new NotificationCompat.BigTextStyle().bigText(AUTONOMOUS_CAR_25M_NOTIFICATION));
-            mNotificationManager.notify(AUTONOMOUS_CAR_25M_NOTIFICATION_ID, mBuilder.build());
-            notificationArray[AUTONOMOUS_CAR_25M_NOTIFICATION_ID] = true;
+                    .setContentText(AUTONOMOUS_CAR_40M_NOTIFICATION)
+                    .setStyle(new NotificationCompat.BigTextStyle())
+                    .setAutoCancel(false);
+            mNotificationManager.notify(AUTONOMOUS_CAR_40M_NOTIFICATION_ID, mBuilder.build());
+            notificationArray[AUTONOMOUS_CAR_40M_NOTIFICATION_ID] = true;
             carNotificationConstant=1;}
             else if(carNotificationConstant==1){
                 mBuilder.setPriority(NotificationCompat.PRIORITY_MAX)
                         .setVibrate(null)
-                        .setStyle(new NotificationCompat.BigTextStyle().bigText(AUTONOMOUS_CAR_25M_NOTIFICATION));
-                mNotificationManager.notify(AUTONOMOUS_CAR_25M_NOTIFICATION_ID, mBuilder.build());
-                notificationArray[AUTONOMOUS_CAR_25M_NOTIFICATION_ID] = true;
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(AUTONOMOUS_CAR_40M_NOTIFICATION));
+                mNotificationManager.notify(AUTONOMOUS_CAR_40M_NOTIFICATION_ID, mBuilder.build());
+                notificationArray[AUTONOMOUS_CAR_40M_NOTIFICATION_ID] = true;
             }
         }
         if(deltaMeters >= 40 && deltaMeters <= 100 && !notificationArray[1]) {
-            cancelNotification(AUTONOMOUS_CAR_25M_NOTIFICATION_ID);
+            cancelNotification(AUTONOMOUS_CAR_40M_NOTIFICATION_ID);
             if(carNotificationConstant2==0){
             mBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
-            mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(AUTONOMOUS_CAR_50M_NOTIFICATION));
+            mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(AUTONOMOUS_CAR_100M_NOTIFICATION));
             mBuilder.setSound(null);
-            mNotificationManager.notify(AUTONOMOUS_CAR_50M_NOTIFICATION_ID, mBuilder.build());
-            notificationArray[AUTONOMOUS_CAR_50M_NOTIFICATION_ID]=true;}
+            mNotificationManager.notify(AUTONOMOUS_CAR_100M_NOTIFICATION_ID, mBuilder.build());
+            notificationArray[AUTONOMOUS_CAR_100M_NOTIFICATION_ID]=true;}
             else if(carNotificationConstant2==1){
                 mBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
-                mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(AUTONOMOUS_CAR_50M_NOTIFICATION));
+                mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(AUTONOMOUS_CAR_100M_NOTIFICATION));
                 mBuilder.setSound(null);
-                mNotificationManager.notify(AUTONOMOUS_CAR_50M_NOTIFICATION_ID, mBuilder.build());
-                notificationArray[AUTONOMOUS_CAR_50M_NOTIFICATION_ID]=true;}
+                mNotificationManager.notify(AUTONOMOUS_CAR_100M_NOTIFICATION_ID, mBuilder.build());
+                notificationArray[AUTONOMOUS_CAR_100M_NOTIFICATION_ID]=true;}
         }
         if(deltaMeters>100) {
-            cancelNotification(AUTONOMOUS_CAR_25M_NOTIFICATION_ID);
-            cancelNotification(AUTONOMOUS_CAR_50M_NOTIFICATION_ID);
+            cancelNotification(AUTONOMOUS_CAR_40M_NOTIFICATION_ID);
+            cancelNotification(AUTONOMOUS_CAR_100M_NOTIFICATION_ID);
         }
         if(deltaMeters>48){
             carNotificationConstant=0;
@@ -381,20 +422,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(notificationArray[id]){
             mNotificationManager.cancel(id);
             notificationArray[id]=false;}
-    }
-
-
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-
-
     }
 
     private void createVRUJSONS() {
@@ -549,6 +576,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             String[] carLonseparated = longitudeCarString.split(":");
             carLon = Double.parseDouble(carLonseparated[1]);
 
+            String bearing = separated[5];
+            String[] bearingSep = bearing.split(":");
+            Float carBearing = Float.parseFloat(bearingSep[1]);
+
             //String speedCarString = separated[5];
             //String[] speedCarSep = speedCarString.split(":");
             //Double speedCar = Double.parseDouble(speedCarSep[1]);
@@ -557,8 +588,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             String latitudeCar = (separated[4]);
             String[] carLatseparated = latitudeCar.split(":");
             carLat = Double.parseDouble(carLatseparated[1]);
-            GeoPoint carLoc = new GeoPoint(carLat,carLon);
-            locationIconUpdate(carLoc);
+            LatLng carLoc = new LatLng(carLat,carLon);
+            locationIconUpdate(carLoc,carBearing);
             if(mCurrentlocation!=null){
                 Double deltaMeters;
                 deltaMeters = DifferenceInMeters(carLat,carLon,mCurrentlocation.getLatitude(),mCurrentlocation.getLongitude());
@@ -761,6 +792,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             Double deltaMeters;
 
+            //Google maps camera
+
+            if(k==0){
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(Latitude,Longitude)));
+            mMap.moveCamera(CameraUpdateFactory.zoomTo(19));
+            k=1;}
+
+
             deltaMeters = DifferenceInMeters(carLat,carLon,mCurrentlocation.getLatitude(),mCurrentlocation.getLongitude());
             handleCarNotification(deltaMeters);
 
@@ -780,7 +819,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             viewLatitude.setText(latitude);
             viewLongitude.setText(longitude);
             viewBearing.setText(bearing);
-            viewBearingAccuracy.setText(bearingAccuracy);
+            //viewBearingAccuracy.setText(bearingAccuracy);
 
             /*Integer timeDifference = 0;
             timeDifference = mGetTimeDifference();
@@ -797,7 +836,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             */
 
             viewSpeed.setText(speedGPS);
-            viewmanualBearing.setText(bearing);
+            //viewmanualBearing.setText(bearing);
 
 
             //Data to Firebase, not needed atm
@@ -817,9 +856,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             Double bound2lo = 5.481070;
 
             onCampusTest(bound1la,bound2la,bound2lo,bound1lo, Longitude, Latitude);*/
-            personIconUpdate(loc);
-            myLocationButton(loc);
-            buildingIcon(loc);
+            //personIconUpdate(loc);
+           // myLocationButton(loc);
+           // buildingIcon(loc);
 
 
         }
@@ -944,6 +983,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(personOverlay!=null){
             map.getOverlays().remove(personOverlay);
         }
+
         Drawable vectorDrawable = ResourcesCompat.getDrawable(getApplicationContext().getResources(), R.drawable.locationicon, null);
         BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.locationicon);
         Bitmap b=bitmapdraw.getBitmap();
@@ -955,15 +995,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
 
-    private void locationIconUpdate(GeoPoint loc) {
+    private void locationIconUpdate(LatLng loc, Float carBearing) {
         if (carOverlay != null) {
-            map.getOverlays().remove(carOverlay);
+            carOverlay.setPosition(loc);
+            carOverlay.setBearing(carBearing);
         }
-        Bitmap locationIcon = Bitmap.createScaledBitmap(((BitmapDrawable) getResources().getDrawable(R.drawable.locationicon)).getBitmap(), 40, 40, false);
-        carOverlay = new SimpleLocationOverlay(locationIcon);
-        carOverlay.setLocation(loc);
-        map.getOverlays().add(carOverlay);
-        map.invalidate();
     }
 
     private void onCampusTest(Double bound1la, Double bound2la, Double bound2lo, Double bound1lo, Double Longitude, Double Latitude) {
@@ -1020,7 +1056,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void myLocationButton(GeoPoint loc) {
         final GeoPoint locf = loc;
         Drawable locButtondrawableAfter = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshape);
-        Button locButton = (Button) findViewById(R.id.locButton);
+        /*Button locButton = (Button) findViewById(R.id.locButton);
         if(locButton.getBackground()!=locButtondrawableAfter){
         locButton.setBackground(locButtondrawableAfter);}
         if(locButton.getBackground()==locButtondrawableAfter){
@@ -1031,7 +1067,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
                 }
             });
-        }
+        }*/
     }
 
     private void buildLocationSettingsRequest(){
