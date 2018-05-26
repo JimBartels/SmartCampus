@@ -478,6 +478,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         mMqttAndroidClient.setCallback(new MqttCallbackExtended() {
             @Override
             public void connectComplete(boolean reconnect, String serverURI) {
+                subscribeToTopic(CsmartcampusSubscriptionTopic);
+                subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
 
                 if (reconnect) {
                     Log.d(TAG, ("Reconnected to : " + serverURI));
@@ -567,7 +569,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         else if(topic.equals(CsmartcampusSubscriptionTopic)){
             if(messageCar.getJSONObject("m2m:rsp").getString("rqi").equals(userId)){
                 String contentTimeString = messageCar.getJSONObject("m2m:rsp").getJSONObject("pc").getJSONArray("m2m:cin").getJSONObject(0).getString("rn");
-                if(!contentTimeString.equals(lastTimeUTC)){packetLosses++;}
+                //if(!contentTimeString.equals(lastTimeUTC)){packetLosses++;}
                 Long timeGps = Long.parseLong(contentTimeString);
                 Long deltaTime = timeUnix - timeGps;
                 String latencyFromGPSTillReceive = Long.toString(deltaTime);
@@ -587,7 +589,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         message.setQos(qos);
         HyperLog.d(TAG, "Sent message: " + new String(message.getPayload()));
         Log.d(TAG, "Sent message: " + new String(message.getPayload()));
-        client.publish(topic, message);
+        client.publish(topic, message).setActionCallback(new IMqttActionListener() {
+            @Override
+            public void onSuccess(IMqttToken asyncActionToken) {
+            }
+
+            @Override
+            public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                packetLosses++;
+            }
+        });
     } // Publishes message to VRU ae
 
     private void writeToLogFile(String[] entry) {
