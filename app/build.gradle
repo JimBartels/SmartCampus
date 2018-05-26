@@ -44,6 +44,8 @@ dependencies {
     implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
     implementation 'com.google.android.gms:play-services-maps:11.8.0'
     implementation "com.android.support:support-compat:27.1.1"
+    implementation 'com.google.firebase:firebase-storage:11.8.0'
+
 
 }
 
