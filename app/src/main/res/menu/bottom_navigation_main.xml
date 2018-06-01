@@ -1,0 +1,19 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_campus"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_mapmode"
+        android:title="Campus" />
+    <item
+        android:id="@+id/action_settings"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:title="Settings"/>
+    <item
+        android:title="Campus Car"
+        android:id="@+id/action_car"
+        android:enabled="true"
+        android:icon="@drawable/navigationbarcaricon" />
+
+</menu>

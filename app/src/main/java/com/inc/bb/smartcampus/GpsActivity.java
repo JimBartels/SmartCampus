@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
@@ -29,8 +30,8 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,15 +53,10 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.Circle;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.GroundOverlay;
 import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -224,8 +220,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         super.onCreate(savedInstanceState);
 
-        //Maps
-
+        //Authentication check
         FirebaseUser user = mAuth.getCurrentUser();
         userCheck(user);
         getUsername(user);
@@ -239,6 +234,30 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         //Button locButton = (Button) findViewById(R.id.locButton);
         // locButton.setBackground(locButtondrawableBefore);
         Log.d(TAG, "onCreate: ");
+
+        //BottomNavigationBar
+        BottomNavigationView bottomNavigationView = (BottomNavigationView)
+                findViewById(R.id.bottom_navigation);
+
+        bottomNavigationView.setOnNavigationItemSelectedListener(
+                new BottomNavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.action_map:
+
+                                break;
+                            case R.id.action_car:
+
+                                break;
+                            case R.id.action_settings:
+
+                                break;
+                        }
+                        return false;
+                    }
+                });
+
         //Google maps
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -314,6 +333,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             }
     }
+
+
 
     private void setupCarOverlay() {
         BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.caricon);
@@ -881,7 +902,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         String contentCreateStatus = contentCreateUserStatus.toString();
         publishMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic);}
 
-    private void publishGpsData(Double latitude, Double longitude, Float Accuracy, Long formattedDate, String speedGPS, String manualBearing,) throws JSONException, MqttException, UnsupportedEncodingException {
+    private void publishGpsData(Double latitude, Double longitude, Float Accuracy, Long formattedDate, String speedGPS, String manualBearing) throws JSONException, MqttException, UnsupportedEncodingException {
         String formattedDateString = "UTC"+ Long.toString(formattedDate) ;
         UTCPacketLossCheck = formattedDate.toString();
         String con = "{\"type\":5,\"id\":" + userId + ", \"timestampUtc\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":"+manualBearing+ ", \"accuracy\":"+Accuracy+ "}";
