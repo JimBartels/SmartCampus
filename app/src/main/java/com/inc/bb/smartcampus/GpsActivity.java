@@ -244,9 +244,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     @Override
                     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                         switch (item.getItemId()) {
-                            case R.id.action_map:
+                           case R.id.action_campus:
 
-                                break;
+                               break;
                             case R.id.action_car:
 
                                 break;
