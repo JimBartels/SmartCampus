@@ -211,6 +211,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     //Car marker
     GroundOverlay carOverlay;
+    Bitmap b;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -236,7 +237,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         Log.d(TAG, "onCreate: ");
 
         //BottomNavigationBar
-        BottomNavigationView bottomNavigationView = (BottomNavigationView)
+        final BottomNavigationView bottomNavigationView =
                 findViewById(R.id.bottom_navigation);
 
         bottomNavigationView.setOnNavigationItemSelectedListener(
@@ -244,17 +245,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     @Override
                     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                         switch (item.getItemId()) {
-                            case R.id.action_map:
-
+                            case R.id.action_campus:
+                                //TODO fragment builder to switch in between fragment views, from maps to settings to car sharing framgent
                                 break;
                             case R.id.action_car:
-
                                 break;
                             case R.id.action_settings:
-
                                 break;
                         }
-                        return false;
+                        return true;
                     }
                 });
 
@@ -262,6 +261,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.caricon);
+        b=bitmapdraw.getBitmap();
 
 
     // GPS functionality, maybe in thread, maybe not, APP keeps doing thread after App quits.
@@ -334,23 +335,23 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
     }
 
-
-
     private void setupCarOverlay() {
-        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.caricon);
-        Bitmap b=bitmapdraw.getBitmap();
         carOverlay = mMap.addGroundOverlay(new GroundOverlayOptions()
                 .position(new LatLng(50.967455, 5.943757),4)
                 .image(BitmapDescriptorFactory.fromBitmap(b))
         .bearing(315));
-        handleCarNotification(0.00000);
+    }
 
-
-      /*  Bitmap carIcon = Bitmap.createScaledBitmap(b, 60, 120, false);
-        carMarker = mMap.addMarker(new MarkerOptions().alpha(0.7f)
-                .position(new LatLng(51.448531, 5.489687))
-        .icon(BitmapDescriptorFactory.fromBitmap(carIcon))
-        .title("Autonomous toyota prius"));*/
+    private void locationIconUpdate(LatLng loc, Float carBearing) {
+        if (carOverlay != null) {
+            carOverlay.remove();
+            carOverlay.setPosition(loc);
+            carOverlay.setBearing(carBearing);
+            carOverlay = mMap.addGroundOverlay(new GroundOverlayOptions()
+                    .position(loc,4)
+                    .image(BitmapDescriptorFactory.fromBitmap(b))
+                    .bearing(carBearing));
+        }
     }
 
     @Override
@@ -392,7 +393,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
     private void handleCarNotification(Double deltaMeters) {
-        deltaMeters = Double.valueOf(30);
         if (deltaMeters <= 40 && !notificationArray[AUTONOMOUS_CAR_40M_NOTIFICATION_ID]) {
             cancelNotification(AUTONOMOUS_CAR_100M_NOTIFICATION_ID);
             if(carNotificationConstant==0){
@@ -1016,12 +1016,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
 
-    private void locationIconUpdate(LatLng loc, Float carBearing) {
-        if (carOverlay != null) {
-            carOverlay.setPosition(loc);
-            carOverlay.setBearing(carBearing);
-        }
-    }
+
 
     private void onCampusTest(Double bound1la, Double bound2la, Double bound2lo, Double bound1lo, Double Longitude, Double Latitude) {
         if(Latitude>bound1la && Latitude<bound2la && Longitude<bound1lo && Longitude>bound2lo){
