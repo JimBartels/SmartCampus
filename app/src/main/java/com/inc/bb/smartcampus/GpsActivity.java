@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -57,6 +58,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.GroundOverlay;
 import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -362,11 +365,86 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         mMap = googleMap;
+        try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            boolean success = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(
+                            this, R.raw.custom_maps));
+
+            if (!success) {
+                Log.e(TAG, "Style parsing failed.");
+            }
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find style. Error: ", e);
+        }
         mMap.setMyLocationEnabled(true);
 
-        // Add a marker in Sydney and move the camera
+
         setupCarOverlay();
+
+
+        //Add buildings to map
+
+
+
+        LatLngBounds flux = new LatLngBounds(
+                new LatLng(51.447233, 5.491179),       // South west corner
+                new LatLng(51.448241, 5.492668));      // North east corner
+
+        GroundOverlayOptions fluxMap = new GroundOverlayOptions()
+                .image(BitmapDescriptorFactory.fromResource(R.drawable.flux_building))
+                .positionFromBounds(flux)
+                .clickable(true);
+
+        mMap.addGroundOverlay(fluxMap);
+
+
+        LatLngBounds metaforum = new LatLngBounds(
+                new LatLng(51.446867, 5.486931),       // South west corner
+                new LatLng(51.448223, 5.488004));      // North east corner
+
+        GroundOverlayOptions metaforumMap = new GroundOverlayOptions()
+                .image(BitmapDescriptorFactory.fromResource(R.drawable.metaforum_building))
+                .positionFromBounds(metaforum)
+                .clickable(true);
+        mMap.addGroundOverlay(metaforumMap);
+
+
+        LatLngBounds atlas = new LatLngBounds(
+                new LatLng(51.447387, 5.485367),       // South west corner
+                new LatLng(51.448349, 5.486638));      // North east corner
+
+        GroundOverlayOptions atlasMap = new GroundOverlayOptions()
+                .image(BitmapDescriptorFactory.fromResource(R.drawable.atlas_building))
+                .positionFromBounds(atlas)
+                .clickable(true);
+        mMap.addGroundOverlay(atlasMap);
+
+
+        LatLngBounds auditorium = new LatLngBounds(
+                new LatLng(51.447691, 5.483843),       // South west corner
+                new LatLng(51.448102, 5.485029));      // North east corner
+
+        GroundOverlayOptions auditoriumMap = new GroundOverlayOptions()
+                .image(BitmapDescriptorFactory.fromResource(R.drawable.auditorium_building))
+                .positionFromBounds(auditorium)
+                .clickable(true);
+        mMap.addGroundOverlay(auditoriumMap);
+
+        LatLngBounds vertigo = new LatLngBounds(
+                new LatLng(51.445695, 5.484804),       // South west corner
+                new LatLng(51.446751, 5.485260));      // North east corner
+
+        GroundOverlayOptions vertigoMap = new GroundOverlayOptions()
+                .image(BitmapDescriptorFactory.fromResource(R.drawable.vertigo_building))
+                .positionFromBounds(vertigo)
+                .clickable(true);
+        mMap.addGroundOverlay(vertigoMap);
+
+
     }
 
 
