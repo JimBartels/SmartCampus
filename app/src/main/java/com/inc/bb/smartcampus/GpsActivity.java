@@ -116,6 +116,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     //Maps
     private GoogleMap mMap;
 
+    //buildings
+    private GroundOverlay fluxOverlay;
+    private GroundOverlay metaforumOverlay;
+    private GroundOverlay atlasOverlay;
+    private GroundOverlay auditoriumOverlay;
+    private GroundOverlay vertigoOverlay;
+
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
     final FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference mDatabase;
@@ -399,7 +406,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .positionFromBounds(flux)
                 .clickable(true);
 
-        mMap.addGroundOverlay(fluxMap);
+        fluxOverlay = mMap.addGroundOverlay(fluxMap);
 
 
         LatLngBounds metaforum = new LatLngBounds(
@@ -410,7 +417,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .image(BitmapDescriptorFactory.fromResource(R.drawable.metaforum_building))
                 .positionFromBounds(metaforum)
                 .clickable(true);
-        mMap.addGroundOverlay(metaforumMap);
+
+        metaforumOverlay = mMap.addGroundOverlay(metaforumMap);
 
 
         LatLngBounds atlas = new LatLngBounds(
@@ -421,7 +429,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .image(BitmapDescriptorFactory.fromResource(R.drawable.atlas_building))
                 .positionFromBounds(atlas)
                 .clickable(true);
-        mMap.addGroundOverlay(atlasMap);
+
+        atlasOverlay = mMap.addGroundOverlay(atlasMap);
 
 
         LatLngBounds auditorium = new LatLngBounds(
@@ -432,7 +441,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .image(BitmapDescriptorFactory.fromResource(R.drawable.auditorium_building))
                 .positionFromBounds(auditorium)
                 .clickable(true);
-        mMap.addGroundOverlay(auditoriumMap);
+
+        auditoriumOverlay = mMap.addGroundOverlay(auditoriumMap);
 
         LatLngBounds vertigo = new LatLngBounds(
                 new LatLng(51.445695, 5.484804),       // South west corner
@@ -442,7 +452,40 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .image(BitmapDescriptorFactory.fromResource(R.drawable.vertigo_building))
                 .positionFromBounds(vertigo)
                 .clickable(true);
-        mMap.addGroundOverlay(vertigoMap);
+
+        vertigoOverlay = mMap.addGroundOverlay(vertigoMap);
+
+
+        //Clicklistener
+        GoogleMap.OnGroundOverlayClickListener listener = new GoogleMap.OnGroundOverlayClickListener() {
+            @Override
+            public void onGroundOverlayClick(GroundOverlay groundOverlay) {
+                switch (groundOverlay) {
+                    case fluxOverlay:
+
+                        break;
+
+                    case metaforumOverlay:
+
+                        break;
+
+                    case atlasOverlay:
+
+                        break;
+
+                    case auditoriumOverlay:
+
+                        break;
+
+                    case vertigoOverlay:
+
+                        break;
+                }
+
+
+            }
+        };
+        mMap.setOnGroundOverlayClickListener(listener);
 
 
     }
