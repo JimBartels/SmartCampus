@@ -1,6 +1,7 @@
 package com.inc.bb.smartcampus;
 
 import android.Manifest;
+import android.app.Fragment;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -117,7 +118,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private GoogleMap mMap;
 
     //buildings
-    private GroundOverlay fluxOverlay;
+    GroundOverlay fluxOverlay;
     private GroundOverlay metaforumOverlay;
     private GroundOverlay atlasOverlay;
     private GroundOverlay auditoriumOverlay;
@@ -236,11 +237,19 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         userCheck(user);
         getUsername(user);
         Log.d(TAG, "onCreate: " + userId);
+        setContentView(R.layout.activity_gps);
+
+        //Google maps
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.caricon);
+        b=bitmapdraw.getBitmap();
+
 
         Context ctx = getApplicationContext();
         Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        setContentView(R.layout.activity_gps);
         Drawable locButtondrawableBefore = ContextCompat.getDrawable(getApplicationContext(), R.drawable.buttonshapebefore);
         //Button locButton = (Button) findViewById(R.id.locButton);
         // locButton.setBackground(locButtondrawableBefore);
@@ -259,6 +268,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                 //TODO fragment builder to switch in between fragment views, from maps to settings to car sharing framgent
                                 break;
                             case R.id.action_car:
+                                Fragment fragment = new CampusCar();
+                                switchToFragment(fragment);
                                 break;
                             case R.id.action_settings:
                                 break;
@@ -267,12 +278,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     }
                 });
 
-        //Google maps
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.caricon);
-        b=bitmapdraw.getBitmap();
 
 
     // GPS functionality, maybe in thread, maybe not, APP keeps doing thread after App quits.
@@ -345,6 +350,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
     }
 
+    private void switchToFragment(Fragment fragment) {
+
+    }
+
     private void setupCarOverlay() {
         carOverlay = mMap.addGroundOverlay(new GroundOverlayOptions()
                 .position(new LatLng(50.967455, 5.943757),4)
@@ -389,14 +398,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
         mMap.setMyLocationEnabled(true);
 
-
         setupCarOverlay();
 
-
         //Add buildings to map
-
-
-
         LatLngBounds flux = new LatLngBounds(
                 new LatLng(51.447233, 5.491179),       // South west corner
                 new LatLng(51.448241, 5.492668));      // North east corner
@@ -407,7 +411,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .clickable(true);
 
         fluxOverlay = mMap.addGroundOverlay(fluxMap);
-
 
         LatLngBounds metaforum = new LatLngBounds(
                 new LatLng(51.446867, 5.486931),       // South west corner
@@ -420,7 +423,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         metaforumOverlay = mMap.addGroundOverlay(metaforumMap);
 
-
         LatLngBounds atlas = new LatLngBounds(
                 new LatLng(51.447387, 5.485367),       // South west corner
                 new LatLng(51.448349, 5.486638));      // North east corner
@@ -431,7 +433,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .clickable(true);
 
         atlasOverlay = mMap.addGroundOverlay(atlasMap);
-
 
         LatLngBounds auditorium = new LatLngBounds(
                 new LatLng(51.447691, 5.483843),       // South west corner
@@ -455,34 +456,28 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         vertigoOverlay = mMap.addGroundOverlay(vertigoMap);
 
-
         //Clicklistener
         GoogleMap.OnGroundOverlayClickListener listener = new GoogleMap.OnGroundOverlayClickListener() {
             @Override
             public void onGroundOverlayClick(GroundOverlay groundOverlay) {
-                switch (groundOverlay) {
-                    case fluxOverlay:
-
-                        break;
-
-                    case metaforumOverlay:
-
-                        break;
-
-                    case atlasOverlay:
-
-                        break;
-
-                    case auditoriumOverlay:
-
-                        break;
-
-                    case vertigoOverlay:
-
-                        break;
+                if(groundOverlay.getId().equals(fluxOverlay.getId())){
+                    //Action for flux
                 }
-
-
+                else if(groundOverlay.getId().equals(vertigoOverlay.getId())){
+                    //Action for vertigo
+                }
+                else if(groundOverlay.getId().equals(auditoriumOverlay.getId())){
+                    //Action for auditorium
+                }
+                else if(groundOverlay.getId().equals(metaforumOverlay.getId())){
+                    //Action for atlas
+                }
+                else if(groundOverlay.getId().equals(atlasOverlay.getId())){
+                    //Action for metaforum
+                }
+                else if(groundOverlay.getId().equals(carOverlay.getId())){
+                    //Action for car click
+                }
             }
         };
         mMap.setOnGroundOverlayClickListener(listener);
@@ -1434,6 +1429,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         Intent intent = new Intent(GpsActivity.this, BackgroundDetectedActivitiesService.class);
         stopService(intent);
     } // Stops tracking of UserActivity (Called in OnDestroy)
+
+    public void CallCar() {
+        //TODO Car caller, Jim has a plan how to do this on OneM2M.
+
+    }
 
     //TODO Imageoverlay clickable for Tu campus
     //TODO Car data receive timestamp and warning display timestamp

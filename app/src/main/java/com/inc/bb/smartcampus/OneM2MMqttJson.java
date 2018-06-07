@@ -167,7 +167,6 @@ public class OneM2MMqttJson {
     }
 
 
-
     //Creates a content instance create JSON request for OneM2M  //TODO add bearing heading etc
 
     //TODO update functions
