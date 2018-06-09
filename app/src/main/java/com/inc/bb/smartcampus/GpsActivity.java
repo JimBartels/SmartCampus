@@ -61,6 +61,8 @@ import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -118,11 +120,21 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private GoogleMap mMap;
 
     //buildings
-    GroundOverlay fluxOverlay;
+    private GroundOverlay fluxOverlay;
+    private static final LatLng FLUX = new LatLng(51.447425, 5.491944);
+    private Marker Flux;
     private GroundOverlay metaforumOverlay;
+    private static final LatLng METAFORUM = new LatLng(51.447398, 5.487480);
+    private Marker Metaforum;
     private GroundOverlay atlasOverlay;
+    private static final LatLng ATLAS = new LatLng(51.447692, 5.486107);
+    private Marker Altas;
     private GroundOverlay auditoriumOverlay;
+    private static final LatLng AUDITORIUM = new LatLng(51.447625, 5.484348);
+    private Marker Auditorium;
     private GroundOverlay vertigoOverlay;
+    private static final LatLng VERTIGO = new LatLng(51.445967, 5.484991);
+    private Marker Vertigo;
 
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
     final FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -423,14 +435,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         metaforumOverlay = mMap.addGroundOverlay(metaforumMap);
 
-        LatLngBounds atlas = new LatLngBounds(
-                new LatLng(51.447387, 5.485367),       // South west corner
-                new LatLng(51.448349, 5.486638));      // North east corner
 
-        GroundOverlayOptions atlasMap = new GroundOverlayOptions()
-                .image(BitmapDescriptorFactory.fromResource(R.drawable.atlas_building))
-                .positionFromBounds(atlas)
-                .clickable(true);
+            LatLngBounds atlas = new LatLngBounds(
+                    new LatLng(51.447387, 5.485367),       // South west corner
+                    new LatLng(51.448349, 5.486638));      // North east corner
+
+            GroundOverlayOptions atlasMap = new GroundOverlayOptions()
+                    .image(BitmapDescriptorFactory.fromResource(R.drawable.atlas_building))
+                    .positionFromBounds(atlas)
+                    .clickable(true);
 
         atlasOverlay = mMap.addGroundOverlay(atlasMap);
 
@@ -444,6 +457,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .clickable(true);
 
         auditoriumOverlay = mMap.addGroundOverlay(auditoriumMap);
+
 
         LatLngBounds vertigo = new LatLngBounds(
                 new LatLng(51.445695, 5.484804),       // South west corner
@@ -462,21 +476,106 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             public void onGroundOverlayClick(GroundOverlay groundOverlay) {
                 if(groundOverlay.getId().equals(fluxOverlay.getId())){
                     //Action for flux
+                    Log.d(TAG, "This is flux");
+
+                        int height = 200;
+                        int width = 200;
+                        BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.flux_building);
+                        Bitmap b = bitmapdraw.getBitmap();
+                        Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+
+                        Flux = mMap.addMarker(new MarkerOptions()
+                                .position(FLUX)
+                                .title("Flux")
+                                .snippet("Applied Physics and Electrical Engineering")
+                                .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
+                                .alpha(0.1f));
+
                 }
                 else if(groundOverlay.getId().equals(vertigoOverlay.getId())){
                     //Action for vertigo
+                    Log.d(TAG, "This is vertigo");
+
+                    int height = 200;
+                    int width = 200;
+                    BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.vertigo_building);
+                    Bitmap b=bitmapdraw.getBitmap();
+                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+
+                    Vertigo =  mMap.addMarker(new MarkerOptions()
+                            .position(VERTIGO)
+                            .title("Vertigo")
+                            .snippet("Architecture")
+                            .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
+                            .alpha(0.1f));
                 }
                 else if(groundOverlay.getId().equals(auditoriumOverlay.getId())){
                     //Action for auditorium
+                    Log.d(TAG, "This is auditorium");
+
+                    int height = 200;
+                    int width = 200;
+                    BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.auditorium_building);
+                    Bitmap b = bitmapdraw.getBitmap();
+                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+
+                    Flux =  mMap.addMarker(new MarkerOptions()
+                            .position(AUDITORIUM)
+                            .title("Auditorium")
+                            .snippet("Main Lecture Hall")
+                            .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
+                            .alpha(0.1f));
                 }
                 else if(groundOverlay.getId().equals(metaforumOverlay.getId())){
-                    //Action for atlas
+                    //Action for metaforum
+                    Log.d(TAG, "This is metaforum");
+
+                    int height = 200;
+                    int width = 200;
+                    BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.metaforum_building);
+                    Bitmap b = bitmapdraw.getBitmap();
+                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+
+                    Flux =  mMap.addMarker(new MarkerOptions()
+                            .position(METAFORUM)
+                            .title("Metaforum")
+                            .snippet("Library")
+                            .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
+                            .alpha(0.1f));
                 }
                 else if(groundOverlay.getId().equals(atlasOverlay.getId())){
-                    //Action for metaforum
+                    //Action for atlas
+                    Log.d(TAG, "This is atlas");
+
+                    int height = 200;
+                    int width = 200;
+                    BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.atlas_building);
+                    Bitmap b = bitmapdraw.getBitmap();
+                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+
+                    Flux =  mMap.addMarker(new MarkerOptions()
+                            .position(ATLAS)
+                            .title("Atlas")
+                            .snippet("Industrial Design and Industrial Engineering")
+                            .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
+                            .alpha(0.1f));
                 }
                 else if(groundOverlay.getId().equals(carOverlay.getId())){
                     //Action for car click
+                    Log.d(TAG, "This is a car");
+
+                    int height = 200;
+                    int width = 200;
+                    BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.flux_building);
+                    Bitmap b = bitmapdraw.getBitmap();
+                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+
+                    Flux =  mMap.addMarker(new MarkerOptions()
+                            .position(FLUX)
+                            .title("Flux")
+                            .snippet("Applied Physics and Electrical Engineering")
+                            .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
+                            .alpha(0.1f));
                 }
             }
         };
