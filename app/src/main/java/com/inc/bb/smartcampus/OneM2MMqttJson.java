@@ -133,7 +133,7 @@ public class OneM2MMqttJson {
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);
 
-        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId + "/status";
+        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId + "/CallTaxi";
         payload.put("to",topic);
 
         payload.put("rqi",userId);
@@ -141,8 +141,8 @@ public class OneM2MMqttJson {
         payload.put("ty", 4);
 
         contentinstancecontent.put("rn", RnContentInstance);
-        contentinstancecontent.put("con", "activity: " + type +  "," +  " activity confidence: " + confidence);
-        m2mcntrequester.put("m2m:cin", contentinstancecontent);
+        contentinstancecontent.put("nu", "aeSmartCampus1");
+        m2mcntrequester.put("m2m:sub", contentinstancecontent);
         payload.put("pc", m2mcntrequester);
         m2mrequester.put("m2m:rqp",payload);
         return m2mrequester;
@@ -165,10 +165,46 @@ public class OneM2MMqttJson {
         m2mrequester.put("m2m:rqp",payload);
         return m2mrequester;
     }
+    public JSONObject CreateTaxiSubContainer() throws JSONException{
+        payload.put("fr",oneM2MAeRi);
+        payload.put("key",oneM2MAePass);
+
+        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId + "/CallTaxi";
+        payload.put("to",topic);
+        payload.put("rqi",userId);
+        payload.put("op", CREATE_OP);
+        payload.put("ty", 23);
+
+        contentinstancecontent.put("rn", "CallTaxi_sub");
+        contentinstancecontent.put("nu", "Csmartcampus");
+        contentinstancecontent.put("nct", "2");
+        m2mcntrequester.put("m2m:sub", contentinstancecontent);
+        payload.put("pc", m2mcntrequester);
+        m2mrequester.put("m2m:rqp",payload);
+        return m2mrequester;
+    }
+
+    public JSONObject CreateContentInstanceCallTaxi(Double lat, Double lng, long timeStamp, String UserID) throws JSONException{
+        payload.put("fr",oneM2MAeRi);
+        payload.put("key",oneM2MAePass);
+
+        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId + "/CallTaxi";
+        payload.put("to",topic);
+        payload.put("rqi",userId);
+        payload.put("op", CREATE_OP);
+        payload.put("ty", 4);
+
+        contentinstancecontent.put("rn", UserID + "-" + timeStamp);
+        contentinstancecontent.put("con", "latitude: " + lat + "," + " longitude: " + lng  + "," + " requestTime: " + timeStamp);
+        m2mcntrequester.put("m2m:cin", contentinstancecontent);
+        payload.put("pc", m2mcntrequester);
+        m2mrequester.put("m2m:rqp",payload);
+        return m2mrequester;
+    }
 
 
-    //Creates a content instance create JSON request for OneM2M  //TODO add bearing heading etc
 
+    //Creates a content instance create JSON request for OneM2M
     //TODO update functions
 
 

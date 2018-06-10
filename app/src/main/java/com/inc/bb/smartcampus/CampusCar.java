@@ -1,8 +1,10 @@
 package com.inc.bb.smartcampus;
 
 import android.app.Fragment;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +26,8 @@ public class CampusCar extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         Button locButton = (Button) getView().findViewById(R.id.carbutton);
+        Drawable buttondrawable2 = ContextCompat.getDrawable(getActivity(),R.drawable.buttonshapebefore);
+        locButton.setBackground(buttondrawable2);
         locButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
