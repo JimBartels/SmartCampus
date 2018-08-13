@@ -48,7 +48,7 @@ public class MQTTPublishService extends Service {
         BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(ConstantsClassifier.BROADCAST_DETECTED_ACTIVITY)) {
+                if (intent.getAction().equals(ConstantsClassifier.ACTIVITY_BROADCAST_ACTION)) {
                     userActivityType = intent.getStringExtra("type");
                     userConfidence= intent.getIntExtra("confidence", 0);
                     Long Timestamp = intent.getLongExtra("timestamp",0);
@@ -70,7 +70,7 @@ public class MQTTPublishService extends Service {
             }
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                broadcastReceiver, new IntentFilter("activity_intent"));
+                broadcastReceiver, new IntentFilter(ConstantsClassifier.ACTIVITY_BROADCAST_ACTION));
     } // Receives broadcast from DetectedActivitiesIntentService, which sends only highest confidens UserActivity
 
     MQTTPublishService(String userId, String OneM2MAeRi, String OneM2MAePass, String OneM2MAeRn){

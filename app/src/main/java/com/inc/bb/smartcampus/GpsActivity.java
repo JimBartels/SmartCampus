@@ -26,7 +26,6 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -194,7 +193,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     String userActivityType;
     int userActivityTypeInt=20;
     int userConfidence = 100;
-    String mActivityRecognitionTimestamp;
+    Long mActivityRecognitionTimestamp;
     SimpleDateFormat df;
     OneM2MMqttJson VRUgps;
     String huaweiUrl = "http://217.110.131.79:2020/mobile/dataapp";
@@ -222,6 +221,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private final static int AUTONOMOUS_CAR_40M_NOTIFICATION_ID = 0;
     private final static int AUTONOMOUS_CAR_100M_NOTIFICATION_ID = 1;
     Boolean[] notificationArray = new Boolean[10];
+    Float carBearing;
+    LatLng carLoc;
 
     //Car marker
     GroundOverlay carOverlay;
@@ -395,7 +396,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
-        try {
+        /*try {
             // Customise the styling of the base map using a JSON object defined
             // in a raw resource file.
             boolean success = googleMap.setMapStyle(
@@ -407,7 +408,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         } catch (Resources.NotFoundException e) {
             Log.e(TAG, "Can't find style. Error: ", e);
-        }
+        }*/
         mMap.setMyLocationEnabled(true);
 
         setupCarOverlay();
@@ -662,6 +663,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         try {
             contentCreateGPS = VRUgps.CreateContentInstanceGps(null,null,null,null);
             contentCreateUserStatus = VRUgps.CreateContentInstanceStatus(null ,null,0);
+            String to = "/server/server/aeSmartCampus1/Users/" + userId + "/Status";
+            contentCreateUserStatus.getJSONObject("m2m:rqp").put("to",to);
+
+
             contentCreateCallCar = VRUgps.CreateContentInstanceCallTaxi(null,null,0,userId);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -672,13 +677,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(ConstantsClassifier.BROADCAST_DETECTED_ACTIVITY)) {
+                if (intent.getAction().equals(ConstantsClassifier.ACTIVITY_BROADCAST_ACTION)) {
                     userActivityTypeInt = intent.getIntExtra("type",20);
                     userConfidence= intent.getIntExtra("confidence", 0);
                     Long Timestamp = intent.getLongExtra("timestamp",0);
 
                     userActivityType = checkActivityType(userActivityTypeInt);
-                    mActivityRecognitionTimestamp = df.format(Timestamp);
+                    mActivityRecognitionTimestamp = Timestamp;
                     Log.d(TAG, userActivityType + "From broadcast " + userConfidence);
                     if(userActivityTypeInt!=20){
                         try {
@@ -694,7 +699,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                broadcastReceiver, new IntentFilter("activity_intent"));
+                broadcastReceiver, new IntentFilter(ConstantsClassifier.ACTIVITY_BROADCAST_ACTION));
     } // Recieves broadcast from DetectedActivitiesIntentService, which sends only highest confidence UserActivity
 
     private String checkActivityType(int type){
@@ -802,16 +807,20 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         Log.d(TAG, "messageArrived: " + messageCar);
         if(topic.equals(CsmartCampusCarsSubscriptionTopic)){
             String contentCarString = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev").getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
-
             String[] separated = contentCarString.split(",");
 
             String longitudeCarString = separated[3];
             String[] carLonseparated = longitudeCarString.split(":");
             carLon = Double.parseDouble(carLonseparated[1]);
 
-            String bearing = separated[5];
+            String bearing = separated[6];
             String[] bearingSep = bearing.split(":");
-            Float carBearing = Float.parseFloat(bearingSep[1]);
+            Toast.makeText(getApplicationContext(),bearingSep[1],Toast.LENGTH_LONG).show();
+
+            //String bearing1[] = bearingSep[1].split("}");
+            //carBearing = Float.parseFloat(bearing1[0]);
+
+
 
             //String speedCarString = separated[5];
             //String[] speedCarSep = speedCarString.split(":");
@@ -821,8 +830,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             String latitudeCar = (separated[4]);
             String[] carLatseparated = latitudeCar.split(":");
             carLat = Double.parseDouble(carLatseparated[1]);
-            LatLng carLoc = new LatLng(carLat,carLon);
-            locationIconUpdate(carLoc,carBearing);
+            carLoc = new LatLng(carLat,carLon);
             if(mCurrentlocation!=null){
                 Double deltaMeters;
                 deltaMeters = DifferenceInMeters(carLat,carLon,mCurrentlocation.getLatitude(),mCurrentlocation.getLongitude());
@@ -842,7 +850,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 writeToLogFile(fileContents);
             }
         }
-    }
+    } //Processes the messages that are incoming
 
     public void publishMessage(@NonNull MqttAndroidClient client, @NonNull String msg, int qos, @NonNull String topic) throws MqttException, UnsupportedEncodingException {
         byte[] encodedPayload = new byte[0];
@@ -863,7 +871,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 packetLosses++;
             }
         });
-    } // Publishes message to VRU ae
+    } // Publishes message to VRU ae on OneM2M
 
     private void writeToLogFile(String[] entry) {
         String FILENAME = userId + "-" + "OneM2MBackAndForthLatency.csv";
@@ -886,7 +894,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             e.printStackTrace();
             Log.d(TAG, "writeToLogFile" + e.toString());
         }
-    }
+    } //Writes a logfile or appends this file if it is already existing with an arbitrary array (does not matter how large) seperated by commas. (Time,Latency, ..... Lat, Lon) will be one line in an CSV file to excel.
 
     public MqttAndroidClient getMqttClient(@NonNull Context context,@NonNull String brokerUrl, @NonNull String clientId) {
         final MqttAndroidClient mqttClient = new MqttAndroidClient(context, brokerUrl, clientId);
@@ -989,7 +997,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(mCurrentlocation!=null){
 
             //Getting info from mCurrentlocation
-
+            if(carLoc!=null){
+            carOverlay.setPosition(carLoc);
+            carOverlay.setBearing(carBearing);}
             Double Longitude = mCurrentlocation.getLongitude();
             Double Latitude = mCurrentlocation.getLatitude();
             Float Accuracy = mCurrentlocation.getAccuracy();
@@ -1103,10 +1113,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         map.invalidate();
     }
 */
-    private void publishUserStatus(String activity, String timeStamp, int confidence) throws JSONException, MqttException, UnsupportedEncodingException {
+    private void publishUserStatus(String activity, Long timeStamp, int confidence) throws JSONException, MqttException, UnsupportedEncodingException {
         String con = "activity: " + activity +  "," +  " activity confidence: " + confidence;
         contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
-        contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", timeStamp);
+        contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
+        String to = "/server/server/aeSmartCampus1/Users/" + userId + "/Status";
+        contentCreateUserStatus.getJSONObject("m2m:rqp").put("to",to);
         String contentCreateStatus = contentCreateUserStatus.toString();
         publishMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic);}
 
@@ -1157,7 +1169,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         //TODO add a realistic threshold to prevent huge speeds at delta t goes to zero
 
         return speedandBearing;
-    }
+    } //Makes a line on the map between the last two points
 
     private double DifferenceUTCtoSeconds(Long timeStamp, Long timeStamp2){
         /*Double deltaseconds = Double.parseDouble(new String(new char[]{timeStamp.charAt(12),timeStamp.charAt(13)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(12),timeStamp2.charAt(13)}));
@@ -1269,7 +1281,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 // ...
             }
         });
-    }
+    } // Uploads file to firebase, currently called whenever the app is paused or destroyed.
 
 
     private void createLocationRequest(){
@@ -1277,7 +1289,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(UPDATE_INVTERVAL_IN_MILLISECONDS);
         mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
-    }
+    } // Constructor of locationrequest, sets certain settings of the locationrequest (interval, priority etc)
 
     private void myLocationButton(GeoPoint loc) {
         final GeoPoint locf = loc;
@@ -1380,7 +1392,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     REQUEST_PERMISSIONS_REQUEST_CODE);
         }
-    }
+    } //Requests the user for permission of GPS
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -1404,7 +1416,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }else{
             }
         }
-    }
+    } // Handler for permission results (if cancelled or accepted)
 
     private boolean checkPermissions() {
         int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);

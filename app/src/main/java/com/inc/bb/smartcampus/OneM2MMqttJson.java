@@ -126,14 +126,10 @@ public class OneM2MMqttJson {
 
 
     public JSONObject CreateContentInstanceStatus(String RnContentInstance,String type, int confidence) throws JSONException{
-        JSONObject payload = new JSONObject();
-        JSONObject m2mrequester = new JSONObject();
-        JSONObject contentinstancecontent = new JSONObject();
-        JSONObject m2mcntrequester = new JSONObject();
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);
 
-        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId + "/CallTaxi";
+        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId + "/Status";
         payload.put("to",topic);
 
         payload.put("rqi",userId);
@@ -141,8 +137,8 @@ public class OneM2MMqttJson {
         payload.put("ty", 4);
 
         contentinstancecontent.put("rn", RnContentInstance);
-        contentinstancecontent.put("nu", "aeSmartCampus1");
-        m2mcntrequester.put("m2m:sub", contentinstancecontent);
+        contentinstancecontent.put("con", 0);
+        m2mcntrequester.put("m2m:cin", contentinstancecontent);
         payload.put("pc", m2mcntrequester);
         m2mrequester.put("m2m:rqp",payload);
         return m2mrequester;

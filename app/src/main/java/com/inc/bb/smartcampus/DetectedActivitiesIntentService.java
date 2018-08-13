@@ -48,6 +48,7 @@ public class DetectedActivitiesIntentService  extends IntentService {
             Log.i(TAG, "Detected activity: " + activity.getType() + ", " + activity.getConfidence());
             broadcastActivity(activity);*/
         }
+        intent.setAction(ConstantsClassifier.ACTIVITY_BROADCAST_ACTION);
         Log.d(TAG, "onHandleIntent: nearbroadcast");
         intent.putExtra("confidence", maxConf);
         intent.putExtra("type", maxConfType);
