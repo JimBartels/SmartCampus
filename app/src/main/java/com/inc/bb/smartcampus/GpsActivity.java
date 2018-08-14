@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -34,6 +33,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,7 +61,6 @@ import com.google.android.gms.maps.model.GroundOverlay;
 import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -141,11 +141,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     FirebaseAuth mAuth = FirebaseAuth.getInstance();
     String TAG = "GpsActivity";
     private FusedLocationProviderClient mFusedLocationClient;
+
+    //Layout elements
     private TextView viewLatitude;
     private TextView viewLongitude;
     private TextView viewLocation;
     private TextView viewBearing;
     private TextView viewSpeed;
+    private Switch gpsHolder;
+
     private Location mCurrentlocation;
     private LocationSettingsRequest mLocationSettingsRequest;
     private LocationCallback mLocationCallback;
@@ -228,6 +232,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     GroundOverlay carOverlay;
     Bitmap b;
 
+    //Holding one gps location
+    boolean isAlreadyHeld = false;
+    boolean gpsHoldButtonChecked = false;
+    Double Longitude=0.00000;
+    Double Latitude=0.00000;
+    Float Accuracy= Float.valueOf(0);
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND =  Uri.parse("android.resource://"+ getPackageName() + "/" + R.raw.translate_tts);
@@ -299,12 +311,21 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         viewLatitude = (TextView) findViewById(R.id.latitude);
         viewLongitude = (TextView) findViewById(R.id.longitude);
         viewBearing = (TextView) findViewById(R.id.bearing);
-        //viewBearingAccuracy = (TextView) findViewById(R.id.bearingAccuracy);
         viewLocation = (TextView) findViewById(R.id.location);
         viewSpeed = (TextView) findViewById(R.id.speed);
-        //viewmanualBearing = (TextView) findViewById(R.id.manualbearing);
-        //viewGoogleSpeed = (TextView) findViewById(R.id.Googlespeed);
+        gpsHolder = findViewById(R.id.holdgpsswitch);
+      /*  gpsHolder.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if(b){
+                    gpsHoldButtonChecked = true;
+                }
+                else if (!b){
+                    gpsHoldButtonChecked = false
+                }
 
+            }
+        }); */
 
         updateValuesFromBundle(savedInstanceState);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -994,15 +1015,32 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
     private void updateLocationUI(Long timestampUTC) {
+        if(!gpsHolder.isChecked()){
+            isAlreadyHeld=false;
+        }
+
         if(mCurrentlocation!=null){
 
             //Getting info from mCurrentlocation
             if(carLoc!=null){
             carOverlay.setPosition(carLoc);
             carOverlay.setBearing(carBearing);}
-            Double Longitude = mCurrentlocation.getLongitude();
-            Double Latitude = mCurrentlocation.getLatitude();
-            Float Accuracy = mCurrentlocation.getAccuracy();
+
+            if(gpsHolder.isChecked()) {
+                if(!isAlreadyHeld){
+                     Longitude = mCurrentlocation.getLongitude();
+                     Latitude = mCurrentlocation.getLatitude();
+                     Accuracy = mCurrentlocation.getAccuracy();
+                    isAlreadyHeld=true;
+                    Log.d(TAG, "updateLocationUI: !isAlreadyHeld");
+                }
+            }
+            else{
+             Longitude = mCurrentlocation.getLongitude();
+             Latitude = mCurrentlocation.getLatitude();
+             Accuracy = mCurrentlocation.getAccuracy();
+                Log.d(TAG, "updateLocationUI: normal operation");
+            }
 
             //Speed implementation
             String speedGPS;
@@ -1101,6 +1139,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
 
         }
+    }
+
+
+    private void fixGPSLoc() {
+
+
     }
 
     /*private void makePolyline(List<GeoPoint> geoPoints,Polyline polyline) {
