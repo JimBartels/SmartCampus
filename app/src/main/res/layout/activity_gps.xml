@@ -22,8 +22,8 @@
 
     <FrameLayout
         android:id="@+id/fragment_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginEnd="0dp"
         android:layout_marginStart="0dp"
         android:background="?android:attr/windowBackground"
@@ -98,39 +98,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView4" />
 
-    <!-- <TextView
-         android:id="@+id/textView12"
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:layout_marginLeft="8dp"
-         android:layout_marginStart="8dp"
-         android:layout_marginTop="8dp"
-         android:text="GoogleSpeed"
-         app:layout_constraintStart_toStartOf="parent"
-         app:layout_constraintTop_toBottomOf="@+id/textView11" />
-
-     <TextView
-         android:id="@+id/textView11"
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:layout_marginLeft="8dp"
-         android:layout_marginStart="8dp"
-         android:layout_marginTop="8dp"
-         android:text="manualBearing"
-         app:layout_constraintStart_toStartOf="parent"
-         app:layout_constraintTop_toBottomOf="@+id/textView10" />
-
-     <TextView
-         android:id="@+id/textView10"
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:layout_marginLeft="8dp"
-         android:layout_marginStart="8dp"
-         android:layout_marginTop="8dp"
-         android:text="BearingAccuracy"
-         app:layout_constraintStart_toStartOf="parent"
-         app:layout_constraintTop_toBottomOf="@+id/textView9" /> -->
-
      <TextView
          android:id="@+id/textView9"
          android:layout_width="wrap_content"
@@ -142,7 +109,17 @@
          app:layout_constraintStart_toStartOf="parent"
          app:layout_constraintTop_toBottomOf="@+id/textView7" />
 
-     <TextView
+    <TextView
+        android:id="@+id/textView8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="52dp"
+        android:layout_marginTop="55dp"
+        android:text="Hold GPS"
+        app:layout_constraintEnd_toEndOf="@+id/holdgpsswitch"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
          android:id="@+id/textView7"
          android:layout_width="wrap_content"
          android:layout_height="wrap_content"
@@ -151,16 +128,6 @@
          android:text="Speed"
          app:layout_constraintStart_toStartOf="parent"
          app:layout_constraintTop_toBottomOf="@+id/textView5" />
-
-     <!--  <Button
-           android:id="@+id/locButton"
-           android:layout_width="55dp"
-           android:layout_height="55dp"
-           android:layout_marginBottom="88dp"
-           android:layout_marginEnd="16dp"
-           android:text="loc"
-           app:layout_constraintBottom_toBottomOf="parent"
-           app:layout_constraintEnd_toEndOf="parent" /> -->
 
       <TextView
           android:id="@+id/longitude"
@@ -173,41 +140,6 @@
           app:layout_constraintStart_toEndOf="@+id/textView5"
           app:layout_constraintTop_toBottomOf="@+id/latitude" />
 
-      <!-- <TextView
-           android:id="@+id/Googlespeed"
-           android:layout_width="wrap_content"
-           android:layout_height="0dp"
-           android:layout_marginLeft="12dp"
-           android:layout_marginStart="12dp"
-           android:layout_marginTop="8dp"
-           android:text="0.0"
-           android:textColor="@android:color/holo_blue_light"
-           app:layout_constraintStart_toEndOf="@+id/textView12"
-           app:layout_constraintTop_toBottomOf="@+id/manualbearing" />
-
-       <TextView
-           android:id="@+id/manualbearing"
-           android:layout_width="wrap_content"
-           android:layout_height="0dp"
-           android:layout_marginLeft="8dp"
-           android:layout_marginStart="8dp"
-           android:layout_marginTop="8dp"
-           android:text="0.0"
-           android:textColor="@android:color/holo_blue_light"
-           app:layout_constraintStart_toEndOf="@+id/textView11"
-           app:layout_constraintTop_toBottomOf="@+id/bearingAccuracy" />
-
-       <TextView
-           android:id="@+id/bearingAccuracy"
-           android:layout_width="wrap_content"
-           android:layout_height="0dp"
-           android:layout_marginLeft="8dp"
-           android:layout_marginStart="8dp"
-           android:layout_marginTop="8dp"
-           android:text="0.0"
-           android:textColor="@android:color/holo_blue_light"
-           app:layout_constraintStart_toEndOf="@+id/textView10"
-           app:layout_constraintTop_toBottomOf="@+id/bearing" /> -->
 
     <TextView
         android:id="@+id/bearing"
@@ -232,5 +164,16 @@
         android:textColor="@android:color/holo_blue_light"
         app:layout_constraintStart_toEndOf="@+id/textView7"
         app:layout_constraintTop_toBottomOf="@+id/longitude" />
+
+    <Switch
+        android:id="@+id/holdgpsswitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="52dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
