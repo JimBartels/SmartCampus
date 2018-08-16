@@ -165,7 +165,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private final static long UPDATE_INVTERVAL_IN_MILLISECONDS = 500;
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private final static long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = 1;
-    private String userId;
     private LocationRequest mLocationRequest;
     private Drawable drawable1;
     int[] t= new int[2];
@@ -239,19 +238,33 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     Double Latitude=0.00000;
     Float Accuracy= Float.valueOf(0);
 
+    //Local user and pass storage
+    private String userId;
+    String password;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND =  Uri.parse("android.resource://"+ getPackageName() + "/" + R.raw.translate_tts);
         Arrays.fill(notificationArray,false);
-
-
         super.onCreate(savedInstanceState);
+
+        //Get user intent
+        password  = getIntent().getStringExtra("password");
+        userId = getIntent().getStringExtra("userId");
+        if (savedInstanceState != null) {
+            userId = savedInstanceState.getString("userId");
+            password = savedInstanceState.getString("password");
+        }
+
+
+
 
         //Authentication check
         FirebaseUser user = mAuth.getCurrentUser();
         userCheck(user);
-        getUsername(user);
+        //getUsername(user);
         Log.d(TAG, "onCreate: " + userId);
         setContentView(R.layout.activity_gps);
 
@@ -1360,6 +1373,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putString("userId",userId);
+        outState.putString("password",password);
+
     }
 
     @Override
@@ -1470,6 +1486,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     private void userCheck(FirebaseUser user) {
         if (user == null) {
+            MainActivity Login =  new MainActivity();
+            Login.login(userId+"@random.com",password);
+            Log.d(TAG, "userCheck: User is null");
             Intent loginIntent = new Intent(GpsActivity.this, MainActivity.class);
             startActivity(loginIntent);
         }
