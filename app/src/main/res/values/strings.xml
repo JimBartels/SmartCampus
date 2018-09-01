@@ -7,6 +7,8 @@
     <string name="title_activity_maps">Map</string>
     <string name="campus">Campus</string>
 
+    <string name="username_or_email_adress">   Username or email address</string>
+    <string name="password">Password</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

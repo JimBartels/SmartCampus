@@ -75,8 +75,7 @@ public class MainActivity extends AppCompatActivity  {
                 password = mPassField.getText().toString().trim();
 
                 if(true){
-                    if(name!=null && !name.isEmpty()&& password!=null && !password.isEmpty() && name.charAt(0)=='s'&& name.length()== 7){
-                        //Fire base doet raar met username inloggen etc. Er is eigenlijk alleen maar een optie voor email en password. Daarom heeft iedereen nu het formaat (s nummer)@random.com haha
+                    if(name!=null && !name.isEmpty()&& !password.isEmpty() /*&& name.charAt(0)=='s'&& name.length()== 7 */){
                         name=name+"@random.com";
                         register(name,password);
                 }

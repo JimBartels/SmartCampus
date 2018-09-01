@@ -1154,12 +1154,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
-
-    private void fixGPSLoc() {
-
-
-    }
-
     /*private void makePolyline(List<GeoPoint> geoPoints,Polyline polyline) {
         if(headingLine!=null){
             map.getOverlays().remove(headingLine);
