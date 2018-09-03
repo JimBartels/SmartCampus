@@ -26,10 +26,6 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class MainActivity extends AppCompatActivity  {
 
-
-
-
-
     //Required for setting up the connection with the Database
     private DatabaseReference mDatabase;
 

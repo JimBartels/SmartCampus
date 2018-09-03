@@ -215,6 +215,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     File file;
     String UTCPacketLossCheck;
     int packetLosses;
+    String gpsMessageTimeSent, statusMessageTimeSent, gpsLogTimeMade, statusLogTimeMade,carLogTimeMade,carMessageTimeReceived;
+    //Outgoing message type logging
+    private final static int LOGGING_NOTNEEDED = 0;
+    private final static int LOGGING_GPS = 1;
+    private final static int LOGGING_STATUS = 2;
+    private final static int LOGGING_VEHICLE = 3;
+
+    
 
     //Car notifications
     Uri AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND;
@@ -886,20 +894,20 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     } //Processes the messages that are incoming
 
-    public void publishMessage(@NonNull MqttAndroidClient client, @NonNull String msg, int qos, @NonNull String topic) throws MqttException, UnsupportedEncodingException {
+    public void publishAndLogMessage(@NonNull MqttAndroidClient client, @NonNull final String msg, int qos, @NonNull final String topic, final int messageType) throws MqttException, UnsupportedEncodingException {
         byte[] encodedPayload = new byte[0];
         encodedPayload = msg.getBytes("UTF-8");
         MqttMessage message = new MqttMessage(encodedPayload);
         message.setId(5866);
         message.setRetained(true);
         message.setQos(qos);
-        HyperLog.d(TAG, "Sent message: " + new String(message.getPayload()));
         Log.d(TAG, "Sent message: " + new String(message.getPayload()));
         client.publish(topic, message).setActionCallback(new IMqttActionListener() {
             @Override
             public void onSuccess(IMqttToken asyncActionToken) {
+                Log.d(TAG, "onSuccess message: ");
+                pilotLogging(messageType, Long.toString(System.currentTimeMillis()), msg);
             }
-
             @Override
             public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
                 packetLosses++;
@@ -907,19 +915,39 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         });
     } // Publishes message to VRU ae on OneM2M
 
-    private void writeToLogFile(String[] entry) {
-        String FILENAME = userId + "-" + "OneM2MBackAndForthLatency.csv";
+    private void pilotLogging(int messageType, String communicationTimeStamp, String data) {
+        String log;
+        switch(messageType) {
+            case LOGGING_NOTNEEDED:
+                break;
+            case LOGGING_GPS:
+                log = ", , " + userId + ", " + "SENT, CELLULAR, AutoPilot.SmartphoneGPS, " + communicationTimeStamp + ", " + userId + ", " + "{" + data + "}";
+                writeToLogFile(userId+"-sentSmartphoneGPSLogging",log);
+                break;
+            case LOGGING_STATUS:
+                log = ", , " + userId + ", " + "SENT, CELLULAR, AutoPilot.SmartphoneUserActivity, " + communicationTimeStamp + ", " + userId + ", " + "{" + data + "}";
+                writeToLogFile(userId+"-sentSmartphoneUserActivityLogging",log);
+                break;
+            case LOGGING_VEHICLE:
+                log = ", , " + userId + ", " + "RECEIVED, CELLULAR, AutoPilot.PriusStatus, " + communicationTimeStamp + ", 3173, " + "{" + data + "}";
+                writeToLogFile(userId+"-receivedVehicleMessagesLogging",log);
+                break;
+        }
+    }
+
+    private void writeToLogFile(String Filename , String entry) {
+       /* String FILENAME = userId + "-" + "OneM2MBackAndForthLatency.csv";
         StringBuilder stringBuilder = new StringBuilder();
 
         //Array loops all sring entries and seperates by comma as in CSV file
         for(String string : entry){
             String strTemp = string + ',';
             stringBuilder.append(strTemp);
-        }
-        String entryFile = stringBuilder.toString() + "\n";
+        }*/
+        String entryFile = entry + "\n";
         try {
-            FileOutputStream out = openFileOutput(FILENAME,Context.MODE_APPEND);
-            out.write(entryFile.getBytes());
+            FileOutputStream out = openFileOutput(Filename,Context.MODE_APPEND);
+            out.write((Long.toString(System.currentTimeMillis())+ entryFile).getBytes());
             out.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -944,11 +972,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     subscribeToTopic(CsmartcampusSubscriptionTopic);
                     subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
                     try {
-                        publishMessage(onem2m,VRU.CreateContainer(userId).toString(),0,oneM2MVRUReqTopic);
-                        publishMessage(onem2m,VRU.CreateUserContainer("Gps").toString(),0,oneM2MVRUReqTopic);
-                        publishMessage(onem2m,VRU.CreateUserContainer("Status").toString(),0,oneM2MVRUReqTopic);
-                        publishMessage(onem2m,VRU.CreateUserContainer("CallTaxi").toString(),0,oneM2MVRUReqTopic);
-                        publishMessage(onem2m,VRU.CreateTaxiSubContainer().toString(),0,oneM2MVRUReqTopic);
+                        publishAndLogMessage(onem2m,VRU.CreateContainer(userId).toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
+                        publishAndLogMessage(onem2m,VRU.CreateUserContainer("Gps").toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
+                        publishAndLogMessage(onem2m,VRU.CreateUserContainer("Status").toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
+                        publishAndLogMessage(onem2m,VRU.CreateUserContainer("CallTaxi").toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
+                        publishAndLogMessage(onem2m,VRU.CreateTaxiSubContainer().toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
                     } catch (JSONException e) {
                         e.printStackTrace();}
                     catch (UnsupportedEncodingException e) {
@@ -1171,7 +1199,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         String to = "/server/server/aeSmartCampus1/Users/" + userId + "/Status";
         contentCreateUserStatus.getJSONObject("m2m:rqp").put("to",to);
         String contentCreateStatus = contentCreateUserStatus.toString();
-        publishMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic);}
+        publishAndLogMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic,LOGGING_STATUS);}
 
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy, Long formattedDate, String speedGPS, String manualBearing) throws JSONException, MqttException, UnsupportedEncodingException {
         String formattedDateString = "UTC"+ Long.toString(formattedDate) ;
@@ -1184,7 +1212,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", formattedDate);
         String contentCreate = contentCreateGPS.toString();
-        publishMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic);
+        publishAndLogMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic,LOGGING_GPS);
     } //Publishes messages to onem2m broker by MQTT and posts to Huawei set up server via HTTP
 
     private String[] calculateSpeedandBearingandImplementPolyline(Double latitude, Double longitude, Long timeStamp){
@@ -1313,8 +1341,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
     private void uploadFileFirebase() {
+        String[] logFiles = {userId+"-sentSmartphoneGPSLogging",userId+"-sentSmartphoneUserActivityLogging",userId+"-receivedVehicleMessagesLogging"};
         FirebaseStorage storage = FirebaseStorage.getInstance();
-        String filePath = getApplicationContext().getFilesDir() + "/" + userId + "-" + "OneM2MBackAndForthLatency.csv";
+        for(String filename : logFiles)
+        {
+        String filePath = getApplicationContext().getFilesDir() + "/" + filename;
+
+
+
+
         Uri file = Uri.fromFile(new File(filePath));
         StorageReference storageRef = storage.getReference();
         StorageReference fileReference = storageRef.child(file.getLastPathSegment());
@@ -1331,7 +1366,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
                 // ...
             }
-        });
+        });}
     } // Uploads file to firebase, currently called whenever the app is paused or destroyed.
 
 
@@ -1595,7 +1630,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     public void CallCar() {
         try {
-            publishMessage(onem2m,VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userId).toString(),0,oneM2MVRUReqTopic);
+            publishAndLogMessage(onem2m,VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userId).toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
         } catch (JSONException e) {
             Log.d(TAG, "CallCar: "+e.toString());
         } catch (UnsupportedEncodingException e){
