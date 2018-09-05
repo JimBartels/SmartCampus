@@ -216,11 +216,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     String UTCPacketLossCheck;
     int packetLosses;
     String gpsMessageTimeSent, statusMessageTimeSent, gpsLogTimeMade, statusLogTimeMade,carLogTimeMade,carMessageTimeReceived;
+    boolean carLoggingUpdatable;
     //Outgoing message type logging
     private final static int LOGGING_NOTNEEDED = 0;
     private final static int LOGGING_GPS = 1;
     private final static int LOGGING_STATUS = 2;
     private final static int LOGGING_VEHICLE = 3;
+
 
     
 
@@ -430,7 +432,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onPause() {
-        uploadFileFirebase();
+        if(carLoggingUpdatable){uploadCarLogFilesFirebase();}
+        uploadGPSandStatusLogFilesFirebase();
         super.onPause();
     }
 
@@ -879,6 +882,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 Log.d(TAG, "Deltameter:" + deltaMeters);
                 handleCarNotification(deltaMeters);
             }
+            pilotLogging(LOGGING_VEHICLE,lastTimeUTC,message.toString());
+            carLoggingUpdatable = true;
         }
         else if(topic.equals(CsmartcampusSubscriptionTopic)){
             if(messageCar.getJSONObject("m2m:rsp").getString("rqi").equals(userId)){
@@ -889,7 +894,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 String latencyFromGPSTillReceive = Long.toString(deltaTime);
                 Log.d(TAG, "Latency:" + latencyFromGPSTillReceive);
                 String[] fileContents = {contentTimeString,latencyFromGPSTillReceive,Integer.toString(packetLosses)};
-                writeToLogFile(fileContents);
             }
         }
     } //Processes the messages that are incoming
@@ -921,16 +925,19 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             case LOGGING_NOTNEEDED:
                 break;
             case LOGGING_GPS:
+                Log.d(TAG, "pilotLogging: GPS");
                 log = ", , " + userId + ", " + "SENT, CELLULAR, AutoPilot.SmartphoneGPS, " + communicationTimeStamp + ", " + userId + ", " + "{" + data + "}";
-                writeToLogFile(userId+"-sentSmartphoneGPSLogging",log);
+                writeToLogFile(userId+"-sentSmartphoneGPSLogging.csv",log);
                 break;
             case LOGGING_STATUS:
+                Log.d(TAG, "pilotLogging: Status");
                 log = ", , " + userId + ", " + "SENT, CELLULAR, AutoPilot.SmartphoneUserActivity, " + communicationTimeStamp + ", " + userId + ", " + "{" + data + "}";
-                writeToLogFile(userId+"-sentSmartphoneUserActivityLogging",log);
+                writeToLogFile(userId+"-sentSmartphoneUserActivityLogging.csv",log);
                 break;
             case LOGGING_VEHICLE:
+                Log.d(TAG, "pilotLogging: Vehicle");
                 log = ", , " + userId + ", " + "RECEIVED, CELLULAR, AutoPilot.PriusStatus, " + communicationTimeStamp + ", 3173, " + "{" + data + "}";
-                writeToLogFile(userId+"-receivedVehicleMessagesLogging",log);
+                writeToLogFile(userId+"-receivedVehicleMessagesLogging.csv",log);
                 break;
         }
     }
@@ -944,6 +951,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             String strTemp = string + ',';
             stringBuilder.append(strTemp);
         }*/
+        Log.d(TAG, "writeToLogFile: in there");
         String entryFile = entry + "\n";
         try {
             FileOutputStream out = openFileOutput(Filename,Context.MODE_APPEND);
@@ -1027,7 +1035,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onStop() {
-        uploadFileFirebase();
+        if(carLoggingUpdatable){
+            uploadCarLogFilesFirebase();
+        }
+        uploadGPSandStatusLogFilesFirebase();
         super.onStop();
     }
 
@@ -1316,7 +1327,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         map.invalidate();
     }
 
-
+    
 
 
     private void onCampusTest(Double bound1la, Double bound2la, Double bound2lo, Double bound1lo, Double Longitude, Double Latitude) {
@@ -1329,7 +1340,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onDestroy() {
-        uploadFileFirebase();
+        if(carLoggingUpdatable){uploadCarLogFilesFirebase();}
+        uploadGPSandStatusLogFilesFirebase();
         Log.d(TAG, "destroy");
         FirebaseAuth.getInstance().signOut();
         stopTracking();
@@ -1340,8 +1352,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onDestroy();
     }
 
-    private void uploadFileFirebase() {
-        String[] logFiles = {userId+"-sentSmartphoneGPSLogging",userId+"-sentSmartphoneUserActivityLogging",userId+"-receivedVehicleMessagesLogging"};
+    private void uploadGPSandStatusLogFilesFirebase() {
+        String[] logFiles = {userId+"-sentSmartphoneGPSLogging.csv",userId+"-sentSmartphoneUserActivityLogging.csv"};
         FirebaseStorage storage = FirebaseStorage.getInstance();
         for(String filename : logFiles)
         {
@@ -1369,6 +1381,32 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         });}
     } // Uploads file to firebase, currently called whenever the app is paused or destroyed.
 
+    private void uploadCarLogFilesFirebase() {
+        String carLogFile = userId+"-receivedVehicleMessagesLogging.csv";
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+            String filePath = getApplicationContext().getFilesDir() + "/" + carLogFile;
+
+
+
+
+            Uri file = Uri.fromFile(new File(filePath));
+            StorageReference storageRef = storage.getReference();
+            StorageReference fileReference = storageRef.child(file.getLastPathSegment());
+            UploadTask uploadTask = fileReference.putFile(file);
+            uploadTask.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    Log.e(TAG, "FailureStorage: " + exception.toString());
+                }
+            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    Log.d(TAG, "Succes of storage");
+                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+                    // ...
+                }
+            });
+    } // Uploads file to firebase, currently called whenever the app is paused or destroyed.
 
     private void createLocationRequest(){
         mLocationRequest = new LocationRequest();
