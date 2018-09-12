@@ -33,7 +33,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -454,7 +453,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         } catch (Resources.NotFoundException e) {
             Log.e(TAG, "Can't find style. Error: ", e);
         }*/
-        mMap.setMyLocationEnabled(true);
+        if(checkPermissions()){
+        mMap.setMyLocationEnabled(true);}
+        else if(!checkPermissions()){
+            requestPermission();
+            mMap.setMyLocationEnabled(true);
+        }
 
         setupCarOverlay();
 
@@ -882,7 +886,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 Log.d(TAG, "Deltameter:" + deltaMeters);
                 handleCarNotification(deltaMeters);
             }
-            pilotLogging(LOGGING_VEHICLE,lastTimeUTC,message.toString());
+            pilotLogging(LOGGING_VEHICLE,timeUnix,message.toString());
             carLoggingUpdatable = true;
         }
         else if(topic.equals(CsmartcampusSubscriptionTopic)){
@@ -898,7 +902,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     } //Processes the messages that are incoming
 
-    public void publishAndLogMessage(@NonNull MqttAndroidClient client, @NonNull final String msg, int qos, @NonNull final String topic, final int messageType) throws MqttException, UnsupportedEncodingException {
+    public void publishAndLogMessage(@NonNull MqttAndroidClient client, @NonNull final String msg, int qos, @NonNull final String topic, final int messageType, final String logmsg, @NonNull final Long generationTimeStamp) throws MqttException, UnsupportedEncodingException {
         byte[] encodedPayload = new byte[0];
         encodedPayload = msg.getBytes("UTF-8");
         MqttMessage message = new MqttMessage(encodedPayload);
@@ -910,7 +914,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             @Override
             public void onSuccess(IMqttToken asyncActionToken) {
                 Log.d(TAG, "onSuccess message: ");
-                pilotLogging(messageType, Long.toString(System.currentTimeMillis()), msg);
+                if(messageType!=LOGGING_NOTNEEDED){
+                pilotLogging(messageType, generationTimeStamp, logmsg);}
             }
             @Override
             public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
@@ -919,24 +924,27 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         });
     } // Publishes message to VRU ae on OneM2M
 
-    private void pilotLogging(int messageType, String communicationTimeStamp, String data) {
+    private void pilotLogging(int messageType, long generationTimeStamp, String data) {
         String log;
+        if(data!=null){
+        data = data.replace("\\", "");
+        data = data.replace(" ", "");}
         switch(messageType) {
             case LOGGING_NOTNEEDED:
                 break;
             case LOGGING_GPS:
                 Log.d(TAG, "pilotLogging: GPS");
-                log = ", , " + userId + ", " + "SENT, CELLULAR, AutoPilot.SmartphoneGPS, " + communicationTimeStamp + ", " + userId + ", " + "{" + data + "}";
+                log = ",1," + userId + "," + "SENT,CELLULAR,AutoPilot.SmartphoneGPS," + generationTimeStamp + "," + userId + "," + "{" + data + "}";
                 writeToLogFile(userId+"-sentSmartphoneGPSLogging.csv",log);
                 break;
             case LOGGING_STATUS:
                 Log.d(TAG, "pilotLogging: Status");
-                log = ", , " + userId + ", " + "SENT, CELLULAR, AutoPilot.SmartphoneUserActivity, " + communicationTimeStamp + ", " + userId + ", " + "{" + data + "}";
+                log = ",2," + userId + "," + "SENT,CELLULAR,AutoPilot.SmartphoneUserActivity," + generationTimeStamp + "," + userId + ", " + "{" + data + "}";
                 writeToLogFile(userId+"-sentSmartphoneUserActivityLogging.csv",log);
                 break;
             case LOGGING_VEHICLE:
                 Log.d(TAG, "pilotLogging: Vehicle");
-                log = ", , " + userId + ", " + "RECEIVED, CELLULAR, AutoPilot.PriusStatus, " + communicationTimeStamp + ", 3173, " + "{" + data + "}";
+                log = ",," + userId + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + generationTimeStamp + ",3173," + "{" + data + "}";
                 writeToLogFile(userId+"-receivedVehicleMessagesLogging.csv",log);
                 break;
         }
@@ -955,7 +963,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         String entryFile = entry + "\n";
         try {
             FileOutputStream out = openFileOutput(Filename,Context.MODE_APPEND);
-            out.write((Long.toString(System.currentTimeMillis())+ entryFile).getBytes());
+            out.write((Double.parseDouble(String.valueOf(System.currentTimeMillis()))+ entryFile).getBytes());
             out.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -980,11 +988,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     subscribeToTopic(CsmartcampusSubscriptionTopic);
                     subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
                     try {
-                        publishAndLogMessage(onem2m,VRU.CreateContainer(userId).toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
-                        publishAndLogMessage(onem2m,VRU.CreateUserContainer("Gps").toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
-                        publishAndLogMessage(onem2m,VRU.CreateUserContainer("Status").toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
-                        publishAndLogMessage(onem2m,VRU.CreateUserContainer("CallTaxi").toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
-                        publishAndLogMessage(onem2m,VRU.CreateTaxiSubContainer().toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
+                        publishAndLogMessage(onem2m,VRU.CreateContainer(userId).toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null, null);
+                        publishAndLogMessage(onem2m,VRU.CreateUserContainer("Gps").toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null, null);
+                        publishAndLogMessage(onem2m,VRU.CreateUserContainer("Status").toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null, null);
+                        publishAndLogMessage(onem2m,VRU.CreateUserContainer("CallTaxi").toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null, null);
+                        publishAndLogMessage(onem2m,VRU.CreateTaxiSubContainer().toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null, null);
                     } catch (JSONException e) {
                         e.printStackTrace();}
                     catch (UnsupportedEncodingException e) {
@@ -1108,7 +1116,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             //Sending GPS to oneM2M
             try {
-                publishGpsData(Latitude,Longitude,Accuracy, timestampUTC,speedGPS,bearing);
+                if (speedGPS == null) {speedGPS = "0.0";
+                }
+                publishGpsData(Latitude,Longitude,Accuracy, mCurrentlocation.getTime(),speedGPS,bearing);
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (MqttException e) {
@@ -1204,26 +1214,29 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 */
     private void publishUserStatus(String activity, Long timeStamp, int confidence) throws JSONException, MqttException, UnsupportedEncodingException {
-        String con = "activity: " + activity +  "," +  " activity confidence: " + confidence;
+        String con = "activity: " + activity +  "," +  "activity confidence: " + confidence + ",timestampUtc:" + timeStamp;
         contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
         contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
         String to = "/server/server/aeSmartCampus1/Users/" + userId + "/Status";
         contentCreateUserStatus.getJSONObject("m2m:rqp").put("to",to);
         String contentCreateStatus = contentCreateUserStatus.toString();
-        publishAndLogMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic,LOGGING_STATUS);}
+        String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").getString("con");
+        publishAndLogMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic,LOGGING_STATUS,logmessage, timeStamp);}
 
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy, Long formattedDate, String speedGPS, String manualBearing) throws JSONException, MqttException, UnsupportedEncodingException {
-        String formattedDateString = "UTC"+ Long.toString(formattedDate) ;
+
+        String formattedDateString = "UTC"+ Long.toString(formattedDate);
         UTCPacketLossCheck = formattedDate.toString();
         String topic = "/server/server/" + "aeSmartCampus1" + "/Users/" + userId + "/gps";
-        String con = "{\"type\":5,\"id\":" + userId + ", \"timestampUtc\":" + formattedDate + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":"+manualBearing+ ", \"accuracy\":"+Accuracy+ "}";
-        String conHuawei = "{\"type\":5,\"id\":" + userId + ", \"timestampUtc\":" + formattedDateString + ", \"lon\":" + longitude + ", \"lat\":"+ latitude + ", \"speed\":"+ speedGPS + ", \"heading\":"+manualBearing+ ", \"accuracy\":"+Accuracy+ "}";
+        String con = "{\"type\":5,\"id\":"+userId + ",\"timestampUtc\":" + formattedDate + ",\"lon\":" + longitude + ",\"lat\":"+ latitude + ",\"speed\":"+ speedGPS + ",\"heading\":"+manualBearing+ ",\"accuracy\":"+Accuracy+ "}";
+        String conHuawei = "{\"type\":5,\"id\":" + userId + ",\"timestampUtc\":" + formattedDateString + ",\"lon\":" + longitude + ",\"lat\":"+ latitude + ",\"speed\":"+ speedGPS + ",\"heading\":"+manualBearing+ ",\"accuracy\":"+Accuracy+ "}";
         okHTTPPost(huaweiUrl,conHuawei);
         contentCreateGPS.getJSONObject("m2m:rqp").put("to",topic);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", formattedDate);
         String contentCreate = contentCreateGPS.toString();
-        publishAndLogMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic,LOGGING_GPS);
+        String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").getString("con");
+        publishAndLogMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic,LOGGING_GPS,logmessage,formattedDate);
     } //Publishes messages to onem2m broker by MQTT and posts to Huawei set up server via HTTP
 
     private String[] calculateSpeedandBearingandImplementPolyline(Double latitude, Double longitude, Long timeStamp){
@@ -1514,11 +1527,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             snackbar.getView().setBackground(drawable1);
             snackbar.show();
         }
-        else{
             ActivityCompat.requestPermissions(GpsActivity.this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     REQUEST_PERMISSIONS_REQUEST_CODE);
-        }
     } //Requests the user for permission of GPS
 
     @Override
@@ -1668,7 +1679,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     public void CallCar() {
         try {
-            publishAndLogMessage(onem2m,VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userId).toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED);
+            publishAndLogMessage(onem2m,VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userId).toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null, null);
         } catch (JSONException e) {
             Log.d(TAG, "CallCar: "+e.toString());
         } catch (UnsupportedEncodingException e){
