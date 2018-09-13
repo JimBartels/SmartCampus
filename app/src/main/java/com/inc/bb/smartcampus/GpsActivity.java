@@ -934,7 +934,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 break;
             case LOGGING_GPS:
                 Log.d(TAG, "pilotLogging: GPS");
-                log = ",1," + userId + "," + "SENT,CELLULAR,AutoPilot.SmartphoneGPS," + generationTimeStamp + "," + userId + "," + "{" + data + "}";
+                log = ",1," + userId + "," + "SENT,CELLULAR,AutoPilot.SmartphoneGPS," + generationTimeStamp + "," + userId + "," + data ;
                 writeToLogFile(userId+"-sentSmartphoneGPSLogging.csv",log);
                 break;
             case LOGGING_STATUS:
