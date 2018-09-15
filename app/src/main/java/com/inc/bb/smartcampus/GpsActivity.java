@@ -243,6 +243,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private final static String AUTONOMOUS_CAR_NOTIFICATION_TITLE = "Autonomous car warning";
     private final static int AUTONOMOUS_CAR_40M_NOTIFICATION_ID = 0;
     private final static int AUTONOMOUS_CAR_100M_NOTIFICATION_ID = 1;
+    private final static int HUAWEI_NOTIFICATION_ID = 3;
     Boolean[] notificationArray = new Boolean[10];
     Float carBearing;
     LatLng carLoc;
@@ -259,7 +260,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     Float Accuracy= Float.valueOf(0);
 
     //Local user and pass storage
-    private String userId;
+    public String userId;
     String password;
 
 
@@ -307,8 +308,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
         Drawable locButtondrawableBefore = ContextCompat.getDrawable(getApplicationContext(), R.drawable.buttonshapebefore);
-        Log.d(TAG, "onCreate: ");
 
+        Log.d(TAG, "onCreate: ");
 
         setupBottomNavigationBar();
 
@@ -316,12 +317,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         //TODO fix GPS function continueing after onDestroy when in thread
 
         //Hyperlog
-        HyperLog.initialize(this);
-        HyperLog.setLogLevel(Log.DEBUG);
-        file = HyperLog.getDeviceLogsInFile(this);
-        File path = getApplicationContext().getFilesDir();
-        logFile = new File(path,"log.txt");
-
 
         oneM2MGPSThread = new Thread(new Runnable() {
             @Override
@@ -354,18 +349,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         viewLocation = (TextView) findViewById(R.id.location);
         viewSpeed = (TextView) findViewById(R.id.speed);
         gpsHolder = findViewById(R.id.holdgpsswitch);
-      /*  gpsHolder.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if(b){
-                    gpsHoldButtonChecked = true;
-                }
-                else if (!b){
-                    gpsHoldButtonChecked = false
-                }
-
-            }
-        }); */
 
         updateValuesFromBundle(savedInstanceState);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -1059,7 +1042,31 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     public void processFinish(String output) {
         Log.d(TAG, "processFinish: "+ output);
+        huaweiResponseHandler(output);
+
     } //Handler voor response van de asynctask post OkHTTP
+
+    private void huaweiResponseHandler(String output) {
+
+        //TODO parsing of JSON
+        boolean inZone;
+        Double deltaMeters;
+       // Double deltaMeters = DifferenceInMeters(latCar,lonCar,mCurrentlocation.getLatitude(),mCurrentlocation.getLongitude());
+       // handleCarNotificationHuawei(deltaMeters, inZone);
+
+    }
+
+    private void handleCarNotificationHuawei(Double deltaMeters, boolean inZone) {
+        String notificationText = "There is an autonomous car driving within" + deltaMeters + "of your location";
+        mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
+                .setContentText(notificationText)
+                .setStyle(new NotificationCompat.BigTextStyle())
+                .setContentTitle("Autonomous car warning")
+                .setAutoCancel(false);
+
+        mNotificationManager.notify(HUAWEI_NOTIFICATION_ID, mBuilder.build());
+        notificationArray[HUAWEI_NOTIFICATION_ID] = true;
+    }
 
     void okHTTPPost(String url, String json) {
         okHttpPost post1 = new okHttpPost(this);
@@ -1079,6 +1086,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(carLoggingUpdatable){
             uploadCarLogFilesFirebase();
         }
+
+
         if(fileNameVector!=null){uploadGPSandStatusLogFilesFirebase();}
         super.onStop();
     }
