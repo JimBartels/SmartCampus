@@ -1,6 +1,11 @@
 package com.inc.bb.smartcampus;
 
 import android.os.AsyncTask;
+import android.util.Log;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -18,10 +23,11 @@ import okhttp3.Response;
  * Created by s163310 on 3/8/2018.
  */
 
-public class okHttpPost extends AsyncTask<String,Void,String> {
+public class okHttpPost extends AsyncTask<String, Void, String[]> {
 
+    String TAG = "OkHttpPost ";
     public interface AsyncResponse{
-        void processFinish(String output);
+        void processFinish(String[] output);
     }
     public AsyncResponse delegate = null;
 
@@ -29,8 +35,9 @@ public class okHttpPost extends AsyncTask<String,Void,String> {
         this.delegate=delegate;
     }
     @Override
-    protected String doInBackground(String... strings) {
+    protected String[] doInBackground(String... strings) {
         try{
+            String userId = strings[2];
         OkHttpClient client = new OkHttpClient();
         MediaType mediaType = MediaType.parse("application/json");
         RequestBody body = RequestBody.create(mediaType, strings[1]);
@@ -46,13 +53,31 @@ public class okHttpPost extends AsyncTask<String,Void,String> {
                 .build();
         Response response = client.newCall(request).execute();
         if(response.isSuccessful()){
-            return response.body().string();}}
-        catch (IOException e){return e.toString();}
+            String responseBody = response.body().string();
+            if(responseBody!=null){
+            try{
+                JSONObject jObject = new JSONObject(responseBody);
+                JSONArray jArray = jObject.getJSONObject("hits").getJSONArray("hits");
+                for(int i = 0 ; i<jArray.length();i++){
+                    JSONObject jObjectIter = jArray.getJSONObject(i);
+                    if(jObjectIter.getString("_id").equals(userId)){
+                        return new String[]{responseBody,"true"};
+                    }
+                }
+            }
+            catch(JSONException e){
+                Log.e(TAG, "doInBackground: " + e.toString());
+            }
+
+            return new String[]{responseBody, "false"}; }
+            }
+        }
+        catch (IOException e){return new String[]{e.toString(),"nothing"};}
         return null;
     }
 
     @Override
-    protected void onPostExecute(String result) {
+    protected void onPostExecute(String[] result) {
         delegate.processFinish(result);
         super.onPostExecute(result);
     }

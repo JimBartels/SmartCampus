@@ -20,6 +20,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -213,6 +214,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     int carNotificationConstant2 =0;
     Double carLon = 5.623863;
     Double carLat = 51.475792;
+    Float carHeading;
 
     //Logging
     File logFile;
@@ -229,6 +231,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private final static int LOGGING_GPS = 1;
     private final static int LOGGING_STATUS = 2;
     private final static int LOGGING_VEHICLE = 3;
+    private final static int LOGGING_HUAWEI_SENT = 4;
+    private final static int LOGGING_HUAWEI_RECEIVED = 5;
     //Logging layout widgets
     EditText runNumberText, experimentNumberText;
     Switch loggingSwitch;
@@ -385,6 +389,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                         switch (item.getItemId()) {
                             case R.id.action_campus:
+                                removeFragments();
                                 break;
                             case R.id.action_car:
                                 android.app.Fragment fragment = new CampusCar();
@@ -407,7 +412,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     private void switchToFragment(Fragment fragment) {
         android.app.FragmentManager manager = getFragmentManager();
-        manager.beginTransaction().replace(R.id.fragment_container, fragment).addToBackStack(null).commit();
+        manager.beginTransaction().replace(R.id.map, fragment).addToBackStack(null).commit();
     }
 
 
@@ -433,7 +438,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onPause() {
         //if(carLoggingUpdatable){uploadCarLogFilesFirebase();}
-        if(fileNameVector!=null){uploadGPSandStatusLogFilesFirebase();}
+        if(fileNameVector!=null){uploadLogFilesFirebase();}
         super.onPause();
     }
 
@@ -856,14 +861,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         Log.d(TAG, "messageArrived: " + messageCar);
         if(topic.equals(CsmartCampusCarsSubscriptionTopic)){
             String contentCarString = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev").getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
+            Log.d(TAG,"oneM2MMessages + " + contentCarString);
             String[] separated = contentCarString.split(",");
             String longitudeCarString = separated[3];
+            String dataGenerationTimestamp = separated[2].split(":")[1];
             String[] carLonseparated = longitudeCarString.split(":");
             carLon = Double.parseDouble(carLonseparated[1]);
             String latitudeCar = separated[4];
+            carHeading = Float.parseFloat((separated[6].split(":"))[1].replace("}",""));
             String[] carLatseparated = latitudeCar.split(":");
             carLat = Double.parseDouble(carLatseparated[1]);
-            Log.d(TAG, "oneM2MMessagesHandler: true car" + carLat + "," + carLatseparated[1]);
             //Toast.makeText(getApplicationContext(),bearingSep[1],Toast.LENGTH_LONG).show();
 
             //String bearing1[] = bearingSep[1].split("}");
@@ -876,16 +883,25 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             //Double speedCar = Double.parseDouble(speedCarSep[1]);
             // String headingCar = separated[6];
 
-
-
             carLoc = new LatLng(carLat,carLon);
+
+            Handler mainHandler = new Handler(getApplicationContext().getMainLooper());
+            Runnable myRunnable = new Runnable() {
+                @Override
+                public void run() {carOverlay.setPosition(carLoc);
+                    carOverlay.setBearing(carHeading);} // This is your code
+            };
+            mainHandler.post(myRunnable);
+
             if(mCurrentlocation!=null){
                 Double deltaMeters;
                 deltaMeters = DifferenceInMeters(carLat,carLon,mCurrentlocation.getLatitude(),mCurrentlocation.getLongitude());
                 Log.d(TAG, "Deltameter:" + deltaMeters);
                 handleCarNotification(deltaMeters);
+
             }
-            pilotLogging(LOGGING_VEHICLE,timeUnix,contentCarString);
+            Log.d(TAG, "oneM2MMessagesHandler: true car" +dataGenerationTimestamp);
+            pilotLogging(LOGGING_VEHICLE,Long.parseLong(dataGenerationTimestamp),contentCarString);
             carLoggingUpdatable = true;
         }
         else if(topic.equals(CsmartcampusSubscriptionTopic)){
@@ -900,6 +916,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         }
     } //Processes the messages that are incoming
+
 
     public void publishAndLogMessage(@NonNull MqttAndroidClient client, @NonNull final String msg, int qos, @NonNull final String topic, final int messageType, final String logmsg, @NonNull final Long generationTimeStamp) throws MqttException, UnsupportedEncodingException {
         byte[] encodedPayload = new byte[0];
@@ -956,13 +973,28 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 break;
             case LOGGING_VEHICLE:
                 Log.d(TAG, "pilotLogging: Vehicle");
-                log = ",," + userId + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + userId  + generationTimeStamp + ",112233," + data;
+                log = ",3," + userId + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + "112233"  + generationTimeStamp + ",112233," + data;
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp" + experimentNumberString + "_Run" + runNumberString + "_" +userId+ "_3.csv",log);
                 String fileNameCar = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"   + experimentNumberString + "_Run" + runNumberString + "_" + userId+"_3.csv";
                 if(fileNameVector==null){fileNameVector.add(fileNameCar);}
                 if(!fileNameVector.contains(fileNameCar)){fileNameVector.add(fileNameCar);}
 
                 break;
+            case LOGGING_HUAWEI_RECEIVED:
+                Log.d(TAG, "pilotLogging: HuaweiReceived");
+                log = ",4," + userId + "," + "RECEIVED,CELLULAR,AutoPilot.HuaweiGeofencingRectangle," + " ,3172," + data;
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp" + experimentNumberString + "_Run" + runNumberString + "_" +userId+ "_4.csv",log);
+                String fileNameHR = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"   + experimentNumberString + "_Run" + runNumberString + "_" + userId+"_4.csv";
+                if(fileNameVector==null){fileNameVector.add(fileNameHR);}
+                if(!fileNameVector.contains(fileNameHR)){fileNameVector.add(fileNameHR);}
+                break;
+            case LOGGING_HUAWEI_SENT:
+                Log.d(TAG, "pilotLogging: HuaweiSent");
+                log = ",5," + userId + "," + "SENT,CELLULAR,AutoPilot.HuaweiGeofencingGPS, ," + userId + "," + data;
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp" + experimentNumberString + "_Run" + runNumberString + "_" +userId+ "_5.csv",log);
+                String fileNameHS = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"   + experimentNumberString + "_Run" + runNumberString + "_" + userId+"_5.csv";
+                if(fileNameVector==null){fileNameVector.add(fileNameHS);}
+                if(!fileNameVector.contains(fileNameHS)){fileNameVector.add(fileNameHS);}
         }
     }
 
@@ -1040,10 +1072,22 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     } //Options for MQTT client (Clean session, automatic reconnect etc)
 
     @Override
-    public void processFinish(String output) {
-        Log.d(TAG, "processFinish: "+ output);
-        huaweiResponseHandler(output);
+    public void processFinish(String[] output) {
+        if(output!=null) {
+            Log.d(TAG, "processFinish: " + output[0] + "," + output[1]);
+            if (loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty() && !experimentNumberText.getText().toString().isEmpty()) {
+                pilotLogging(LOGGING_HUAWEI_RECEIVED, 150000000, output[0]);
+            }
+            if (output[1].equals("true")) {
+                handleCarNotificationHuawei(true);
+            }
+            if (output[1].equals("false")) {
+                handleCarNotificationHuawei(false);
+            }
 
+            // huaweiResponseHandler(output);
+        }
+        handleCarNotificationHuawei(false);
     } //Handler voor response van de asynctask post OkHTTP
 
     private void huaweiResponseHandler(String output) {
@@ -1056,8 +1100,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     }
 
-    private void handleCarNotificationHuawei(Double deltaMeters, boolean inZone) {
-        String notificationText = "There is an autonomous car driving within" + deltaMeters + "of your location";
+    private void handleCarNotificationHuawei(boolean inZone) {
+        if(inZone){
+        if(!notificationArray[HUAWEI_NOTIFICATION_ID]){
+        String notificationText = "You are in the rectangle";
         mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
                 .setContentText(notificationText)
                 .setStyle(new NotificationCompat.BigTextStyle())
@@ -1065,14 +1111,18 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .setAutoCancel(false);
 
         mNotificationManager.notify(HUAWEI_NOTIFICATION_ID, mBuilder.build());
-        notificationArray[HUAWEI_NOTIFICATION_ID] = true;
-    }
+        notificationArray[HUAWEI_NOTIFICATION_ID] = true;}
+        if(!inZone){
+            cancelNotification(HUAWEI_NOTIFICATION_ID);
+        }
+    }}
 
     void okHTTPPost(String url, String json) {
         okHttpPost post1 = new okHttpPost(this);
-        String[] string = new String[2];
+        String[] string = new String[3];
         string[0]=url;
         string[1]=json;
+        string[2]=userId;
         post1.execute(string);
     }
 
@@ -1083,12 +1133,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onStop() {
-        if(carLoggingUpdatable){
-            uploadCarLogFilesFirebase();
-        }
-
-
-        if(fileNameVector!=null){uploadGPSandStatusLogFilesFirebase();}
+        if(fileNameVector!=null){uploadLogFilesFirebase();}
         super.onStop();
     }
 
@@ -1116,6 +1161,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             requestPermission();
         }
     }
+
     private void updateLocationUI(Long timestampUTC) {
         if(!gpsHolder.isChecked()){
             isAlreadyHeld=false;
@@ -1124,10 +1170,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(mCurrentlocation!=null){
 
             //Getting info from mCurrentlocation
-            if(carLoc!=null) {
-                carOverlay.setPosition(carLoc);
-                //carOverlay.setBearing(carBearing);
-            }
+
 
             if(gpsHolder.isChecked()) {
                 if(!isAlreadyHeld){
@@ -1161,7 +1204,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             try {
                 if (speedGPS == null) {speedGPS = "0.0";
                 }
-                publishGpsData(Latitude,Longitude,Accuracy, mCurrentlocation.getTime(),speedGPS,bearing);
+                if(mCurrentlocation!=null){
+                publishGpsData(Latitude,Longitude,Accuracy, mCurrentlocation.getTime(),speedGPS,bearing);}
+
+
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (MqttException e) {
@@ -1278,7 +1324,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("rn", formattedDate);
         String contentCreate = contentCreateGPS.toString();
         String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").getString("con");
+
         publishAndLogMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic,LOGGING_GPS,logmessage,formattedDate);
+        if(loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty() && !experimentNumberText.getText().toString().isEmpty()){
+            pilotLogging(LOGGING_HUAWEI_SENT,formattedDate,conHuawei);}
     } //Publishes messages to onem2m broker by MQTT and posts to Huawei set up server via HTTP
 
     private String[] calculateSpeedandBearingandImplementPolyline(Double latitude, Double longitude, Long timeStamp){
@@ -1393,7 +1442,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onDestroy() {
         //if(carLoggingUpdatable){uploadCarLogFilesFirebase();}
-        if(fileNameVector!=null){uploadGPSandStatusLogFilesFirebase();}
+        if(fileNameVector!=null){uploadLogFilesFirebase();}
         Log.d(TAG, "destroy");
         FirebaseAuth.getInstance().signOut();
         stopTracking();
@@ -1404,7 +1453,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onDestroy();
     }
 
-    private void uploadGPSandStatusLogFilesFirebase() {
+    private void uploadLogFilesFirebase() {
         fileNameVector.elements();
         FirebaseStorage storage = FirebaseStorage.getInstance();
         for(Enumeration<String> e = fileNameVector.elements(); e.hasMoreElements();){
@@ -1431,34 +1480,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 // ...
             }
         });}
-    } // Uploads file to firebase, currently called whenever the app is paused or destroyed.
+    } // Uploads files to firebase by using a vector as dataformat, a dynamic array, currently called whenever the app is paused or destroyed.
 
-    private void uploadCarLogFilesFirebase() {
-        String carLogFile = userId+"-receivedVehicleMessagesLogging.csv";
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-            String filePath = getApplicationContext().getFilesDir() + "/" + carLogFile;
-
-
-
-
-            Uri file = Uri.fromFile(new File(filePath));
-            StorageReference storageRef = storage.getReference();
-            StorageReference fileReference = storageRef.child(file.getLastPathSegment());
-            UploadTask uploadTask = fileReference.putFile(file);
-            uploadTask.addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    Log.e(TAG, "FailureStorage: " + exception.toString());
-                }
-            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    Log.d(TAG, "Succes of storage");
-                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
-                    // ...
-                }
-            });
-    } // Uploads file to firebase, currently called whenever the app is paused or destroyed.
 
     private void createLocationRequest(){
         mLocationRequest = new LocationRequest();
@@ -1624,7 +1647,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 super.onLocationResult(locationResult);
                 Long timestamp = System.currentTimeMillis();
                 mCurrentlocation= locationResult.getLastLocation();
-                String mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
                 updateLocationUI(timestamp);
 
             }
