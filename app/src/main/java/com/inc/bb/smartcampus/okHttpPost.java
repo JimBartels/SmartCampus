@@ -58,7 +58,9 @@ public class okHttpPost extends AsyncTask<String, Void, String[]> {
             try{
                 JSONObject jObject = new JSONObject(responseBody);
                 JSONArray jArray = jObject.getJSONObject("hits").getJSONArray("hits");
-                for(int i = 0 ; i<jArray.length();i++){
+                int i=0;
+                for(i=0 ; i<jArray.length();i++){
+
                     JSONObject jObjectIter = jArray.getJSONObject(i);
                     if(jObjectIter.getString("_id").equals(userId)){
                         return new String[]{responseBody,"true"};

@@ -1102,14 +1102,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     private void handleCarNotificationHuawei(boolean inZone) {
         if(inZone){
-        if(!notificationArray[HUAWEI_NOTIFICATION_ID]){
-        String notificationText = "You are in the rectangle";
-        mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
+            long[] vibrationPattern = {Long.valueOf(0),Long.valueOf(500)};
+            if(!notificationArray[HUAWEI_NOTIFICATION_ID]){
+            String notificationText = "You are in the rectangle";
+            mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
                 .setContentText(notificationText)
                 .setStyle(new NotificationCompat.BigTextStyle())
                 .setContentTitle("Autonomous car warning")
-                .setAutoCancel(false);
-
+                .setAutoCancel(false)
+                .setVibrate(vibrationPattern);
         mNotificationManager.notify(HUAWEI_NOTIFICATION_ID, mBuilder.build());
         notificationArray[HUAWEI_NOTIFICATION_ID] = true;}
         if(!inZone){
