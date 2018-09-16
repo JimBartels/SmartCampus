@@ -20,6 +20,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -215,6 +216,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     Double carLon = 5.623863;
     Double carLat = 51.475792;
     Float carHeading;
+    Float carSpeed;
+    Long lastFlowRadar;
+    Long lastRTK=null;
+    boolean noRTK = true;
 
     //Logging
     File logFile;
@@ -283,9 +288,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             userId = savedInstanceState.getString("userId");
             password = savedInstanceState.getString("password");
         }
-
-
-
 
         //Authentication check
         FirebaseUser user = mAuth.getCurrentUser();
@@ -859,51 +861,71 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void oneM2MMessagesHandler(String topic, MqttMessage message, Long timeUnix, String lastTimeUTC) throws JSONException {
         JSONObject messageCar = new JSONObject(new String(message.getPayload()));
         Log.d(TAG, "messageArrived: " + messageCar);
+
         if(topic.equals(CsmartCampusCarsSubscriptionTopic)){
+            String comparator = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getString("sur");
             String contentCarString = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev").getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
-            Log.d(TAG,"oneM2MMessages + " + contentCarString);
-            String[] separated = contentCarString.split(",");
-            String longitudeCarString = separated[3];
-            String dataGenerationTimestamp = separated[2].split(":")[1];
-            String[] carLonseparated = longitudeCarString.split(":");
-            carLon = Double.parseDouble(carLonseparated[1]);
-            String latitudeCar = separated[4];
-            carHeading = Float.parseFloat((separated[6].split(":"))[1].replace("}",""));
-            String[] carLatseparated = latitudeCar.split(":");
-            carLat = Double.parseDouble(carLatseparated[1]);
-            //Toast.makeText(getApplicationContext(),bearingSep[1],Toast.LENGTH_LONG).show();
+            Long dataGenerationTimestamp=null;
+            boolean newData=false;
 
-            //String bearing1[] = bearingSep[1].split("}");
-            //carBearing = Float.parseFloat(bearing1[0]);
+           /* if(comparator.equals("/server/server/aeTechnolution/flowradar/flowradar_car/subFlowradar_car")){
+                Log.d(TAG,"oneM2MMessages + " + contentCarString);
+                String[] separated = contentCarString.split(",");
+                lastFlowRadar = System.currentTimeMillis();
 
-
-
-            //String speedCarString = separated[5];
-            //String[] speedCarSep = speedCarString.split(":");
-            //Double speedCar = Double.parseDouble(speedCarSep[1]);
-            // String headingCar = separated[6];
-
-            carLoc = new LatLng(carLat,carLon);
-
-            Handler mainHandler = new Handler(getApplicationContext().getMainLooper());
-            Runnable myRunnable = new Runnable() {
-                @Override
-                public void run() {carOverlay.setPosition(carLoc);
-                    carOverlay.setBearing(carHeading);} // This is your code
-            };
-            mainHandler.post(myRunnable);
-
-            if(mCurrentlocation!=null){
-                Double deltaMeters;
-                deltaMeters = DifferenceInMeters(carLat,carLon,mCurrentlocation.getLatitude(),mCurrentlocation.getLongitude());
-                Log.d(TAG, "Deltameter:" + deltaMeters);
-                handleCarNotification(deltaMeters);
-
+                String longitudeCarString = separated[3];
+                dataGenerationTimestamp = separated[2].split(":")[1];
+                String[] carLonseparated = longitudeCarString.split(":");
+                carLon = Double.parseDouble(carLonseparated[1]);
+                String latitudeCar = separated[4];
+                carHeading = Float.parseFloat((separated[6].split(":"))[1].replace("}",""));
+                carSpeed = Float.parseFloat(separated[5].split(":")[1]);
+                String[] carLatseparated = latitudeCar.split(":");
+                carLat = Double.parseDouble(carLatseparated[1]);
+                newData = true;}*/
+            if(comparator.equals("/server/server/aeTechnolution/prius/GPS/subPrius")){
+                noRTK=false;
+                Log.d(TAG, "oneM2MMessagesHandler: RTK");
+                lastRTK = System.currentTimeMillis();
+                String[] separated = contentCarString.split(",");
+                String longitudeCarString = separated[1];
+                dataGenerationTimestamp = Long.parseLong(separated[2].split(":")[1].replace(" ",""));
+                Log.d(TAG, "oneM2MMessagesHandler: " +dataGenerationTimestamp);
+                String[] carLonseparated = longitudeCarString.split(":");
+                carLon = Double.parseDouble(carLonseparated[1]);
+                carSpeed = Float.parseFloat(separated[6].split(":")[1]);
+                String latitudeCar = separated[4];
+                carHeading = Float.parseFloat((separated[3].split(":"))[1]);
+                String[] carLatseparated = latitudeCar.split(":");
+                carLat = Double.parseDouble(carLatseparated[1]);
+                newData = true;
             }
-            Log.d(TAG, "oneM2MMessagesHandler: true car" +dataGenerationTimestamp);
-            pilotLogging(LOGGING_VEHICLE,Long.parseLong(dataGenerationTimestamp),contentCarString);
-            carLoggingUpdatable = true;
+            if(newData) {
+                carLoc = new LatLng(carLat, carLon);
+
+                Handler mainHandler = new Handler(getApplicationContext().getMainLooper());
+                Runnable myRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        carOverlay.setPosition(carLoc);
+                        carOverlay.setBearing(carHeading);
+                    } // This is your code
+                };
+                mainHandler.post(myRunnable);
+
+                if (mCurrentlocation != null) {
+                    Double deltaMeters;
+                    deltaMeters = DifferenceInMeters(carLat, carLon, mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude());
+                    Log.d(TAG, "Deltameter:" + deltaMeters);
+                    handleCarNotification(deltaMeters);
+
+                }
+
+                pilotLogging(LOGGING_VEHICLE, dataGenerationTimestamp, contentCarString);
+                newData=false;
+            }
         }
+
         else if(topic.equals(CsmartcampusSubscriptionTopic)){
             if(messageCar.getJSONObject("m2m:rsp").getString("rqi").equals(userId)){
                 String contentTimeString = messageCar.getJSONObject("m2m:rsp").getJSONObject("pc").getJSONArray("m2m:cin").getJSONObject(0).getString("rn");
@@ -1090,16 +1112,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         handleCarNotificationHuawei(false);
     } //Handler voor response van de asynctask post OkHTTP
 
-    private void huaweiResponseHandler(String output) {
-
-        //TODO parsing of JSON
-        boolean inZone;
-        Double deltaMeters;
-       // Double deltaMeters = DifferenceInMeters(latCar,lonCar,mCurrentlocation.getLatitude(),mCurrentlocation.getLongitude());
-       // handleCarNotificationHuawei(deltaMeters, inZone);
-
-    }
-
     private void handleCarNotificationHuawei(boolean inZone) {
         if(inZone){
             long[] vibrationPattern = {Long.valueOf(0),Long.valueOf(500)};
@@ -1216,13 +1228,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-            SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssSS");
-
 
             Double deltaMeters;
 
             //Google maps camera
-
             if(k==0){
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(Latitude,Longitude)));
                 mMap.moveCamera(CameraUpdateFactory.zoomTo(19));
@@ -1319,6 +1328,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         String topic = "/server/server/" + "aeSmartCampus1" + "/Users/" + userId + "/gps";
         String con = "{\"type\":5,\"id\":"+userId + ",\"timestampUtc\":" + formattedDate + ",\"lon\":" + longitude + ",\"lat\":"+ latitude + ",\"speed\":"+ speedGPS + ",\"heading\":"+manualBearing+ ",\"accuracy\":"+Accuracy+ "}";
         String conHuawei = "{\"type\":5,\"id\":" + userId + ",\"timestampUtc\":" + formattedDateString + ",\"lon\":" + longitude + ",\"lat\":"+ latitude + ",\"speed\":"+ speedGPS + ",\"heading\":"+manualBearing+ ",\"accuracy\":"+Accuracy+ "}";
+        Log.d(TAG, "publishGpsData: " + conHuawei);
         okHTTPPost(huaweiUrl,conHuawei);
         contentCreateGPS.getJSONObject("m2m:rqp").put("to",topic);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
@@ -1328,7 +1338,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         publishAndLogMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic,LOGGING_GPS,logmessage,formattedDate);
         if(loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty() && !experimentNumberText.getText().toString().isEmpty()){
-            pilotLogging(LOGGING_HUAWEI_SENT,formattedDate,conHuawei);}
+           pilotLogging(LOGGING_HUAWEI_SENT,formattedDate,conHuawei);
+        }
     } //Publishes messages to onem2m broker by MQTT and posts to Huawei set up server via HTTP
 
     private String[] calculateSpeedandBearingandImplementPolyline(Double latitude, Double longitude, Long timeStamp){
@@ -1649,10 +1660,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 Long timestamp = System.currentTimeMillis();
                 mCurrentlocation= locationResult.getLastLocation();
                 updateLocationUI(timestamp);
-
             }
         };
-
     }
 
     private void buildingIcon(GeoPoint loc) {
@@ -1751,8 +1760,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     } //Sends a message to OneM2M CallCar container when button is clicked for calling a taxi. This message is then forwarded to Csmartcampus topic for IBM rebalancing service via the subscription container CallTaxi_sub
 
-    //TODO Imageoverlay clickable for Tu campus
-    //TODO Car data receive timestamp and warning display timestamp
     //TODO Extrapolating the vehicle speed heading if time is too long/delay
     //TODO randomize the ID (crossguid)  java.util.UUID id = UUID.randomUUID();
 }

@@ -60,9 +60,11 @@ public class okHttpPost extends AsyncTask<String, Void, String[]> {
                 JSONArray jArray = jObject.getJSONObject("hits").getJSONArray("hits");
                 int i=0;
                 for(i=0 ; i<jArray.length();i++){
-
                     JSONObject jObjectIter = jArray.getJSONObject(i);
-                    if(jObjectIter.getString("_id").equals(userId)){
+                    Log.d(TAG, "doInBackground: " + jObjectIter);
+                    Log.d(TAG, "doInBackground: " + jObjectIter.getString("_id"));
+
+                    if(jObjectIter.getString("_id").replace(".0","").equals(userId)){
                         return new String[]{responseBody,"true"};
                     }
                 }
