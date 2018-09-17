@@ -95,7 +95,6 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
 import org.osmdroid.views.overlay.OverlayItem;
-import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.mylocation.SimpleLocationOverlay;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
@@ -111,6 +110,8 @@ import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
 
 
@@ -239,8 +240,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     EditText runNumberText, experimentNumberText;
     Switch loggingSwitch;
 
-
-    
+    //Huawei timer
+    Timer huaweiTimer;
+    TimerTask huaweiTimerTask;
 
     //Car notifications
     Uri AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND;
@@ -362,6 +364,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .addApi(ActivityRecognition.API)
                 .build();
         mGoogleApiClient.connect();
+        huaweiTimer();
 
         df = new SimpleDateFormat("yyyyMMddHHmmssSS");
         //GPS functionality
@@ -376,6 +379,24 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if (a == true) {
 
         }
+    }
+
+    private void huaweiTimer(){
+        huaweiTimer = new Timer();
+        initializeHuaweiTimerTask();
+        huaweiTimer.schedule(huaweiTimerTask,10000, 400);
+
+
+    }
+
+    private void initializeHuaweiTimerTask() {
+        huaweiTimerTask =  new TimerTask() {
+            @Override
+            public void run() {
+                String conHuawei = "{\"type\":5,\"id\":" + "fenceRequester" + ",\"timestampUtc\":" + 0 + ",\"lon\":" + 0 + ",\"lat\":"+ 0 + ",\"speed\":"+ 0 + ",\"heading\":"+0+ ",\"accuracy\":"+0+ "}";
+                okHTTPPost(huaweiUrl,conHuawei);
+            }
+        };
     }
 
     private void setupBottomNavigationBar() {
@@ -860,9 +881,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     private void oneM2MMessagesHandler(String topic, MqttMessage message, Long timeUnix, String lastTimeUTC) throws JSONException {
         JSONObject messageCar = new JSONObject(new String(message.getPayload()));
-        Log.d(TAG, "messageArrived: " + messageCar);
+        Log.d(TAG, "oneM2MMessagesHandler: Arrived");
 
         if(topic.equals(CsmartCampusCarsSubscriptionTopic)){
+            Log.d(TAG, "oneM2MMessagesHandler: SubCar");
             String comparator = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getString("sur");
             String contentCarString = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev").getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
             Long dataGenerationTimestamp=null;
@@ -893,9 +915,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 Log.d(TAG, "oneM2MMessagesHandler: " +dataGenerationTimestamp);
                 String[] carLonseparated = longitudeCarString.split(":");
                 carLon = Double.parseDouble(carLonseparated[1]);
-                carSpeed = Float.parseFloat(separated[6].split(":")[1]);
-                String latitudeCar = separated[4];
-                carHeading = Float.parseFloat((separated[3].split(":"))[1]);
+                carSpeed = Float.parseFloat(separated[5].split(":")[1]);
+                String latitudeCar = separated[3];
+                carHeading = Float.parseFloat((separated[6].split(":"))[1]);
                 String[] carLatseparated = latitudeCar.split(":");
                 carLat = Double.parseDouble(carLatseparated[1]);
                 newData = true;
@@ -907,7 +929,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 Runnable myRunnable = new Runnable() {
                     @Override
                     public void run() {
+                        Log.d(TAG, "oneM2MMessagesHandler: Updating car");
                         carOverlay.setPosition(carLoc);
+                        if(carHeading<0){
+                            carHeading = 360 + carHeading;
+                        }
                         carOverlay.setBearing(carHeading);
                     } // This is your code
                 };
@@ -971,8 +997,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(data!=null){
         data = data.replace("\\", "");
         data = data.replace(" ", "");}
-        String experimentNumberString = (experimentNumber < 10 ? "0" : "") + Integer.parseInt(experimentNumberText.getText().toString());
-        String runNumberString = (runNumber < 10 ? "0" : "") + Integer.parseInt(runNumberText.getText().toString());
+        String experimentNumberString = (Integer.parseInt(experimentNumberText.getText().toString()) < 10 ? "0" : "") + Integer.parseInt(experimentNumberText.getText().toString());
+        String runNumberString = (Integer.parseInt(runNumberText.getText().toString())  < 10 ? "0" : "") + Integer.parseInt(runNumberText.getText().toString());
         switch(messageType) {
             case LOGGING_NOTNEEDED:
                 break;
