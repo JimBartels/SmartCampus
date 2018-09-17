@@ -20,7 +20,6 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -36,7 +35,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -67,6 +65,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -76,7 +75,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.hypertrack.hyperlog.HyperLog;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -97,6 +95,7 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
 import org.osmdroid.views.overlay.OverlayItem;
+import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.mylocation.SimpleLocationOverlay;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
@@ -105,12 +104,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
@@ -260,6 +257,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     //Car marker
     GroundOverlay carOverlay;
     Bitmap b;
+    com.google.android.gms.maps.model.Polygon geoFencingPolygon;
 
     //Holding one gps location
     boolean isAlreadyHeld = false;
@@ -422,6 +420,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         carOverlay = mMap.addGroundOverlay(new GroundOverlayOptions()
                 .position(new LatLng(50.967455, 5.943757),4)
                 .image(BitmapDescriptorFactory.fromBitmap(b))
+                .zIndex(1)
                 .bearing(315));
     }
 
@@ -468,6 +467,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
         mMap.setMyLocationEnabled(true);
         setupCarOverlay();
+        //makePolygon();
 
         //Add buildings to map
         LatLngBounds flux = new LatLngBounds(
@@ -1094,20 +1094,30 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     } //Options for MQTT client (Clean session, automatic reconnect etc)
 
     @Override
-    public void processFinish(String[] output) {
-        if(output!=null) {
-            Log.d(TAG, "processFinish: " + output[0] + "," + output[1]);
-            if (loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty() && !experimentNumberText.getText().toString().isEmpty()) {
-                pilotLogging(LOGGING_HUAWEI_RECEIVED, 150000000, output[0]);
+    public void processFinish(Bundle output) {
+        if(output!=null && output.getString("error")==null) {
+            Log.d(TAG, "processFinish: " + output.getString("returnMessage") + "," + output.getBoolean("isInRectangle"));
+            if(loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty() && !experimentNumberText.getText().toString().isEmpty()) {
+                pilotLogging(LOGGING_HUAWEI_RECEIVED, 150000000, output.getString("returnMessage"));
             }
-            if (output[1].equals("true")) {
+            if (output.getBoolean("isInRectangle")) {
                 handleCarNotificationHuawei(true);
             }
-            if (output[1].equals("false")) {
+            if (output.getBoolean("isInRectangle")) {
                 handleCarNotificationHuawei(false);
             }
-
+            LatLng[] points = new LatLng[5];
+            double[] rectangleLat = output.getDoubleArray("rectangleLat");
+            double[] rectangleLon = output.getDoubleArray("rectangleLon");
+            for(i=0 ; i<rectangleLat.length;i++){
+                points[i] = new LatLng(rectangleLat[i],rectangleLon[i]);
+            }
+            geoFencingCarPolygon(points);
             // huaweiResponseHandler(output);
+        }
+        if(output !=null && output.getString("error")!=null) {
+            Log.d(TAG, "processFinish: " + output.getString("error"));
+            handleCarNotificationHuawei(false);
         }
         handleCarNotificationHuawei(false);
     } //Handler voor response van de asynctask post OkHTTP
@@ -1127,6 +1137,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         notificationArray[HUAWEI_NOTIFICATION_ID] = true;}
         if(!inZone){
             cancelNotification(HUAWEI_NOTIFICATION_ID);
+            Log.d(TAG, "handleCarNotificationHuawei: Inzone false");
         }
     }}
 
@@ -1463,6 +1474,22 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
 
         super.onDestroy();
+    }
+
+    private void geoFencingCarPolygon(LatLng[] points){
+        if(geoFencingPolygon==null){
+            geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
+                    .add(points)
+                    .zIndex(0)
+                    .strokeColor(Color.LTGRAY));
+        }
+        else{
+            geoFencingPolygon.remove();
+            geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
+                    .add(points)
+                    .zIndex(0)
+                    .strokeColor(Color.LTGRAY));
+        }
     }
 
     private void uploadLogFilesFirebase() {
