@@ -66,6 +66,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -258,6 +259,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     Bitmap b;
     com.google.android.gms.maps.model.Polygon geoFencingPolygon;
     com.google.android.gms.maps.model.Polygon speedPolygon;
+    com.google.android.gms.maps.model.Polygon speedPolygon2;
 
     //Holding one gps location
     boolean isAlreadyHeld = false;
@@ -1179,26 +1181,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         pointsSpeed[0] = points[0];
         pointsSpeed[1] = points[3];
         if(carSpeed!=null){
-<<<<<<< HEAD
-
-           Double DeltaLat = ((-81.5 * Math.cos(carHeading*Math.PI/180))/27.8) * 5;
-           Double Deltalong = ((-81.5 * Math.sin(carHeading*Math.PI/180))/27.8) * 5;
-=======
-            Double y = Math.sin((points[1].longitude-points[0].longitude)*Math.PI/180) * Math.cos(points[1].latitude*Math.PI/180);
-            Double x = Math.cos(points[0].latitude)*Math.sin(points[1].latitude) -
-                    Math.sin(points[0].latitude*Math.PI/180)*Math.cos(points[1].latitude*Math.PI/180)*Math.cos((points[1].longitude-points[0].longitude)*Math.PI/180);
-        //  Double heading = (Math.atan2(y, x))*180/Math.PI;
-
-            Double HeadingDeltaLat = ((points[1].latitude - points[0].latitude)/360 * 40075000);
+            /*Double HeadingDeltaLat = ((points[1].latitude - points[0].latitude)/360 * 40075000);
             Double HeadingDeltaLong = ((points[1].longitude - points[0].longitude)/360 * 4007500);
 
             Double heading = Math.atan2(HeadingDeltaLong, HeadingDeltaLat)*180/Math.PI;
 
            // heading = (heading+180) % 360;
-            Log.d(TAG, "speedPolygon: " + heading);
-           Double DeltaLat = ((-81.5 * Math.cos(heading*Math.PI/180))/27.8) * carSpeed;
-           Double Deltalong = ((-81.5 * Math.sin(heading*Math.PI/180))/27.8) * carSpeed;
->>>>>>> daa05bbcb56e33edbff88f594e0fbe17b53915f3
+            Log.d(TAG, "speedPolygon: " + heading);*/
+           Double DeltaLat = ((-81.5 * Math.cos(carHeading*Math.PI/180))/27.8) * carSpeed;
+           Double Deltalong = ((-81.5 * Math.sin(carHeading*Math.PI/180))/27.8) * carSpeed;
 
            //point for array element 2
            Double lat2_2 = points[3].latitude - (DeltaLat*360/40075000);
@@ -1212,20 +1203,30 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
            pointsSpeed[3] = new LatLng(lat2_3,lon2_3);
 
 
-
             if(speedPolygon==null){
-                speedPolygon = mMap.addPolygon(new PolygonOptions()
+                speedPolygon= mMap.addPolygon(new PolygonOptions()
                         .add(pointsSpeed)
                         .zIndex(0)
                         .strokeColor(Color.RED)
                         .fillColor(Color.RED));
             }
-            else{
-                speedPolygon = mMap.addPolygon(new PolygonOptions()
-                        .add(pointsSpeed)
-                        .zIndex(0)
-                        .strokeColor(Color.RED)
-                        .fillColor(Color.RED));
+            else {
+                if(speedPolygon!=null){
+                    speedPolygon2 = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.RED)
+                            .fillColor(Color.RED));
+                    speedPolygon.remove();
+                }
+                else if (speedPolygon2 != null) {
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.RED)
+                            .fillColor(Color.RED));
+                    speedPolygon2.remove();
+                }
             }
         }
 
@@ -1549,8 +1550,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
     @Override
-    protected void onDestroy() {
-        //if(carLoggingUpdatable){uploadCarLogFilesFirebase();}
+    protected void onDestroy() {//if(carLoggingUpdatable){uploadCarLogFilesFirebase();}
         if(fileNameVector!=null){uploadLogFilesFirebase();}
         Log.d(TAG, "destroy");
         FirebaseAuth.getInstance().signOut();
