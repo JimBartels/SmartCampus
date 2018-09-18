@@ -1547,29 +1547,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         return d;
     }
 
-    private void personIconUpdate(GeoPoint loc) {
-        if(personOverlay!=null){
-            map.getOverlays().remove(personOverlay);
-        }
-
-        Drawable vectorDrawable = ResourcesCompat.getDrawable(getApplicationContext().getResources(), R.drawable.locationicon, null);
-        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.locationicon);
-        Bitmap b=bitmapdraw.getBitmap();
-        Bitmap locationIcon = Bitmap.createScaledBitmap(b, 40, 40, false);
-        personOverlay= new SimpleLocationOverlay(locationIcon);
-        personOverlay.setLocation(loc);
-        map.getOverlays().add(personOverlay);
-        map.invalidate();
-    }
-
-    private void onCampusTest(Double bound1la, Double bound2la, Double bound2lo, Double bound1lo, Double Longitude, Double Latitude) {
-        if(Latitude>bound1la && Latitude<bound2la && Longitude<bound1lo && Longitude>bound2lo){
-            viewLocation.setText("You are currently on Tu/e campus");
-            mDatabase.child("users").child(userId).child("onTue").setValue("yes");}
-        else{mDatabase.child("users").child(userId).child("onTue").setValue("no");
-            viewLocation.setText("You are currently not on Tu/e campus");}
-    }
-
     @Override
     protected void onDestroy() {
         //if(carLoggingUpdatable){uploadCarLogFilesFirebase();}
