@@ -164,7 +164,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public  String bearing;
     public  String bearingAccuracy;
     public String speed;
-    private final static String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private final static String KEY_LOCATION = "location";
     private final static String KEY_LAST_UPDATED_TIME_STRING = "last-updated-time-string";
     private final static long UPDATE_INVTERVAL_IN_MILLISECONDS = 500;
@@ -181,20 +180,21 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     Double lastLon=0.00;
     Long lastTime;
     Integer i=0;
-    SimpleLocationOverlay personOverlay;
 
     Thread oneM2MGPSThread;
 
     //MQTT String and variables
-    MqttAndroidClient onem2m,onem2m2;
+    MqttAndroidClient onem2m;
     String oneM2MVRUAeRi = "Csmartcampus";
     String oneM2MVRUAeRn = "aeSmartCampus1";
     String oneM2MVRUAePass = "smartcampuspassword";
     String oneM2MVRUReqTopic = "/oneM2M/req/aeSmartCampus1/server/json";
+
     private final static int CREATE = 1;
     private final static int RETRIEVE = 2;
     private final static int UPDATE = 3;
     private final static int DELETE = 4;
+
     String CsmartcampusSubscriptionTopic = "/oneM2M/resp/server/aeSmartCampus1/json";
     String CsmartCampusCarsSubscriptionTopic = "/oneM2M/resp/server/Ctechnolution/json";
     BroadcastReceiver broadcastReceiver;
@@ -216,7 +216,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     Double carLat = 51.475792;
     Float carHeading=null;
     Float carSpeed=null;
-    Long lastFlowRadar;
     Long lastRTK=null;
     boolean noRTK = true;
 
@@ -227,9 +226,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     int packetLosses;
     int experimentNumber = 0;
     int runNumber = 0;
-    Vector<String> fileNameVector =  new Vector<String>();
-    String gpsMessageTimeSent, statusMessageTimeSent, gpsLogTimeMade, statusLogTimeMade,carLogTimeMade,carMessageTimeReceived;
-    boolean carLoggingUpdatable;
+    Vector<String> fileNameVector =  new Vector<>();
     //Outgoing message type logging
     private final static int LOGGING_NOTNEEDED = 0;
     private final static int LOGGING_GPS = 1;
@@ -254,13 +251,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private final static int AUTONOMOUS_CAR_100M_NOTIFICATION_ID = 1;
     private final static int HUAWEI_NOTIFICATION_ID = 3;
     Boolean[] notificationArray = new Boolean[10];
-    Float carBearing;
     LatLng carLoc;
 
     //Car marker
     GroundOverlay carOverlay;
-    GroundOverlay speedOverlay;
-    Marker speedMarker;
     Bitmap b;
     com.google.android.gms.maps.model.Polygon geoFencingPolygon;
     com.google.android.gms.maps.model.Polygon speedPolygon;
@@ -275,10 +269,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     //Local user and pass storage
     public String userId;
     String password;
-
-
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -376,14 +366,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         //GPS functionality
 
         //OneM2M MQTT client
-        Boolean a = checkPermissions();
-        Boolean timerOn = false;
-
-        if (a == false) {
+        if (checkPermissions()) {
             requestPermission();
-        }
-        if (a == true) {
-
         }
     }
 
@@ -1195,10 +1179,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         pointsSpeed[0] = points[0];
         pointsSpeed[1] = points[3];
         if(carSpeed!=null){
-
-
-           Double DeltaLat = ((-81.5 * Math.cos(carHeading*Math.PI/180))/27.8) * carSpeed;
-           Double Deltalong = ((81.5 * Math.sin(carHeading*Math.PI/180))/27.8) * carSpeed;
+            Double y = Math.sin((points[1].longitude-points[0].longitude)*Math.PI/180) * Math.cos(points[1].latitude*Math.PI/180);
+            Double x = Math.cos(points[0].latitude)*Math.sin(points[1].latitude) -
+                    Math.sin(points[0].latitude*Math.PI/180)*Math.cos(points[1].latitude*Math.PI/180)*Math.cos((points[1].longitude-points[0].longitude)*Math.PI/180);
+            Double heading = (Math.atan2(y, x))*180/Math.PI;
+            heading = (heading+180) % 360;
+            Log.d(TAG, "speedPolygon: " + heading);
+           Double DeltaLat = ((-81.5 * Math.cos(heading*Math.PI/180))/27.8) * carSpeed;
+           Double Deltalong = ((-81.5 * Math.sin(heading*Math.PI/180))/27.8) * carSpeed;
 
            //point for array element 2
            Double lat2_2 = points[3].latitude - (DeltaLat*360/40075000);
@@ -1211,6 +1199,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
            Double lon2_3 = points[0].longitude - (Deltalong*360/40075000);
            pointsSpeed[3] = new LatLng(lat2_3,lon2_3);
 
+
+
             if(speedPolygon==null){
                 speedPolygon = mMap.addPolygon(new PolygonOptions()
                         .add(pointsSpeed)
@@ -1219,7 +1209,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         .fillColor(Color.RED));
             }
             else{
-                speedPolygon.remove();
                 speedPolygon = mMap.addPolygon(new PolygonOptions()
                         .add(pointsSpeed)
                         .zIndex(0)
