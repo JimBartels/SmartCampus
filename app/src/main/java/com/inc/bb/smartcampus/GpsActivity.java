@@ -1156,7 +1156,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             if (output.getBoolean("isInRectangle")) {
                 handleCarNotificationHuawei(true);
             }
-            if (output.getBoolean("isInRectangle")) {
+            if (!output.getBoolean("isInRectangle")) {
                 handleCarNotificationHuawei(false);
             }
             LatLng[] points = new LatLng[5];
@@ -1165,7 +1165,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             for(i=0 ; i<rectangleLat.length;i++){
                 points[i] = new LatLng(rectangleLat[i],rectangleLon[i]);
             }
-            speedPolygon(points);
+           // speedPolygon(points);
             geoFencingCarPolygon(points);
             // huaweiResponseHandler(output);
         }
@@ -1176,7 +1176,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         handleCarNotificationHuawei(false);
     } //Handler voor response van de asynctask post OkHTTP
 
-    private void speedPolygon(LatLng[] points) {
+  /*  private void speedPolygon(LatLng[] points) {
         LatLng[] pointsSpeed = new LatLng[4];
         pointsSpeed[0] = points[0];
         pointsSpeed[1] = points[3];
@@ -1187,7 +1187,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             Double heading = Math.atan2(HeadingDeltaLong, HeadingDeltaLat)*180/Math.PI;
 
            // heading = (heading+180) % 360;
-            Log.d(TAG, "speedPolygon: " + heading);*/
+            Log.d(TAG, "speedPolygon: " + heading);
            Double DeltaLat = ((-81.5 * Math.cos(carHeading*Math.PI/180))/27.8) * carSpeed;
            Double Deltalong = ((-81.5 * Math.sin(carHeading*Math.PI/180))/27.8) * carSpeed;
 
@@ -1230,7 +1230,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         }
 
-    }
+    } */
 
     private void handleCarNotificationHuawei(boolean inZone) {
         if(inZone){
@@ -1267,7 +1267,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onStop() {
-        if(fileNameVector!=null){uploadLogFilesFirebase();}
+        if(fileNameVector!=null){uploadLogFilesFirebase();
+        }
         super.onStop();
     }
 
@@ -1557,7 +1558,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         stopTracking();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
         mNotificationManager.cancelAll();
-
+        huaweiTimer.cancel();
+        huaweiTimer.purge();
 
         super.onDestroy();
     }
