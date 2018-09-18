@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
@@ -213,8 +214,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     int carNotificationConstant2 =0;
     Double carLon = 5.623863;
     Double carLat = 51.475792;
-    Float carHeading;
-    Float carSpeed;
+    Float carHeading=null;
+    Float carSpeed=null;
     Long lastFlowRadar;
     Long lastRTK=null;
     boolean noRTK = true;
@@ -258,8 +259,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     //Car marker
     GroundOverlay carOverlay;
+    GroundOverlay speedOverlay;
+    Marker speedMarker;
     Bitmap b;
     com.google.android.gms.maps.model.Polygon geoFencingPolygon;
+    com.google.android.gms.maps.model.Polygon speedPolygon;
 
     //Holding one gps location
     boolean isAlreadyHeld = false;
@@ -271,6 +275,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     //Local user and pass storage
     public String userId;
     String password;
+
+
 
 
 
@@ -443,6 +449,32 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .image(BitmapDescriptorFactory.fromBitmap(b))
                 .zIndex(1)
                 .bearing(315));
+
+
+        //Marker with speed
+      //  speedMarker = mMap.addMarker(new MarkerOptions()
+      //          .position(new LatLng(50.967455, 5.943757)
+      //          .icon(bitmapImage)
+      //          .title("text"));
+
+
+        //Overlay for speed visualisation
+
+
+
+  //      int width = 100;
+  //      int height = 100;
+  //      BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.blue_arrow);
+  //      Bitmap c = bitmapdraw.getBitmap();
+  //      Bitmap smallMarker = Bitmap.createScaledBitmap(c, width, height, false);
+
+
+        //Attempt at speedOverlay
+     //   speedOverlay = mMap.addGroundOverlay(new GroundOverlayOptions()
+     //   .position(new LatLng(50.967455, 5.943757),4)
+     //   .image(BitmapDescriptorFactory.fromBitmap(c))
+     //   .zIndex(1)
+     //   .bearing(315));
     }
 
     private void locationIconUpdate(LatLng loc, Float carBearing) {
@@ -935,6 +967,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             carHeading = 360 + carHeading;
                         }
                         carOverlay.setBearing(carHeading);
+
+
+                        //Attempt at speedOverlay
+                       // speedOverlay.setPosition(carLoc);
+                       // speedOverlay.setBearing(carHeading);
+                       // speedOverlay.setDimensions(5, carSpeed);
+                        //speedMarker.setPosition(carLoc);
+
+
                     } // This is your code
                 };
                 mainHandler.post(myRunnable);
@@ -1138,6 +1179,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             for(i=0 ; i<rectangleLat.length;i++){
                 points[i] = new LatLng(rectangleLat[i],rectangleLon[i]);
             }
+            speedPolygon(points);
             geoFencingCarPolygon(points);
             // huaweiResponseHandler(output);
         }
@@ -1147,6 +1189,50 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
         handleCarNotificationHuawei(false);
     } //Handler voor response van de asynctask post OkHTTP
+
+    private void speedPolygon(LatLng[] points) {
+        LatLng[] pointsSpeed = new LatLng[4];
+        pointsSpeed[0] = points[0];
+        pointsSpeed[1] = points[3];
+        if(carSpeed!=null){
+
+
+           Double DeltaLat = 50/carSpeed * Math.cos(carHeading*Math.PI/180);
+           Double Deltalong = 50/carSpeed * Math.sin(carHeading*Math.PI/180);
+
+           //point for array element 2
+           Double lat2_2 = points[3].latitude - (DeltaLat*360/40000);
+           Double lon2_2 = points[3].longitude - (Deltalong*360/40000);
+           pointsSpeed[2] = new LatLng(lat2_2,lon2_2);
+
+
+           //point for array element 3
+           Double lat2_3 = points[0].latitude - (DeltaLat*360/40000);
+           Double lon2_3 = points[0].longitude - (Deltalong*360/40000);
+           pointsSpeed[3] = new LatLng(lat2_3,lon2_3);
+
+            if(speedPolygon==null){
+                speedPolygon = mMap.addPolygon(new PolygonOptions()
+                        .add(pointsSpeed)
+                        .zIndex(0)
+                        .strokeColor(Color.RED));
+            }
+            else{
+                speedPolygon.remove();
+                speedPolygon = mMap.addPolygon(new PolygonOptions()
+                        .add(pointsSpeed)
+                        .zIndex(0)
+                        .strokeColor(Color.RED));
+            }
+
+
+        }
+                //Formule
+
+
+
+
+    }
 
     private void handleCarNotificationHuawei(boolean inZone) {
         if(inZone){
