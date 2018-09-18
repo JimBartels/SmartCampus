@@ -1197,40 +1197,36 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(carSpeed!=null){
 
 
-           Double DeltaLat = 50/carSpeed * Math.cos(carHeading*Math.PI/180);
-           Double Deltalong = 50/carSpeed * Math.sin(carHeading*Math.PI/180);
+           Double DeltaLat = ((-81.5 * Math.cos(carHeading*Math.PI/180))/27.8) * carSpeed;
+           Double Deltalong = ((81.5 * Math.sin(carHeading*Math.PI/180))/27.8) * carSpeed;
 
            //point for array element 2
-           Double lat2_2 = points[3].latitude - (DeltaLat*360/40000);
-           Double lon2_2 = points[3].longitude - (Deltalong*360/40000);
+           Double lat2_2 = points[3].latitude - (DeltaLat*360/40075000);
+           Double lon2_2 = points[3].longitude - (Deltalong*360/40075000);
            pointsSpeed[2] = new LatLng(lat2_2,lon2_2);
 
 
            //point for array element 3
-           Double lat2_3 = points[0].latitude - (DeltaLat*360/40000);
-           Double lon2_3 = points[0].longitude - (Deltalong*360/40000);
+           Double lat2_3 = points[0].latitude - (DeltaLat*360/40075000);
+           Double lon2_3 = points[0].longitude - (Deltalong*360/40075000);
            pointsSpeed[3] = new LatLng(lat2_3,lon2_3);
 
             if(speedPolygon==null){
                 speedPolygon = mMap.addPolygon(new PolygonOptions()
                         .add(pointsSpeed)
                         .zIndex(0)
-                        .strokeColor(Color.RED));
+                        .strokeColor(Color.RED)
+                        .fillColor(Color.RED));
             }
             else{
                 speedPolygon.remove();
                 speedPolygon = mMap.addPolygon(new PolygonOptions()
                         .add(pointsSpeed)
                         .zIndex(0)
-                        .strokeColor(Color.RED));
+                        .strokeColor(Color.RED)
+                        .fillColor(Color.RED));
             }
-
-
         }
-                //Formule
-
-
-
 
     }
 
