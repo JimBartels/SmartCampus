@@ -1179,9 +1179,26 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         pointsSpeed[0] = points[0];
         pointsSpeed[1] = points[3];
         if(carSpeed!=null){
+<<<<<<< HEAD
 
            Double DeltaLat = ((-81.5 * Math.cos(carHeading*Math.PI/180))/27.8) * 5;
            Double Deltalong = ((-81.5 * Math.sin(carHeading*Math.PI/180))/27.8) * 5;
+=======
+            Double y = Math.sin((points[1].longitude-points[0].longitude)*Math.PI/180) * Math.cos(points[1].latitude*Math.PI/180);
+            Double x = Math.cos(points[0].latitude)*Math.sin(points[1].latitude) -
+                    Math.sin(points[0].latitude*Math.PI/180)*Math.cos(points[1].latitude*Math.PI/180)*Math.cos((points[1].longitude-points[0].longitude)*Math.PI/180);
+        //  Double heading = (Math.atan2(y, x))*180/Math.PI;
+
+            Double HeadingDeltaLat = ((points[1].latitude - points[0].latitude)/360 * 40075000);
+            Double HeadingDeltaLong = ((points[1].longitude - points[0].longitude)/360 * 4007500);
+
+            Double heading = Math.atan2(HeadingDeltaLong, HeadingDeltaLat)*180/Math.PI;
+
+           // heading = (heading+180) % 360;
+            Log.d(TAG, "speedPolygon: " + heading);
+           Double DeltaLat = ((-81.5 * Math.cos(heading*Math.PI/180))/27.8) * carSpeed;
+           Double Deltalong = ((-81.5 * Math.sin(heading*Math.PI/180))/27.8) * carSpeed;
+>>>>>>> daa05bbcb56e33edbff88f594e0fbe17b53915f3
 
            //point for array element 2
            Double lat2_2 = points[3].latitude - (DeltaLat*360/40075000);
