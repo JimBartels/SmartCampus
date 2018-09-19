@@ -1180,7 +1180,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             /*Double HeadingDeltaLat = ((points[1].latitude - points[0].latitude)/360 * 40075000);
             Double HeadingDeltaLong = ((points[1].longitude - points[0].longitude)/360 * 4007500);
 
-            Double heading = Math.atan2(HeadingDeltaLong, HeadingDeltaLat)*180/Math.PI;
+            Double heading = Math.atan2(HeadingDeltaong, HeadingDeltaLat)*180/Math.PI;
 
            // heading = (heading+180) % 360;
             Log.d(TAG, "speedPolygon: " + heading);*/

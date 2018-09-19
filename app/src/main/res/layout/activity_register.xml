@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  ~ Created by Jim Bartels, lead developer and co-owner of Beams on 7/13/18 8:16 PM
+  ~ Copyright (c) 2018. All rights reserved.
+  ~
+  ~ Last modified 7/13/18 8:15 PM
+  -->
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+
+        <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/layout_before"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/constrainter"
+            android:background="#FFFF"
+            android:fitsSystemWindows="true"
+            tools:context=".LoginActivity">
+
+            <!-- The primary full-screen view. This can be replaced with whatever view
+             is needed to present your content, e.g. VideoView, SurfaceView,
+             TextureView, etc. -->
+
+            <EditText
+                android:id="@+id/pass_field"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:layout_marginEnd="34dp"
+                android:layout_marginLeft="34dp"
+                android:layout_marginRight="34dp"
+                android:layout_marginStart="34dp"
+                android:layout_marginTop="50dp"
+                android:background="@drawable/edittextshape"
+                android:ems="10"
+                android:hint="Email adress"
+                android:inputType="textPassword"
+                android:paddingBottom="2dp"
+                android:paddingLeft="11dp"
+                android:textSize="15sp"
+                app:layout_constraintBottom_toTopOf="@+id/firebase_btn"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+            <Button
+                android:id="@+id/firebase_btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:layout_marginEnd="34dp"
+                android:layout_marginLeft="34dp"
+                android:layout_marginRight="34dp"
+                android:layout_marginStart="34dp"
+                android:background="@android:color/darker_gray"
+                android:text="Save to Database"
+                android:textColor="@android:color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <ImageView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="50dp"
+                android:src="@drawable/testprofilepicture"
+                android:textAllCaps="false"
+                android:textColor="@android:color/background_dark"
+                android:textSize="80sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.503"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </android.support.constraint.ConstraintLayout>
+
+        <TextView
+            android:id="@+id/constrainter2"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+
+    </LinearLayout>
+</ScrollView>

@@ -180,7 +180,7 @@
                 android:layout_marginEnd="8dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="15dp"
-                android:text="sign up"
+                android:text="@string/register"
                 android:textSize="11sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -189,9 +189,9 @@
 
             <Button
                 android:id="@+id/signUpButton"
-                android:background="@android:color/transparent"
-                android:layout_width="0dp"
                 android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                android:layout_width="@android:color/secondary_text_light_nodisable"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.85"
