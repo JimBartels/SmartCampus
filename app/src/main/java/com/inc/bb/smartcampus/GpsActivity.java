@@ -23,7 +23,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
@@ -31,7 +30,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
@@ -66,7 +64,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -97,7 +94,6 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
 import org.osmdroid.views.overlay.OverlayItem;
-import org.osmdroid.views.overlay.mylocation.SimpleLocationOverlay;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.File;
@@ -1156,7 +1152,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             if (output.getBoolean("isInRectangle")) {
                 handleCarNotificationHuawei(true);
             }
-            if (!output.getBoolean("isInRectangle")) {
+            if (output.getBoolean("isInRectangle")) {
                 handleCarNotificationHuawei(false);
             }
             LatLng[] points = new LatLng[5];
@@ -1165,7 +1161,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             for(i=0 ; i<rectangleLat.length;i++){
                 points[i] = new LatLng(rectangleLat[i],rectangleLon[i]);
             }
-           // speedPolygon(points);
+            speedPolygon(points);
             geoFencingCarPolygon(points);
             // huaweiResponseHandler(output);
         }
@@ -1176,7 +1172,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         handleCarNotificationHuawei(false);
     } //Handler voor response van de asynctask post OkHTTP
 
-  /*  private void speedPolygon(LatLng[] points) {
+    private void speedPolygon(LatLng[] points) {
         LatLng[] pointsSpeed = new LatLng[4];
         pointsSpeed[0] = points[0];
         pointsSpeed[1] = points[3];
@@ -1187,7 +1183,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             Double heading = Math.atan2(HeadingDeltaLong, HeadingDeltaLat)*180/Math.PI;
 
            // heading = (heading+180) % 360;
-            Log.d(TAG, "speedPolygon: " + heading);
+            Log.d(TAG, "speedPolygon: " + heading);*/
            Double DeltaLat = ((-81.5 * Math.cos(carHeading*Math.PI/180))/27.8) * carSpeed;
            Double Deltalong = ((-81.5 * Math.sin(carHeading*Math.PI/180))/27.8) * carSpeed;
 
@@ -1210,27 +1206,20 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         .strokeColor(Color.RED)
                         .fillColor(Color.RED));
             }
-            else {
+           //* else {
                 if(speedPolygon!=null){
-                    speedPolygon2 = mMap.addPolygon(new PolygonOptions()
-                            .add(pointsSpeed)
-                            .zIndex(0)
-                            .strokeColor(Color.RED)
-                            .fillColor(Color.RED));
                     speedPolygon.remove();
-                }
-                else if (speedPolygon2 != null) {
                     speedPolygon = mMap.addPolygon(new PolygonOptions()
                             .add(pointsSpeed)
                             .zIndex(0)
                             .strokeColor(Color.RED)
                             .fillColor(Color.RED));
-                    speedPolygon2.remove();
+
                 }
+
             }
         }
 
-    } */
 
     private void handleCarNotificationHuawei(boolean inZone) {
         if(inZone){
@@ -1267,8 +1256,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onStop() {
-        if(fileNameVector!=null){uploadLogFilesFirebase();
-        }
+        if(fileNameVector!=null){uploadLogFilesFirebase();}
         super.onStop();
     }
 
@@ -1558,8 +1546,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         stopTracking();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
         mNotificationManager.cancelAll();
-        huaweiTimer.cancel();
-        huaweiTimer.purge();
+
 
         super.onDestroy();
     }
