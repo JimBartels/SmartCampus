@@ -70,9 +70,6 @@
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps" />
-        <activity
-            android:name=".RegisterActivity"
-            android:label="@string/title_activity_register"></activity>
     </application>
 
 </manifest>

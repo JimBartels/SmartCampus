@@ -1199,23 +1199,142 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
            pointsSpeed[3] = new LatLng(lat2_3,lon2_3);
 
 
-            if(speedPolygon==null){
-                speedPolygon= mMap.addPolygon(new PolygonOptions()
-                        .add(pointsSpeed)
-                        .zIndex(0)
-                        .strokeColor(Color.RED)
-                        .fillColor(Color.RED));
-            }
-           //* else {
-                if(speedPolygon!=null){
-                    speedPolygon.remove();
-                    speedPolygon = mMap.addPolygon(new PolygonOptions()
-                            .add(pointsSpeed)
-                            .zIndex(0)
-                            .strokeColor(Color.RED)
-                            .fillColor(Color.RED));
 
-                }
+           if (carSpeed < 5){
+
+               if(speedPolygon==null){
+                   speedPolygon= mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.WHITE)
+                           .fillColor(Color.WHITE));
+               }
+
+               //* else {
+               if(speedPolygon!=null){
+                   speedPolygon.remove();
+                   speedPolygon = mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.WHITE)
+                           .fillColor(Color.WHITE));
+
+               }
+
+           }
+
+           else if (carSpeed >= 5 && carSpeed <= 10){
+
+               if(speedPolygon==null){
+                   speedPolygon= mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.LTGRAY)
+                           .fillColor(Color.LTGRAY));
+               }
+
+               //* else {
+               if(speedPolygon!=null){
+                   speedPolygon.remove();
+                   speedPolygon = mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.LTGRAY)
+                           .fillColor(Color.LTGRAY));
+
+               }
+           }
+
+           else if (carSpeed > 10 && carSpeed <= 15){
+
+               if(speedPolygon==null){
+                   speedPolygon= mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.GRAY)
+                           .fillColor(Color.GRAY));
+               }
+
+               //* else {
+               if(speedPolygon!=null){
+                   speedPolygon.remove();
+                   speedPolygon = mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.GRAY)
+                           .fillColor(Color.GRAY));
+
+               }
+           }
+
+           else if (carSpeed > 15 && carSpeed <= 20){
+
+               if(speedPolygon==null){
+                   speedPolygon= mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.DKGRAY)
+                           .fillColor(Color.DKGRAY));
+               }
+
+               //* else {
+               if(speedPolygon!=null){
+                   speedPolygon.remove();
+                   speedPolygon = mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.DKGRAY)
+                           .fillColor(Color.DKGRAY));
+
+               }
+           }
+
+           else if (carSpeed > 20 && carSpeed <= 28){
+
+               if(speedPolygon==null){
+                   speedPolygon= mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.BLACK)
+                           .fillColor(Color.BLACK));
+               }
+
+               //* else {
+               if(speedPolygon!=null){
+                   speedPolygon.remove();
+                   speedPolygon = mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.BLACK)
+                           .fillColor(Color.BLACK));
+
+               }
+           }
+
+           else if (carSpeed > 25 && carSpeed <= 28){
+
+               if(speedPolygon==null){
+                   speedPolygon= mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.RED)
+                           .fillColor(Color.RED));
+               }
+
+               //* else {
+               if(speedPolygon!=null){
+                   speedPolygon.remove();
+                   speedPolygon = mMap.addPolygon(new PolygonOptions()
+                           .add(pointsSpeed)
+                           .zIndex(0)
+                           .strokeColor(Color.RED)
+                           .fillColor(Color.RED));
+
+               }
+           }
+
+
+
 
             }
         }
