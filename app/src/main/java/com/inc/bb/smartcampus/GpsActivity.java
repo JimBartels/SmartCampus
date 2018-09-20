@@ -433,31 +433,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .bearing(315));
 
 
-        //Marker with speed
-      //  speedMarker = mMap.addMarker(new MarkerOptions()
-      //          .position(new LatLng(50.967455, 5.943757)
-      //          .icon(bitmapImage)
-      //          .title("text"));
-
-
-        //Overlay for speed visualisation
-
-
-
-  //      int width = 100;
-  //      int height = 100;
-  //      BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.blue_arrow);
-  //      Bitmap c = bitmapdraw.getBitmap();
-  //      Bitmap smallMarker = Bitmap.createScaledBitmap(c, width, height, false);
-
-
-        //Attempt at speedOverlay
-     //   speedOverlay = mMap.addGroundOverlay(new GroundOverlayOptions()
-     //   .position(new LatLng(50.967455, 5.943757),4)
-     //   .image(BitmapDescriptorFactory.fromBitmap(c))
-     //   .zIndex(1)
-     //   .bearing(315));
-    }
+         }
 
     private void locationIconUpdate(LatLng loc, Float carBearing) {
         if (carOverlay != null) {
@@ -903,6 +879,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             String contentCarString = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev").getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
             Long dataGenerationTimestamp=null;
             boolean newData=false;
+            Log.d(TAG, "oneM2MMessagesHandler: " + comparator);
 
            /* if(comparator.equals("/server/server/aeTechnolution/flowradar/flowradar_car/subFlowradar_car")){
                 Log.d(TAG,"oneM2MMessages + " + contentCarString);
@@ -951,11 +928,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         carOverlay.setBearing(carHeading);
 
 
-                        //Attempt at speedOverlay
-                       // speedOverlay.setPosition(carLoc);
-                       // speedOverlay.setBearing(carHeading);
-                       // speedOverlay.setDimensions(5, carSpeed);
-                        //speedMarker.setPosition(carLoc);
+
 
 
                     } // This is your code
@@ -1177,13 +1150,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         pointsSpeed[0] = points[0];
         pointsSpeed[1] = points[3];
         if(carSpeed!=null){
-            /*Double HeadingDeltaLat = ((points[1].latitude - points[0].latitude)/360 * 40075000);
-            Double HeadingDeltaLong = ((points[1].longitude - points[0].longitude)/360 * 4007500);
 
-            Double heading = Math.atan2(HeadingDeltaong, HeadingDeltaLat)*180/Math.PI;
-
-           // heading = (heading+180) % 360;
-            Log.d(TAG, "speedPolygon: " + heading);*/
+           //Calculates the differences in lat,lon in meters, but scaled at 100 km/h (27.8 m/s), to visualise speed
            Double DeltaLat = ((-81.5 * Math.cos(carHeading*Math.PI/180))/27.8) * carSpeed;
            Double Deltalong = ((-81.5 * Math.sin(carHeading*Math.PI/180))/27.8) * carSpeed;
 
@@ -1199,7 +1167,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
            pointsSpeed[3] = new LatLng(lat2_3,lon2_3);
 
 
-
+           //fills up the speedpolygon with different colours based on its speed
            if (carSpeed < 5){
 
                if(speedPolygon==null){
@@ -1289,7 +1257,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                }
            }
 
-           else if (carSpeed > 20 && carSpeed <= 28){
+           else if (carSpeed > 20 && carSpeed <= 25){
 
                if(speedPolygon==null){
                    speedPolygon= mMap.addPolygon(new PolygonOptions()
@@ -1488,19 +1456,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             viewBearing.setText(bearing);
             //viewBearingAccuracy.setText(bearingAccuracy);
 
-            /*Integer timeDifference = 0;
-            timeDifference = mGetTimeDifference();
-            mDatabase= FirebaseDatabase.getInstance().getReference();
-            String timeDifferenceString = Integer.toString(timeDifference);
-            String firebaseString = latitude + "    " + longitude + "   " + timeDifferenceString;
-            String gpsCount = Integer.toString(k);
-            mDatabase.child("GPSTest").child(userId).child(gpsCount).setValue(firebaseString, new DatabaseReference.CompletionListener() {
-                        @Override
-                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                            k++;
-                        }
-                    });
-            */
 
             viewSpeed.setText(speedGPS);
             //viewmanualBearing.setText(bearing);
@@ -1516,31 +1471,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             //UI buttons and on campus test
             GeoPoint loc = new GeoPoint(Latitude,Longitude);
-            //String location = "lat: " + latitude + " lng: " + longitude;
-            /*Double bound1la = 51.445110;
-            Double bound2la= 51.452770;
-            Double bound1lo = 5.500690;
-            Double bound2lo = 5.481070;
 
-            onCampusTest(bound1la,bound2la,bound2lo,bound1lo, Longitude, Latitude);*/
-            //personIconUpdate(loc);
-            // myLocationButton(loc);
-            // buildingIcon(loc);
+
+
 
 
         }
     }
 
-    /*private void makePolyline(List<GeoPoint> geoPoints,Polyline polyline) {
-        if(headingLine!=null){
-            map.getOverlays().remove(headingLine);
-        }
-        polyline= new Polyline();
-        polyline.setPoints(geoPoints);
-        map.getOverlayManager().add(polyline);
-        map.invalidate();
-    }
-*/
+
     private void publishUserStatus(String activity, Long timeStamp, int confidence) throws JSONException, MqttException, UnsupportedEncodingException {
         String con = "{\"activity\":" + "\"" + activity + "\"" + "," +  "\"activity confidence\":" + confidence + ",\"timestampUtc\":" + timeStamp + "}";
         contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin").put("con", con);
@@ -1607,15 +1546,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     } //Makes a line on the map between the last two points
 
     private double DifferenceUTCtoSeconds(Long timeStamp, Long timeStamp2){
-        /*Double deltaseconds = Double.parseDouble(new String(new char[]{timeStamp.charAt(12),timeStamp.charAt(13)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(12),timeStamp2.charAt(13)}));
-        Double deltamiliseconds = Double.parseDouble(new String(new char[]{timeStamp.charAt(14),timeStamp.charAt(15)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(14),timeStamp2.charAt(15)}));
-        Double deltaminutes = Double.parseDouble(new String(new char[]{timeStamp.charAt(10),timeStamp.charAt(11)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(10),timeStamp2.charAt(11)}));
-        Double deltahours = Double.parseDouble(new String(new char[]{timeStamp.charAt(8),timeStamp.charAt(9)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(8),timeStamp2.charAt(9)}));
-        Double deltadays = Double.parseDouble(new String(new char[]{timeStamp.charAt(6),timeStamp.charAt(7)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(6),timeStamp2.charAt(7)}));
-        Double deltamonths = Double.parseDouble(new String(new char[]{timeStamp.charAt(4),timeStamp.charAt(5)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(4),timeStamp2.charAt(5)}));
-        Double deltayears = Double.parseDouble(new String(new char[]{timeStamp.charAt(0),timeStamp.charAt(1), timeStamp.charAt(2),timeStamp.charAt(3)}))-Double.parseDouble(new String(new char[]{timeStamp2.charAt(0),timeStamp2.charAt(1),timeStamp2.charAt(2),timeStamp2.charAt(3)}));
-        Double totalDeltaInMiliSeconds = deltaseconds*1000 + deltamiliseconds + deltaminutes * 60 * 1000 + deltahours *60*60*1000 + deltadays*24*60*60*1000; //This does not include difference in months since that is irrelevant for two gps time points
-        return totalDeltaInMiliSeconds;*/
         return timeStamp-timeStamp2;
     }
 
@@ -1722,23 +1652,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         mLocationRequest.setInterval(UPDATE_INVTERVAL_IN_MILLISECONDS);
         mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
     } // Constructor of locationrequest, sets certain settings of the locationrequest (interval, priority etc)
-
-    private void myLocationButton(GeoPoint loc) {
-        final GeoPoint locf = loc;
-        Drawable locButtondrawableAfter = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshape);
-        /*Button locButton = (Button) findViewById(R.id.locButton);
-        if(locButton.getBackground()!=locButtondrawableAfter){
-        locButton.setBackground(locButtondrawableAfter);}
-        if(locButton.getBackground()==locButtondrawableAfter){
-            locButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    map.getController().setCenter(locf);
-
-                }
-            });
-        }*/
-    }
 
     private void buildLocationSettingsRequest(){
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(this.mLocationRequest);
@@ -1885,73 +1798,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         };
     }
 
-    private void buildingIcon(GeoPoint loc) {
-        ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
-        OverlayItem locationIcon=new OverlayItem("Title", "Description", loc);
-        items.add(locationIcon);
-
-        /*BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.buildingicon);
-        Bitmap b=bitmapdraw.getBitmap();
-        Bitmap buildingIcon = Bitmap.createScaledBitmap(b, 60, 60, false);
-        BuildingMarker = new SimpleLocationOverlay(buildingIcon);
-        GeoPoint startPoint = new GeoPoint(51.447500, 5.491267);
-        BuildingMarker.setLocation(startPoint);
-        map.getOverlays().add(BuildingMarker);
-        map.invalidate();
-
-        Marker startMarker = new Marker(map);
-        GeoPoint startPoint = new GeoPoint(51.447000, 5.491267);
-        startMarker.setPosition(startPoint);
-        startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        map.getOverlays().add(startMarker);
-        startMarker.setIcon(getResources().getDrawable(R.drawable.buildingicon));
-        startMarker.setTitle("Flux"); */
-
-        ItemizedOverlayWithFocus mItemizedOverlay = new ItemizedOverlayWithFocus<OverlayItem>(items, new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
-            @Override
-            public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
-                return false;
-            }
-
-            @Override
-            public boolean onItemLongPress(final int index, final OverlayItem item) {
-                return false;
-            }
-        }, this);
-        items.add(locationIcon);
-        mItemizedOverlay.addItems(items);
-        //TODO Add the icon in the map
-    }
-
-    private int mGetTimeDifference() {
-        Integer timeInSeconds[] = new Integer[2];
-        Integer timeDifference = 0;
-        Calendar c = Calendar.getInstance();
-        SimpleDateFormat dh = new SimpleDateFormat("hh");
-        SimpleDateFormat dm = new SimpleDateFormat("mm");
-        SimpleDateFormat ds = new SimpleDateFormat("ss");
-        String formattedHours = dh.format(c.getTime());
-        String formattedMinutes = dm.format(c.getTime());
-        String formattedSeconds=  ds.format(c.getTime());
-        Integer timeInHours[] = new Integer[2];
-        Integer timeSeconds[]= new Integer[2];
-        Integer timeInMinutes[]= new Integer[2];
-        timeInHours[i] = Integer.parseInt(formattedHours);
-        timeSeconds[i]=Integer.parseInt(formattedSeconds);
-        timeInMinutes[i]=Integer.parseInt(formattedMinutes);
-        String timeDifferenceString = Integer.toString(i);
-
-
-
-        if(i==0){
-            timeInSeconds[0]= timeInHours[0]*3600 +timeInMinutes[0]*60 + timeSeconds[0];}
-        if(i==1){
-            timeInSeconds[1]= timeInHours[1]*3600 +timeInMinutes[1]*60 + timeSeconds[1];
-        }
-        //timeDifference = timeInSeconds[1]-timeInSeconds[0];}
-
-        return timeInSeconds[i];
-    }
 
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
