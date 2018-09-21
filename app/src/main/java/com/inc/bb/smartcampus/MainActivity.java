@@ -35,14 +35,11 @@ public class MainActivity extends AppCompatActivity  {
     Button mFirebaseBtn;
     private FirebaseAuth mAuth;
     String TAG;
-    boolean hasAccount;
     String longitude="0";
     String latitude= "0";
     String userId = "";
     Drawable buttondrawable1;
     Drawable buttondrawable2;
-    Boolean isTextChanged1;
-    Boolean isTextChanged2;
     private String name;
     private String password;
 
@@ -57,13 +54,17 @@ public class MainActivity extends AppCompatActivity  {
               buttondrawable1 = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshape);
         buttondrawable2 = ContextCompat.getDrawable(getApplicationContext(),R.drawable.buttonshapebefore);
 
-        mFirebaseBtn = (Button) findViewById(R.id.firebase_btn);
-        mNameField = (EditText) findViewById(R.id.name_field);
-        mPassField = (EditText) findViewById(R.id.pass_field);
+        mFirebaseBtn = (Button) findViewById(R.id.signUpNext);
+        mNameField = (EditText) findViewById(R.id.studentEmail);
+        mPassField = (EditText) findViewById(R.id.registerPassField);
         mFirebaseBtn.setBackground(buttondrawable2);
         final FirebaseUser user =mAuth.getCurrentUser();
         mFirebaseBtn.setText("Login");
         buttonchanger();
+
+        //Signup Button callback setter and intent
+        signUpButtonActions();
+
         mFirebaseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -93,6 +94,16 @@ public class MainActivity extends AppCompatActivity  {
         });
     }
 
+    private void signUpButtonActions() {
+        Button signUpButton = (Button) findViewById(R.id.signUpButton);
+        signUpButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent signUpIntent = new Intent(getApplicationContext(), RegisterActivity.class);
+                startActivity(signUpIntent);
+            }
+        });
+    }
 
     public void register(final String studentNumber, final String pass) {
         mAuth.createUserWithEmailAndPassword(studentNumber,pass)

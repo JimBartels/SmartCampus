@@ -62,7 +62,7 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAHgSeva0ncJnJbkPccPs941waEWqAvxPU" />
+            android:value="AIzaSyBTTNm979D38iiB3KDsYS7boee5FHoh26k" />
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
@@ -72,7 +72,11 @@
             android:label="@string/title_activity_maps" />
         <activity
             android:name=".RegisterActivity"
-            android:label="@string/title_activity_register"></activity>
+            android:label="@string/title_activity_register"
+            android:windowSoftInputMode="adjustResize|stateHidden"/>
+        <activity
+            android:name=".test"
+            android:label="@string/title_activity_test" />
     </application>
 
 </manifest>

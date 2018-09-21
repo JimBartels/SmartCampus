@@ -14,13 +14,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
-    android:fillViewport="true"
-    android:scrollbars="none">
+    android:scrollbars="none"
+    android:fillViewport="true">
+
+
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+        <TextView
+            android:id="@+id/constrainter"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
 
 
         <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -38,67 +45,143 @@
              is needed to present your content, e.g. VideoView, SurfaceView,
              TextureView, etc. -->
 
+            <View
+                android:id="@+id/signUpLine2"
+                android:layout_width="0dp"
+                android:layout_height="2dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginEnd="37dp"
+                android:layout_marginStart="37dp"
+                android:background="@android:color/darker_gray"
+                app:layout_constraintBottom_toTopOf="@+id/studentEmail"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
             <EditText
-                android:id="@+id/pass_field"
+                android:id="@+id/studentEmail"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="15dp"
                 android:layout_marginEnd="34dp"
-                android:layout_marginLeft="34dp"
-                android:layout_marginRight="34dp"
                 android:layout_marginStart="34dp"
-                android:layout_marginTop="50dp"
                 android:background="@drawable/edittextshape"
                 android:ems="10"
-                android:hint="Email adress"
-                android:inputType="textPassword"
+                android:hint="Student email"
+                android:inputType="textEmailAddress"
                 android:paddingBottom="2dp"
-                android:paddingLeft="11dp"
+                android:paddingLeft="15dp"
+                android:selectAllOnFocus="false"
+                android:singleLine="false"
+                android:textColorLink="@android:color/darker_gray"
                 android:textSize="15sp"
-                app:layout_constraintBottom_toTopOf="@+id/firebase_btn"
+                app:layout_constraintBottom_toTopOf="@+id/registerPassField"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView" />
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent" />
 
-            <Button
-                android:id="@+id/firebase_btn"
+            <EditText
+                android:id="@+id/registerPassField"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="14dp"
+                android:layout_marginBottom="15dp"
                 android:layout_marginEnd="34dp"
-                android:layout_marginLeft="34dp"
-                android:layout_marginRight="34dp"
+                android:layout_marginStart="34dp"
+                android:background="@drawable/edittextshape"
+                android:ems="10"
+                android:hint="@string/password"
+                android:inputType="textPassword"
+                android:paddingBottom="2dp"
+                android:paddingLeft="15dp"
+                android:textSize="15sp"
+                app:layout_constraintBottom_toTopOf="@+id/signUpNext"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <Button
+                android:id="@+id/signUpNext"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginBottom="15dp"
+                android:layout_marginEnd="34dp"
                 android:layout_marginStart="34dp"
                 android:background="@android:color/darker_gray"
-                android:text="Save to Database"
+                android:text="Next"
                 android:textColor="@android:color/white"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
-            <ImageView
-                android:id="@+id/textView"
+            <Button
+                android:id="@+id/pictureButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginStart="8dp"
-                android:layout_marginTop="50dp"
-                android:src="@drawable/testprofilepicture"
-                android:textAllCaps="false"
-                android:textColor="@android:color/background_dark"
-                android:textSize="80sp"
+                android:layout_marginTop="5dp"
+                android:background="@drawable/profilepic"
+                app:layout_constraintBottom_toTopOf="@+id/signUpLine2"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.503"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
-
         </android.support.constraint.ConstraintLayout>
 
         <TextView
             android:id="@+id/constrainter2"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"/>
+
+        <android.support.constraint.ConstraintLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/layout_before2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/scrollView"
+            android:layout_below="@+id/constrainter2"
+            android:background="#FFFF"
+            android:fitsSystemWindows="true"
+            tools:context=".LoginActivity">
+
+            <View
+                android:id="@+id/signUpLine"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/signUpText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="15dp"
+                android:text="@string/backToLogin"
+                android:textSize="11sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <Button
+                android:id="@+id/signUpButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.85"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/signUpLine"
+                app:layout_constraintVertical_bias="0.0" />
+        </android.support.constraint.ConstraintLayout>
 
 
     </LinearLayout>

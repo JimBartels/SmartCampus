@@ -901,6 +901,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             Log.d(TAG, "oneM2MMessagesHandler: SubCar");
             String comparator = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getString("sur");
             String contentCarString = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev").getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
+            
             Long dataGenerationTimestamp=null;
             boolean newData=false;
 

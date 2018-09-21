@@ -11,9 +11,10 @@
     <string name="password">Password</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="register">First time here? <b><font fgcolor='#000000'>Join the campus of the future</font></b></string>
+    <string name="register">First time here? <b><font fgcolor='#6495ed'>Join the campus of the future</font></b></string>
+    <string name="backToLogin"><b><font fgcolor='#6495ed'>Return to login</font></b></string>
     <string name="title_activity_register">Sign in</string>
-
+s
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password (optional)</string>
@@ -26,4 +27,5 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email
         completions."
     </string>
+    <string name="title_activity_test">Sign in</string>
 </resources>
