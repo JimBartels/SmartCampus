@@ -91,9 +91,6 @@ import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.ItemizedIconOverlay;
-import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
-import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.File;
@@ -129,7 +126,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private Marker Metaforum;
     private GroundOverlay atlasOverlay;
     private static final LatLng ATLAS = new LatLng(51.447692, 5.486107);
-    private Marker Altas;
+    private Marker Atlas;
     private GroundOverlay auditoriumOverlay;
     private static final LatLng AUDITORIUM = new LatLng(51.447625, 5.484348);
     private Marker Auditorium;
@@ -435,18 +432,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
          }
 
-    private void locationIconUpdate(LatLng loc, Float carBearing) {
-        if (carOverlay != null) {
-            carOverlay.remove();
-            carOverlay.setPosition(loc);
-            carOverlay.setBearing(carBearing);
-            carOverlay = mMap.addGroundOverlay(new GroundOverlayOptions()
-                    .position(loc,4)
-                    .image(BitmapDescriptorFactory.fromBitmap(b))
-                    .bearing(carBearing));
-        }
-    }
-
     @Override
     protected void onPause() {
         //if(carLoggingUpdatable){uploadCarLogFilesFirebase();}
@@ -471,9 +456,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         } catch (Resources.NotFoundException e) {
             Log.e(TAG, "Can't find style. Error: ", e);
         }*/
-        if(checkPermissions()){
-        mMap.setMyLocationEnabled(true);}
-        else while(!checkPermissions()){
+        if (checkPermissions()) {
+            mMap.setMyLocationEnabled(true);
+        } else while (!checkPermissions()) {
             requestPermission();
         }
         mMap.setMyLocationEnabled(true);
@@ -538,116 +523,188 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         vertigoOverlay = mMap.addGroundOverlay(vertigoMap);
 
-        //Clicklistener
+        //Clicklistener Groundoverlay
         GoogleMap.OnGroundOverlayClickListener listener = new GoogleMap.OnGroundOverlayClickListener() {
             @Override
             public void onGroundOverlayClick(GroundOverlay groundOverlay) {
-                if(groundOverlay.getId().equals(fluxOverlay.getId())){
+                if (groundOverlay.getId().equals(fluxOverlay.getId())) {
                     //Action for flux
-                    Log.d(TAG, "This is flux");
 
-                    int height = 200;
-                    int width = 200;
-                    BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.flux_building);
-                    Bitmap b = bitmapdraw.getBitmap();
-                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+
 
                     Flux = mMap.addMarker(new MarkerOptions()
                             .position(FLUX)
                             .title("Flux")
                             .snippet("Applied Physics and Electrical Engineering")
-                            .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
-                            .alpha(0.1f));
+                            .alpha(-1f));
 
-                }
-                else if(groundOverlay.getId().equals(vertigoOverlay.getId())){
+
+                    Flux.showInfoWindow();
+                    Log.d(TAG, "This is " + Flux.getTitle());
+
+                    GoogleMap.OnInfoWindowClickListener infoWindowClickListenerFlux = new GoogleMap.OnInfoWindowClickListener() {
+                        @Override
+                        public void onInfoWindowClick(Marker marker) {
+
+                            String title = marker.getTitle();
+                            Log.d(TAG, "onInfoWindowClick: " + title);
+
+                            if (title.equals(Flux.getTitle())) {
+                                //Action for flux infowindow
+                                Log.d(TAG, "This is flux infowindow " + Flux.getTitle());
+                                //TODO: action
+
+                            }
+                        }
+
+                    };
+                    mMap.setOnInfoWindowClickListener(infoWindowClickListenerFlux);
+
+                } else if (groundOverlay.getId().equals(vertigoOverlay.getId())) {
                     //Action for vertigo
-                    Log.d(TAG, "This is vertigo");
 
-                    int height = 200;
-                    int width = 200;
-                    BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.vertigo_building);
-                    Bitmap b=bitmapdraw.getBitmap();
-                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
 
-                    Vertigo =  mMap.addMarker(new MarkerOptions()
+
+                    Vertigo = mMap.addMarker(new MarkerOptions()
                             .position(VERTIGO)
                             .title("Vertigo")
                             .snippet("Architecture")
-                            .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
-                            .alpha(0.1f));
-                }
-                else if(groundOverlay.getId().equals(auditoriumOverlay.getId())){
+                            .alpha(-1f));
+
+                    Vertigo.showInfoWindow();
+                    Log.d(TAG, "This is " + Vertigo.getTitle());
+
+                    GoogleMap.OnInfoWindowClickListener infoWindowClickListenerVertigo = new GoogleMap.OnInfoWindowClickListener() {
+                        @Override
+                        public void onInfoWindowClick(Marker marker) {
+
+                            String title = marker.getTitle();
+                            Log.d(TAG, "onInfoWindowClick: " + title);
+
+                            if (title.equals(Vertigo.getTitle())) {
+                                //Action for flux infowindow
+                                Log.d(TAG, "This is Vertigo infowindow " + Vertigo.getTitle());
+                                //TODO: action
+
+                            }
+                        }
+
+                    };
+                    mMap.setOnInfoWindowClickListener(infoWindowClickListenerVertigo);
+
+                } else if (groundOverlay.getId().equals(auditoriumOverlay.getId())) {
                     //Action for auditorium
-                    Log.d(TAG, "This is auditorium");
 
-                    int height = 200;
-                    int width = 200;
-                    BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.auditorium_building);
-                    Bitmap b = bitmapdraw.getBitmap();
-                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
 
-                    Flux =  mMap.addMarker(new MarkerOptions()
+                    Auditorium = mMap.addMarker(new MarkerOptions()
                             .position(AUDITORIUM)
                             .title("Auditorium")
                             .snippet("Main Lecture Hall")
-                            .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
-                            .alpha(0.1f));
-                }
-                else if(groundOverlay.getId().equals(metaforumOverlay.getId())){
+                            .alpha(-1f));
+
+                    Auditorium.showInfoWindow();
+                    Log.d(TAG, "This is " + Auditorium.getTitle());
+
+                    GoogleMap.OnInfoWindowClickListener infoWindowClickListenerAuditorium = new GoogleMap.OnInfoWindowClickListener() {
+                        @Override
+                        public void onInfoWindowClick(Marker marker) {
+
+                            String title = marker.getTitle();
+                            Log.d(TAG, "onInfoWindowClick: " + title);
+
+                            if (title.equals(Auditorium.getTitle())) {
+                                //Action for flux infowindow
+                                Log.d(TAG, "This is Auditorium infowindow " + Auditorium.getTitle());
+                                //TODO: action
+
+                            }
+                        }
+
+                    };
+                    mMap.setOnInfoWindowClickListener(infoWindowClickListenerAuditorium);
+
+                } else if (groundOverlay.getId().equals(metaforumOverlay.getId())) {
                     //Action for metaforum
-                    Log.d(TAG, "This is metaforum");
 
-                    int height = 200;
-                    int width = 200;
-                    BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.metaforum_building);
-                    Bitmap b = bitmapdraw.getBitmap();
-                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
 
-                    Flux =  mMap.addMarker(new MarkerOptions()
+
+                    Metaforum = mMap.addMarker(new MarkerOptions()
                             .position(METAFORUM)
                             .title("Metaforum")
                             .snippet("Library")
-                            .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
-                            .alpha(0.1f));
-                }
-                else if(groundOverlay.getId().equals(atlasOverlay.getId())){
+                            .alpha(-1f));
+
+                    Metaforum.showInfoWindow();
+                    Log.d(TAG, "This is " + Metaforum.getTitle());
+
+                    GoogleMap.OnInfoWindowClickListener infoWindowClickListenerMetaforum = new GoogleMap.OnInfoWindowClickListener() {
+                        @Override
+                        public void onInfoWindowClick(Marker marker) {
+
+                            String title = marker.getTitle();
+                            Log.d(TAG, "onInfoWindowClick: " + title);
+
+                            if (title.equals(Metaforum.getTitle())) {
+                                //Action for flux infowindow
+                                Log.d(TAG, "This is Metaforum infowindow " + Metaforum.getTitle());
+                                //TODO: action
+
+                            }
+                        }
+
+                    };
+                    mMap.setOnInfoWindowClickListener(infoWindowClickListenerMetaforum);
+
+                } else if (groundOverlay.getId().equals(atlasOverlay.getId())) {
                     //Action for atlas
-                    Log.d(TAG, "This is atlas");
 
-                    int height = 200;
-                    int width = 200;
-                    BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.atlas_building);
-                    Bitmap b = bitmapdraw.getBitmap();
-                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
 
-                    Flux =  mMap.addMarker(new MarkerOptions()
+
+                    Atlas = mMap.addMarker(new MarkerOptions()
                             .position(ATLAS)
                             .title("Atlas")
                             .snippet("Industrial Design and Industrial Engineering")
-                            .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
-                            .alpha(0.1f));
-                }
-                else if(groundOverlay.getId().equals(carOverlay.getId())){
+                            .alpha(-1f));
+
+                    Atlas.showInfoWindow();
+                    Log.d(TAG, "This is " + Atlas.getTitle());
+
+                    GoogleMap.OnInfoWindowClickListener infoWindowClickListenerAtlas = new GoogleMap.OnInfoWindowClickListener() {
+                        @Override
+                        public void onInfoWindowClick(Marker marker) {
+
+                            String title = marker.getTitle();
+                            Log.d(TAG, "onInfoWindowClick: " + title);
+
+                            if (title.equals(Atlas.getTitle())) {
+                                //Action for flux infowindow
+                                Log.d(TAG, "This is Atlas infowindow " + Atlas.getTitle());
+                                //TODO: action
+
+                            }
+                        }
+
+                    };
+                    mMap.setOnInfoWindowClickListener(infoWindowClickListenerAtlas);
+
+                } else if (groundOverlay.getId().equals(carOverlay.getId())) {
                     //Action for car click
                     Log.d(TAG, "This is a car");
 
-                    int height = 200;
-                    int width = 200;
-                    BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.flux_building);
-                    Bitmap b = bitmapdraw.getBitmap();
-                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
 
-                    Flux =  mMap.addMarker(new MarkerOptions()
+                    Flux = mMap.addMarker(new MarkerOptions()
                             .position(FLUX)
                             .title("Flux")
                             .snippet("Applied Physics and Electrical Engineering")
-                            .icon(BitmapDescriptorFactory.fromBitmap(smallMarker))
                             .alpha(0.1f));
                 }
             }
         };
         mMap.setOnGroundOverlayClickListener(listener);
+
+        //Clicklistener Infowindowmarker
+
+
     }
 
     private void buildCarNotification(String title) {
