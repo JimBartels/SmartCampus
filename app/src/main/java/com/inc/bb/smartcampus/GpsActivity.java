@@ -552,7 +552,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             if (title.equals(Flux.getTitle())) {
                                 //Action for flux infowindow
                                 Log.d(TAG, "This is flux infowindow " + Flux.getTitle());
-                                //TODO: action
+
+                                //launches FluxActivity
+                                startActivity(new Intent(GpsActivity.this, FluxActivity.class));
+
+                            }
+                            else {
 
                             }
                         }
@@ -582,9 +587,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             Log.d(TAG, "onInfoWindowClick: " + title);
 
                             if (title.equals(Vertigo.getTitle())) {
-                                //Action for flux infowindow
+                                //Action for Vertigo infowindow
                                 Log.d(TAG, "This is Vertigo infowindow " + Vertigo.getTitle());
-                                //TODO: action
+
+                                //Launches VertigoActivity
+                                startActivity(new Intent(GpsActivity.this, VertigoActivity.class));
 
                             }
                         }
@@ -613,10 +620,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             Log.d(TAG, "onInfoWindowClick: " + title);
 
                             if (title.equals(Auditorium.getTitle())) {
-                                //Action for flux infowindow
+                                //Action for Auditorium infowindow
                                 Log.d(TAG, "This is Auditorium infowindow " + Auditorium.getTitle());
-                                //TODO: action
 
+                                //Launches AuditoriumActivity
+                                startActivity(new Intent(GpsActivity.this, AuditoriumActivity.class));
                             }
                         }
 
@@ -645,9 +653,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             Log.d(TAG, "onInfoWindowClick: " + title);
 
                             if (title.equals(Metaforum.getTitle())) {
-                                //Action for flux infowindow
+                                //Action for Metaforum infowindow
                                 Log.d(TAG, "This is Metaforum infowindow " + Metaforum.getTitle());
-                                //TODO: action
+
+                                //Launches MetaforumActivity
+                                startActivity(new Intent(GpsActivity.this, MetaforumActivity.class));
 
                             }
                         }
@@ -677,9 +687,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             Log.d(TAG, "onInfoWindowClick: " + title);
 
                             if (title.equals(Atlas.getTitle())) {
-                                //Action for flux infowindow
+                                //Action for Atlas infowindow
                                 Log.d(TAG, "This is Atlas infowindow " + Atlas.getTitle());
-                                //TODO: action
+
+                                //Launches AtlasActivity
+                                startActivity(new Intent(GpsActivity.this, AtlasActivity.class));
 
                             }
                         }

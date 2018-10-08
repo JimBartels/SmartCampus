@@ -70,6 +70,11 @@
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps" />
+        <activity android:name=".FluxActivity" />
+        <activity android:name=".MetaforumActivity" />
+        <activity android:name=".VertigoActivity" />
+        <activity android:name=".AtlasActivity" />
+        <activity android:name=".AuditoriumActivity"></activity>
     </application>
 
 </manifest>
