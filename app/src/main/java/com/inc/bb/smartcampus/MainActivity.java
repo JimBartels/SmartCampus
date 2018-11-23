@@ -209,7 +209,8 @@ public class MainActivity extends AppCompatActivity  {
             if(user!=null){
                 login(user.studentnumber,user.password);}
         }
-    } //Checks whether user is logged in and if so goes to GPS activity.
+    }
+    //Checks whether user is logged in and if so goes to GPS activity.
 
     private void writeNewUser(String userId, String studentNumber, String passWord, String Longitude
             , String Latitude){
@@ -272,7 +273,8 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
-    } //Listener for user input into username and password editTexts, changes button to other color
+    } //Listener for user input into username and password
+    // editTexts, changes button to other color
     // when those two both have input, void function.
 
     @Override
