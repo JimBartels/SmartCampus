@@ -1109,7 +1109,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             case LOGGING_GPS:
                 Log.d(TAG, "pilotLogging: GPS");
                 log = ",1," + userName + "," + "SENT,CELLULAR,AutoPilot.SmartphoneGPS,"
-                        + UUID.randomUUID() + "," + userName + "," + data ;
+                        + UUID.randomUUID().toString() + "," + userName + "," + data ;
 
                 String fileNameGPS = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_" + userName
@@ -1128,7 +1128,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             case LOGGING_STATUS:
                 Log.d(TAG, "pilotLogging: Status");
                 log = ",2," + userName + "," + "SENT,CELLULAR,AutoPilot.SmartphoneUserActivity,"
-                        + UUID.randomUUID() + "," + userName + ", " + data;
+                        + UUID.randomUUID().toString() + "," + userName + ", " + data;
 
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_" + userName
@@ -1179,7 +1179,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             case LOGGING_HUAWEI_SENT:
                 Log.d(TAG, "pilotLogging: HuaweiSent");
-                log = ",5," + userName + "," + "SENT,CELLULAR,AutoPilot.HuaweiGeofencingGPS, ,"
+                log = ",5," + userName + "," + "SENT,CELLULAR,AutoPilot.HuaweiGeofencingGPS," +
+                        UUID.randomUUID().toString() + ','
                         + userName + "," + data;
 
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
