@@ -108,7 +108,8 @@ public class MainActivity extends AppCompatActivity  {
 
                         // task.isSuccessful means if the creating of a new user was successful
                         if(task.isSuccessful()){
-                            Toast toast = Toast.makeText(getApplicationContext(), "Registration successful", Toast.LENGTH_SHORT);
+                            Toast toast = Toast.makeText(getApplicationContext(),
+                                    "Registration successful", Toast.LENGTH_SHORT);
                             toast.show();
                             FirebaseUser user = mAuth.getCurrentUser();
                             userId=studentNumber.replace("@random.com", "");
@@ -128,7 +129,8 @@ public class MainActivity extends AppCompatActivity  {
 
                             //If the exception is case of user already existing
                             if (task.getException() instanceof FirebaseAuthUserCollisionException) {
-                                Toast.makeText(getApplicationContext(),"Logging in",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(),"Logging in",
+                                        Toast.LENGTH_SHORT).show();
                                 login(studentNumber,pass);
                             }
 
@@ -164,13 +166,15 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     public void login(String name, String pass) {
-        mAuth.signInWithEmailAndPassword(name,pass).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+        mAuth.signInWithEmailAndPassword(name,pass).addOnCompleteListener
+                (this, new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
 
                 //Handles if logging in is succesful
                 if(task.isSuccessful()){
-                    Toast toast = Toast.makeText(getApplicationContext(), "Log in successful", Toast.LENGTH_SHORT);
+                    Toast toast = Toast.makeText(getApplicationContext(),
+                            "Log in successful", Toast.LENGTH_SHORT);
                     toast.show();
                     FirebaseUser user = mAuth.getCurrentUser();
                     checkUserLoggedInAndGPSActivityIntent(user);
@@ -200,8 +204,11 @@ public class MainActivity extends AppCompatActivity  {
     private void checkUserLoggedInAndGPSActivityIntent(FirebaseUser currentUser) {
         if(currentUser!=null){
             Intent intentgps=new Intent(this, GpsActivity.class);
-            intentgps.putExtra("userId",currentUser.getEmail().replace("@random.com",""));
+            intentgps.putExtra("userId",currentUser.getEmail().
+                    replace("@random.com",""));
             intentgps.putExtra(" password",password);
+            intentgps.putExtra("passwordStored",user.password);
+            intentgps.putExtra("usernameStored", user.studentnumber);
             startActivity(intentgps);
         }
 
