@@ -74,6 +74,8 @@ public class MainActivity extends AppCompatActivity  {
         loginButtonListener();
     }
 
+    // Listener for the login button. If password andusername are not empty it goes to register
+    // function.
     private void loginButtonListener() {
         mFirebaseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -95,11 +97,12 @@ public class MainActivity extends AppCompatActivity  {
                 // logging in. This was left out for testing convenience.
             }
         });
-    } // Listener for the login button. If password and
-    // username are not empty it goes to register function.
+    }
 
-
-
+    // Tries to register by the "studentnumber" variable and "pass variable", these are the password
+    // and username inputs from the edittexts as seen in the listeners. If register is successful ->
+    // Gpsactivity, if not exception by firebase is handled by either logging in or showing error to
+    // user by toast.
     public void register(final String studentNumber, final String pass) {
         mAuth.createUserWithEmailAndPassword(studentNumber,pass)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -139,11 +142,9 @@ public class MainActivity extends AppCompatActivity  {
                                     Toast.LENGTH_SHORT).show();}}
                     }
                 });
-    } // Tries to register
-    // by the "studentnumber" variable and "pass variable", these are the password and username
-    // inputs from the edittexts as seen in the listeners. If register is successful -> Gpsactivity,
-    // if not exception by firebase is handled by either logging in or showing error to user by toast.
+    }
 
+    // Updates another Firebase variable (displayname) to the username used to login/register
     private void updateDisplayName(FirebaseUser user) {
 
         UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
@@ -165,6 +166,7 @@ public class MainActivity extends AppCompatActivity  {
         super.onDestroy();
     }
 
+    //Tries to login to firebase auth client, if successful -> GPSactivity, if not error is shown.
     public void login(String name, String pass) {
         mAuth.signInWithEmailAndPassword(name,pass).addOnCompleteListener
                 (this, new OnCompleteListener<AuthResult>() {
@@ -191,8 +193,7 @@ public class MainActivity extends AppCompatActivity  {
                 }
             }
         });
-    } //Tries to login to firebase auth client,
-    // if successful -> GPSactivity, if not error is shown.
+    }
 
     @Override
     protected void onStart() {
@@ -201,6 +202,7 @@ public class MainActivity extends AppCompatActivity  {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         checkUserLoggedInAndGPSActivityIntent(currentUser);}
 
+    //Checks whether user is logged in and if so goes to GPS activity.
     private void checkUserLoggedInAndGPSActivityIntent(FirebaseUser currentUser) {
         if(currentUser!=null){
             Intent intentgps=new Intent(this, GpsActivity.class);
@@ -217,19 +219,18 @@ public class MainActivity extends AppCompatActivity  {
                 login(user.studentnumber,user.password);}
         }
     }
-    //Checks whether user is logged in and if so goes to GPS activity.
 
+    // Writes a User class (nothing to do with firebase), this is used for staying logged in to
+    // firebase this will prevent logging in again after short connection loss.
     private void writeNewUser(String userId, String studentNumber, String passWord, String Longitude
             , String Latitude){
         userId=userId.replace("@random.com","");
         user = new User(studentNumber,passWord, latitude, longitude);
         mDatabase.child("users").child(userId).setValue(user);
         return;
-    } //Writes a User class (nothing to do with firebase), this is
-    // used for staying logged in to firebase this will prevent logging in again after short connection
-    // loss
-
-
+    }
+    //Listener for user input into username and password
+    // editTexts, changes button to other color when those two both have input, void function.
     private void editTextsListeners() {
         mPassField.addTextChangedListener(new TextWatcher() {
             @Override
@@ -280,9 +281,7 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
-    } //Listener for user input into username and password
-    // editTexts, changes button to other color
-    // when those two both have input, void function.
+    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {

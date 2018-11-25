@@ -359,6 +359,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
+    // Starts location request and updates as well as the oneM2M connection and communication.
+    // Moreover it starts the detection of user activity.
     private void startOneM2MGpsUserActivityThread() {
 
         oneM2MGPSThread = new Thread(new Runnable() {
@@ -381,8 +383,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         });
         oneM2MGPSThread.start();
-    } // Starts location request and updates as well as
-    // the oneM2M connection and communication. Moreover it starts the detection of user activity.
+    }
 
     private void huaweiTimer(){
         huaweiTimer = new Timer();
@@ -400,6 +401,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         };
     }
 
+    //Assigns listeners to when the buttom navigation is clicked, changing activity etc.
     private void setupBottomNavigationBar() {
         //BottomNavigationBar
         final BottomNavigationView bottomNavigationView =
@@ -424,23 +426,23 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         return true;
                     }
                 });
-    } //Assigns listeners to when the buttom navigation
-    //is clicked, changing activity etc. //TODO make campusCar an activity instead of fragment
+    } //TODO make campusCar an activity instead of fragment
 
+    // Removes all fragments that are on the stack, fragments are stored on top of eachother on a
+    // stack (sort of memory) and can be popped (removed), this goes back to initial google maps
+    // fragment.
     private void removeFragments() {
         android.app.FragmentManager fm = getFragmentManager();
         for (int i = 0; i < fm.getBackStackEntryCount(); ++i) {
             fm.popBackStack();}
-    } //Removes all fragments that are on the stack, fragments
-    // are stored on top of eachother on a stack (sort of memory) and can be popped (removed),
-    // this goes back to initial google maps fragment.
+    }
 
+    // Switches the fragmentcontainer which contains google maps (initially) to a certain other
+    // fragment, this is passed to this function from its implementation.
     private void switchToFragment(Fragment fragment) {
         android.app.FragmentManager manager = getFragmentManager();
         manager.beginTransaction().replace(R.id.map, fragment).addToBackStack(null).commit();
-    } //Switches the fragmentcontainer which
-    // contains google maps (initially) to a certain other fragment, this is passed to this function
-    // from its implementation.
+    }
 
     @Override
     protected void onPause() {
@@ -448,6 +450,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onPause();
     }
 
+    //Override function called when google maps is first initialized/ready in the app. All campus
+    // buildings are initialized (their actions/listeners) as well as the car overlay and user
+    // location that is observable in the app.
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
@@ -694,11 +699,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         };
         mMap.setOnGroundOverlayClickListener(listener);
-    } //Override function called when google maps
-    // is first initialized in the app. All campus buildings are initialized
-    // (their actions/listeners) as well as the car overlay and user location that is observable
-    // in the app.
+    }
 
+    //Puts car somewhere on the map, to be later called when coordinates change.
     private void setupCarOverlay() {
         BitmapDrawable carBitmapDrawable=(BitmapDrawable)getResources().getDrawable(R.drawable.caricon);
         carBitmap =carBitmapDrawable.getBitmap();
@@ -708,9 +711,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .image(BitmapDescriptorFactory.fromBitmap(carBitmap))
                 .zIndex(1)
                 .bearing(315));
-    } //Puts car somewhere on the map, to be later called when
-    //coordinates change.
+    }
 
+    // Builds common notification settings; vibration pattern, title etc which is being sent from
+    // the implementation.
     private void buildCarNotification(String title) {
         long[] vibrationPattern = {Long.valueOf(0),Long.valueOf(500)};
         mNotificationManager =
@@ -731,9 +735,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         PendingIntent pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         mBuilder.setContentIntent(pi);
 
-    } // Builds common notification settings;
-    // vibration pattern title which is being sent from the implementation.
+    }
 
+    // Cancels and shows notifications changed accordingly after being built in buildCarNotifcation
+    // depending upon the distance in a straight line from the last car location to the last user
+    // location.
     private void handleCarNotification(Double deltaMeters) {
         if (deltaMeters <= 40 && !notificationArray[AUTONOMOUS_CAR_40M_NOTIFICATION_ID]) {
             cancelNotification(AUTONOMOUS_CAR_100M_NOTIFICATION_ID);
@@ -782,18 +788,19 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(deltaMeters>100){
             carNotificationConstant2=0;
         }
-    } // Cancels and shows
-    // notifications changed accordingly after being built in buildCarNotifcation depending upon the
-    // distance in a straight line from the last car location to the last user location.
+    }
 
+    // Cancels any notification. The id is the id given to the notifcation when created. the
+    // notifcationarray with the element of this ID is set to false and the notifcation itself is
+    // cancelled via notifcationmanager.
     public void cancelNotification(int id) {
         if(notificationArray[id]){
             mNotificationManager.cancel(id);
             notificationArray[id]=false;}
-    } //Cancels any notification. The id is the id
-    // given to the notifcation when created. the notifcationarray with the element of this ID is
-    // set to false and the notifcation itself is cancelled via notifcationmanager.
+    }
 
+    // Creates appropriate JSON objects to be called for creating content instances and containers
+    // on oneM2M. These are global variables.
     private void createVRUJSONS() {
         VRUgps = new OneM2MMqttJson(oneM2MVRUAeRi,oneM2MVRUAePass,oneM2MVRUAeRn,userName);
 
@@ -810,9 +817,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         } catch (JSONException e) {
             e.printStackTrace();
         }
-    } // Creates appropriate JSON objects to be called for
-    // creating content instances and containers on oneM2M. These are global variables.
+    }
 
+    // Creates broadcast receiver for DetectedActivitiesIntentService, this receives all activites
+    // with their confidence. The Highest confidence activity is then sent to checkActivityType and
+    // published to oneM2M and Huawei and logged.
     private void setBroadcastReceiver(){
         broadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -841,11 +850,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 broadcastReceiver, new IntentFilter(ConstantsClassifier.ACTIVITY_BROADCAST_ACTION));
-    } // Creates broadcast receiver for
-    // DetectedActivitiesIntentService, this receives all activites with their confidence. The
-    // Highest confidence activity is then sent to checkActivityType and published to oneM2M and
-    // Huawei and logged.
+    }
 
+    // Checks which activity type is detected and sends back appropriate string to be put into json
+    // for status detection.
     private String checkActivityType(int type){
         switch(type){
             case DetectedActivity.IN_VEHICLE: {
@@ -872,18 +880,19 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             default:{ return "unknown";}
         }
 
-    } //Checks which activity type is detected and
-    // sends back appropriate string to be put into json for status detection.
+    }
 
+    // Starts the tracking of UserActivity via BackgroundDetectedAcitiviesService, which sends
+    // activities list to DetectedActivitiesIntentService, this gets the highest confidense activity
+    // type and broadcasts to setBroadcastReceiver
     private void startTrackingUserActivity(){
         Intent intent1 = new Intent(GpsActivity.this, BackgroundDetectedActivitiesService.class);
         Log.d(TAG, "startTrackingUserActivity: ");
         startService(intent1);
-    } // Starts the tracking of UserActivity via
-    // BackgroundDetectedAcitiviesService, which sends activities list to
-    // DetectedActivitiesIntentService, this gets the highest confidense activity type and
-    // broadcasts to setBroadcastReceiver
+    }
 
+    // Builds the OneM2M broker connection, subscribes to the VRU ae Response topic and creates
+    // UserID container.
     private MqttAndroidClient buildOneM2MVRU(MqttAndroidClient mMqttAndroidClient,
                                              String userId1) {
         userId1 = userId1.replace("s","suser");
@@ -921,9 +930,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         });
         return mMqttAndroidClient;
-    } // Builds the OneM2M broker
-    // connection, subscribes to the VRU ae Response topic and creates UserID container.
+    }
 
+    // Subscribes to response topic on OneM2M the listener created here get called whenever a
+    // message on a subscribed topic on OneM2M arrives.
     public void subscribeToTopic(String subscription) {
         try {
             onem2m.subscribe(subscription, 0, null, new IMqttActionListener() {
@@ -950,10 +960,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             System.err.println("Exception whilst subscribing");
             ex.printStackTrace();
         }
-    }//Subscribes to response topic on OneM2M
-    // the listener created here get called whenever a message on a subscribed topic on OneM2M
-    // arrives.
+    }
 
+    // Processes the messages that are incoming from oneM2M from a certain subscribed topic as
+    // defined in subscribeToTopic. This is the handler for incoming car messages and if this is
+    // from the RTK (accurate GPS) from the car or from the flowradar. Currently only RTK is used.
     private void oneM2MMessagesHandler(String topic, MqttMessage message, Long timeUnix,
                                        String lastTimeUTC) throws JSONException {
         JSONObject messageCar = new JSONObject(new String(message.getPayload()));
@@ -1046,12 +1057,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 Log.d(TAG, "Latency:" + latencyFromGPSTillReceive);
             }
         }
-    } //Processes
-    // the messages that are incoming from oneM2M from a certain subscribed topic as defined in
-    // subscribeToTopic. This is the handler for incoming car messages and if this is from the RTK
-    // (accurate GPS) from the car or from the flowradar. Currently only RTK is used.
+    }
 
-
+    // Publishes any message to to a topic on oneM2M defined by the input and logs this message.
+    // This is used for publishing status, GPS and call taxi messages. Messagetype defines what kind
+    // of messsage this is and if it needs to be logged or not.
     public void publishAndLogMessage(@NonNull MqttAndroidClient client, @NonNull final String msg,
                                      int qos, @NonNull final String topic, final int messageType,
                                      final String logmsg, @NonNull final Long generationTimeStamp)
@@ -1077,11 +1087,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 packetLosses++;
             }
         });
-    } // Publishes any message to
-    // to a topic on oneM2M defined by the input and logs this message. This is used for publishing
-    //  status, GPS and call taxi messages. Messagetype defines what kind of messsage this is and
-    // if it needs to be logged or not.
+    }
 
+    // Function that processes al logging depending on the messagetype (what kind of log), the data
+    // and the generation timestamp that is needed to be put into the log.
     private void pilotLogging(int messageType, long generationTimeStamp, String data) {
         String log;
         Calendar calendar = Calendar.getInstance();
@@ -1195,9 +1204,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 if(!fileNameVector.contains(fileNameHS)){fileNameVector.add(fileNameHS);}
         }
     }
-    // Function that processes al logging depending on the messagetype (what kind of log), the data
-    // and the generation timestamp that is needed to be put into the log.
 
+    // Writes a logfile or appends this file if it is already existing with an arbitrary array (does
+    // not matter how large) seperated by commas. (Time,Latency, ..... Lat, Lon) will be one line in
+    // an CSV file to excel.
     private void writeToLogFile(String Filename , String entry) {
        /* String FILENAME = userId + "-" + "OneM2MBackAndForthLatency.csv";
         StringBuilder stringBuilder = new StringBuilder();
@@ -1220,10 +1230,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             e.printStackTrace();
             Log.d(TAG, "writeToLogFile" + e.toString());
         }
-    } //Writes a logfile or appends
-    // this file if it is already existing with an arbitrary array (does not matter how large)
-    // seperated by commas. (Time,Latency, ..... Lat, Lon) will be one line in an CSV file to excel.
+    }
 
+    // Initializes MQTT client
     public MqttAndroidClient getMqttClient(@NonNull Context context,@NonNull String brokerUrl,
                                            @NonNull String clientId) {
         final MqttAndroidClient mqttClient = new MqttAndroidClient(context, brokerUrl, clientId);
@@ -1277,8 +1286,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             e.printStackTrace();
         }
         return mqttClient;
-    } // Initializes MQTT client
+    }
 
+    //Sets options for the MQTT client (Clean session, automatic reconnect etc). Sends this back to
+    // where it is called.
     private MqttConnectOptions setMqttConnectionOptions() {
         MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
         mqttConnectOptions.setCleanSession(false);
@@ -1287,9 +1298,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         mqttConnectOptions.setPassword("onem2m".toCharArray());
         mqttConnectOptions.setKeepAliveInterval(60);
         return mqttConnectOptions;
-    } //Sets options for the MQTT client
-    // (Clean session, automatic reconnect etc). Sends this back to where it is called.
+    }
 
+    // Function called when asynctasks are finished. In this case handles the response received by
+    // the OkHTTP Huawei connection asynctask. Whenever Huawei sends something back (whenever we
+    // send them something by post) this function is called. This then handles the rectangle
+    // placement and speed indication in the google maps layout and also handles logging of Huawei
+    // messaging as well as notifications for the rectangle.
     @Override
     public void processFinish(Bundle output) {
         if(output!=null && output.getString("error")==null) {
@@ -1326,13 +1341,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             handleCarNotificationHuawei(false);
         }
         handleCarNotificationHuawei(false);
-    } // Function called when asynctasks are finished.
-    // In this case handles the response received by the OkHTTP Huawei connection asynctask.
-    // Whenever Huawei sends something back (whenever we send them something by post)
-    // this function is called. This then handles the rectangle placement and speed indication in
-    // the google maps layout and also handles logging of Huawei messaging as well as notifications
-    // for the rectangle.
+    }
 
+    // Makes a tansformation of the speed into distance between points of the existing Huawei
+    // rectangle, then fills this up depending on speed with a certain color. Takes the points of
+    // the huawei rectangle.
     private void speedPolygon(LatLng[] points) {
         LatLng[] pointsSpeed = new LatLng[4];
         pointsSpeed[0] = points[0];
@@ -1493,10 +1506,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
 
             }
-        } //Makes a tansformation of the speed into
-    // distance between points of the existing Huawei rectangle, then fills this up depending
-    // on speed with a certain color. Takes the points of the huawei rectangle.
+        }
 
+    // Makes a notification whenever user is in the rectangle of the Huawei geofencing rectangle.
+    // inZone is boolean whether the user is in the zone or not.
     private void handleCarNotificationHuawei(boolean inZone) {
         if(inZone){
             long[] vibrationPattern = {Long.valueOf(0),Long.valueOf(500)};
@@ -1514,10 +1527,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             cancelNotification(HUAWEI_NOTIFICATION_ID);
             Log.d(TAG, "handleCarNotificationHuawei: Inzone false");
         }
-    }} //Makes a notification whenever
-    // user is in the rectangle of the Huawei geofencing rectangle. inZone is boolean whether the
-    // user is in the zone or not.
+    }}
 
+    // Executes an OkHTTPpost asynctask to send a json to a certain URL that is indicated by the url
+    // and json. results of this is handled in process finish (used for Huawei communication).
     void okHTTPPost(String url, String json) {
         okHttpPost post1 = new okHttpPost(this);
         String[] string = new String[3];
@@ -1525,9 +1538,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         string[1]=json;
         string[2]=userName;
         post1.execute(string);
-    } //Executes an OkHTTPpost asynctask to send a json
-    // to acertain URL that is indicated by the url and json. results of this is handled in
-    // process finish (used for Huawei communication).
+    }
 
     @Override
     protected void onStart() {
@@ -1552,6 +1563,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
+    // Main function, is called whenever a new location is found in onlocationresult. Functions
+    // sends last location to communication function publishGpsData and updated textview fields in
+    // activity. timestampUTC is GPS timestamp from last location result.
     private void updateLocationUI(Long timestampUTC) {
         if(!gpsHolder.isChecked()){
             isAlreadyHeld=false;
@@ -1620,11 +1634,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             mDatabase.child("users").child(userId).child("latitude").setValue(latitude);
             mDatabase.child("users").child(userId).child("speed").setValue(speed);*/
         }
-    } // Main function, is called whenever
-    // a new location is found in onlocationresult. Functions sends last location to communication
-    // function publishGpsData and updated textview fields in activity. timestampUTC is GPS
-    // timestamp from last location result.
+    }
 
+    // Used to check if holdGPS is checked, if it is then last location when checked is only send
+    //(Last location is maintained), when it is unchecked, locations are updated normally.
     private boolean checkHoldGPSLocation() {
         if(gpsHolder.isChecked()) {
             if(!isAlreadyHeld){
@@ -1638,10 +1651,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             return true;
         }
         return false;
-    } //Used to check if holdGPS is checked, if it is then
-    // last location when checked is only send (Last location is maintained), when it is unchecked
-    // locations are updated normally.
+    }
 
+    // Function for creating the final Json to be sent to the publishandlogmessage function for
+    // sending and logging of the userstatus to oneM2M. The input concerns the confidence activity
+    // type and timestamp of the received detected user activity from the AcitivtyRecognition
+    // broadcast receiver.
     private void publishUserStatus(String activity, Long timeStamp, int confidence)
             throws JSONException, MqttException, UnsupportedEncodingException {
         String con = "{\"activity\":" + "\"" + activity + "\"" + "," +  "\"activity confidence\":"
@@ -1654,12 +1669,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc")
                 .getJSONObject("m2m:cin").getString("con");
         publishAndLogMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic
-                ,LOGGING_STATUS,logmessage, timeStamp);} // Function
-    // for creating the final Json to be sent to the publishandlogmessage function for sending and
-    // logging of the userstatus to oneM2M. The input concerns the confidence activity type and
-    // timestamp of the received detected user activity from the AcitivtyRecognition broadcast
-    // receiver.
+                ,LOGGING_STATUS,logmessage, timeStamp);} //
 
+    // Function for creating the final json to be sent to the publishandlogmessage function for
+    // sending and logging of the GPS information to OneM2M. The inputs concern the found lat,lon
+    // speed etc from last found location of the Google mfusedlocationclient.
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy,
                                 Long formattedDate, String speedGPS, String manualBearing)
             throws JSONException, MqttException, UnsupportedEncodingException {
@@ -1691,11 +1705,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 && !experimentNumberText.getText().toString().isEmpty()){
            pilotLogging(LOGGING_HUAWEI_SENT,formattedDate,conHuawei);
         }
-    } //Function for
-    // creating the final json to be sent to the publishandlogmessage function for sending and
-    // logging of the GPS information to OneM2M. The inputs concern the found lat,lon speed etc
-    // from last found location of the Google mfusedlocationclient.
+    }
 
+    // Calculates the manual speed and bearing if google does not provide any (when inside for
+    // example). Uses last location and new location for the calculation of this speed and bearing.
     private String[] calculateSpeedAndBearing
             (Double latitude, Double longitude, Long timeStamp){
         String speedGPS;
@@ -1729,14 +1742,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         //TODO add a realistic threshold to prevent huge speeds at delta t goes to zero
 
         return speedandBearing;
-    } //Calculates the manual
-    // speed and bearing if google does not provide any (when inside for example). Uses last
-    // location and new location for the calculation of this speed and bearing.
+    } //
 
     private double DifferenceUTCtoSeconds(Long timeStamp, Long timeStamp2){
         return timeStamp-timeStamp2;
     }
 
+    // Difference in meters (birds flight) using 'haversine' formula, gives back distance between
+    // two points in doubles. the latitude and longitude are in degrees.
     private double DifferenceInMeters(Double lastLat,Double lastLon,Double lat,Double lon){
         Double deltaPhiLon = (lon - lastLon)*Math.PI/180;
         Double deltaPhilat = (lat - lastLat)*Math.PI/180;
@@ -1750,10 +1763,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         Double d = earth*c;
         return d;
     }
-    // Difference in meters (birds flight) using 'haversine' formula, gives back distance between
-    // two points in doubles. the latitude and longitude are in degrees.
 
-
+    // Calculates the bearing or direction of the user based upon two location points (the last one
+    // and the latest), sends this back to be used in the logging as well as in layout. Only used
+    // when Google does not give any heading/bearing, hence the name manual. lat and lon in degrees.
     private double ManualBearing(Double lastLat,Double lastLon,Double lat,Double lon){
         Double deltaPhiLon = (lon - lastLon) * Math.PI/180;
         lastLat = lastLat*Math.PI/180;
@@ -1772,9 +1785,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
         return d;
     }
-    // Calculates the bearing or direction of the user based upon two location points (the last one
-    // and the latest), sends this back to be used in the logging as well as in layout. Only used
-    // when Google does not give any heading/bearing, hence the name manual. lat and lon in degrees.
 
     @Override
     protected void onDestroy() {
@@ -1791,6 +1801,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onDestroy();
     }
 
+    // Removes last location of Huawei geofencing rectangle and adds the new location of the
+    // rectangle in the map, this function accepts array of LatLng points.
     private void geoFencingCarPolygon(LatLng[] points){
         if(geoFencingPolygon==null){
             geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
@@ -1805,10 +1817,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     .zIndex(0)
                     .strokeColor(Color.LTGRAY));
         }
-    } //Removes last location of Huawei
-    // geofencing rectangle and adds the new location of the rectangle in the map, this function
-    // accepts array of LatLng points.
+    }
 
+    // Uploads the log files storedto firebase by using a vector as dataformat (an dynamically
+    // expandable array), currently called whenever the app is paused or destroyed.
     private void uploadLogFilesFirebase() {
         fileNameVector.elements();
         FirebaseStorage storage = FirebaseStorage.getInstance();
@@ -1834,25 +1846,23 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
             }
         });}
-    } // Uploads the log files storedto firebase by using
-    // a vector as dataformat (an dynamically expandable array), currently called whenever the app
-    // is paused or destroyed.
+    }
 
+    // Constructor of locationrequest, sets certain settings of the locationrequest (interval,
+    // priority etc) for the client that sends the location updates.
     private void createLocationRequest(){
         mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(UPDATE_INVTERVAL_IN_MILLISECONDS);
         mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
-    } // Constructor of locationrequest, sets certain
-    // settings of the locationrequest (interval, priority etc) for the client that sends the
-    // location updates.
+    }
 
+    //Builds the location request upon the settings build in createLocationRequest
     private void buildLocationSettingsRequest(){
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(this.mLocationRequest);
         mLocationSettingsRequest= builder.build();
-    } //Builds the location request upon the settings
-    // build in createLocationRequest
+    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -1867,15 +1877,18 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onRestoreInstanceState(savedInstanceState);
     }
 
+    // Override function for giving functionality to whenever the back button is pressed
     @Override
     public void onBackPressed() {
         FirebaseAuth.getInstance().signOut();
         stopTracking();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
         this.finishAffinity();
-    } //Override function for giving functionality to whenever the
-    // back button is pressed
+    }
 
+    // Starts the actual location updates from the settings that have been built before. Sets on
+    // success listeners and on failure listeners to inform whether the locationupdates request was
+    // successful.
     private void startLocationUpdates() {
         mSettingsClient.checkLocationSettings(mLocationSettingsRequest)
                 .addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>()
@@ -1909,10 +1922,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                 Toast.makeText(getApplicationContext(),errorMessage,Toast.LENGTH_LONG).show();
                         }}
                 });
-    } //Starts the actual location updates from the settings
-    //that have been built before. Sets on succes listeners and on failure listeners to inform
-    //Whether the locationupdates request was succesfull.
+    }
 
+    //Requests the user for permission of GPS, a rationale is given if needed to state the reason
+    // why GPS is needed. When permissions are requested and accepted or cancelled, the override
+    //  function onRequestPermissionsResult is called.
     private void requestPermission() {
         boolean shouldProvideRationale =
                 ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -1938,10 +1952,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             ActivityCompat.requestPermissions(GpsActivity.this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     REQUEST_PERMISSIONS_REQUEST_CODE);
-    } //Requests the user for permission of GPS, a rationale is
-    // given if needed to state the reason why GPS is needed. When permissions are requested and
-    // accepted or cancelled, the override function onRequestPermissionsResult is called.
+    }
 
+    // Handler for permission results (if cancelled or accepted), this is called whenever a
+    // permission is given for something (@Override function). This then starts location updates,
+    // gives feedback that user has indeed given permissions to start GPS updates.
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -1965,20 +1980,20 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }else{
             }
         }
-    }// Handler for
-    // permission results (if cancelled or accepted), this is called whenever a permission is given
-    // for something (@Override function). This then starts location updates, gives feedback that
-    // user has indeed given permissions to start GPS updates.
+    }
 
+    // Checks whether user has already given permission to use GPS, gives back a boolean (true or
+    // false) that is used to either request permissions for GPS or start location updates.
     private boolean checkPermissions() {
         int permission = ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION);
         return permission == PackageManager.PERMISSION_GRANTED;
 
-    } // Checks whether user has already given permission to
-    // use GPS, gives back a boolean (true or false) that is used to either request permissions for
-    // GPS or start location updates.
+    }
 
+    // Checks if user is still logged in via Firebase if not, logs in with stored credentials from
+    // Firebase, if this is null uses stored credentials from User class and if this is null goes
+    // back to login screen. FirebaseUser user is sent since this variable changes. Void function.
     private void userCheck(FirebaseUser user) {
         if (user == null) {
             MainActivity Login =  new MainActivity();
@@ -1992,16 +2007,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             Intent loginIntent = new Intent(GpsActivity.this, MainActivity.class);
             startActivity(loginIntent);}
         }
-    } //Checks if user is still logged in via Firebase
-    // if not, logs in with stored credentials from Firebase, if this is null uses stored
-    // credentials from User class and if this is null goes back to login screen. FirebaseUser user
-    // is sent since this variable changes. Void function.
+    }
 
+    // Gets the username from Firebase
     private void getUsername(FirebaseUser user) {
         String userEmail = user.getEmail();
         userName = userEmail.replace("@random.com","");
     }
-    // Gets the username from Firebase
+
 
     private void createLocationCallback() {
         mLocationCallback = new LocationCallback(){
@@ -2016,6 +2029,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     } //This is called whenever a new location is found,
     // this is the clock where updatelocationUI runs on.
 
+    // Updates values from savedinstance, for example if user pauses app and comes back, locations
+    // are pulled from the last savedInstanceState
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             if (savedInstanceState.keySet().contains(KEY_LOCATION)) {
@@ -2025,16 +2040,17 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 String mLastUpdateTime = savedInstanceState.getString(KEY_LAST_UPDATED_TIME_STRING);
             }
         }
-    } //Updates values from
-    // savedinstance, for example if user pauses app and comes back, locations are pulled from
-    // the last savedInstanceState
+    }
 
+    // Stops the detection of DetectedUserActivity (Called in OnDestroy)
     private void stopTracking() {
         Intent intent = new Intent(GpsActivity.this, BackgroundDetectedActivitiesService.class);
         stopService(intent);
-    } // Stops the detection of DetectedUserActivity
-    // (Called in OnDestroy)
+    }
 
+    // Sends a message to OneM2M CallCar container when button is clicked
+    // for calling a taxi. This message is then forwarded to Csmartcampus topic for IBM rebalancing
+    // service via the subscription container CallTaxi_sub
     public void CallCar() {
         try {
             publishAndLogMessage(onem2m,VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userName).toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null, null);
@@ -2045,9 +2061,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         } catch (MqttException e) {
             Log.d(TAG, "CallCar: "+e.toString());
         }
-    } //Sends a message to OneM2M CallCar container when button is clicked
-    // for calling a taxi. This message is then forwarded to Csmartcampus topic for IBM rebalancing
-    // service via the subscription container CallTaxi_sub
-
+    }
     //TODO Extrapolating the vehicle speed heading if time is too long/delay
 }
