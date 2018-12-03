@@ -170,29 +170,29 @@ public class MainActivity extends AppCompatActivity  {
     public void login(String name, String pass) {
         mAuth.signInWithEmailAndPassword(name,pass).addOnCompleteListener
                 (this, new OnCompleteListener<AuthResult>() {
-            @Override
-            public void onComplete(@NonNull Task<AuthResult> task) {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
 
-                //Handles if logging in is succesful
-                if(task.isSuccessful()){
-                    Toast toast = Toast.makeText(getApplicationContext(),
-                            "Log in successful", Toast.LENGTH_SHORT);
-                    toast.show();
-                    FirebaseUser user = mAuth.getCurrentUser();
-                    checkUserLoggedInAndGPSActivityIntent(user);
-                }
+                        //Handles if logging in is succesful
+                        if(task.isSuccessful()){
+                            Toast toast = Toast.makeText(getApplicationContext(),
+                                    "Log in successful", Toast.LENGTH_SHORT);
+                            toast.show();
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            checkUserLoggedInAndGPSActivityIntent(user);
+                        }
 
-                //Handles exception by firebase and shows to user
-                else if(!task.isSuccessful())
-                {String temp= "";
-                    try {
-                        temp =  task.getException().getMessage();
-                    } catch (Exception e) {}
-                    Toast.makeText(MainActivity.this, temp,
-                            Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+                        //Handles exception by firebase and shows to user
+                        else if(!task.isSuccessful())
+                        {String temp= "";
+                            try {
+                                temp =  task.getException().getMessage();
+                            } catch (Exception e) {}
+                            Toast.makeText(MainActivity.this, temp,
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
 
     @Override
@@ -209,6 +209,7 @@ public class MainActivity extends AppCompatActivity  {
             intentgps.putExtra("userId",currentUser.getEmail().
                     replace("@random.com",""));
             intentgps.putExtra(" password",password);
+            if(user==null){writeNewUser(currentUser.getEmail().replace("@random.com",""),currentUser.getEmail(),password,null,null);}
             intentgps.putExtra("passwordStored",user.password);
             intentgps.putExtra("usernameStored", user.studentnumber);
             startActivity(intentgps);

@@ -6,6 +6,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
+import java.util.regex.Pattern;
+
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
@@ -115,7 +117,7 @@ public class PasswordUtils {
                     "1. Must contain an upper case letter \n" +
                     "2. Must contain a lower case letter \n" +
                     "3. Must have a digit (0-9) \n" +
-                    "4. Must contain a special symbol.")
+                    "4. Must contain a special symbol.");
         }
 
         String returnValue = null;
@@ -123,7 +125,6 @@ public class PasswordUtils {
 
         // the following functions require API 26, so something we need to look into later
         returnValue = Base64.getEncoder().encodeToString(securePassword);
-
         return returnValue;
     }
 
