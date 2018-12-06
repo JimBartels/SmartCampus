@@ -1352,9 +1352,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         pointsSpeed[1] = points[3];
         if(carSpeed!=null){
 
-           //Calculates the differences in lat,lon in meters, but scaled at 100 km/h (27.8 m/s), to visualise speed
-           Double DeltaLat = ((-81.5 * Math.cos(carHeading*Math.PI/180))/27.8) * carSpeed;
-           Double Deltalong = ((-81.5 * Math.sin(carHeading*Math.PI/180))/27.8) * carSpeed;
+           //Calculates the differences in lat,lon in meters, but scaled at 35 km/h (9.7 m/s), to visualise speed
+           Double DeltaLat = ((-81.5 * Math.cos(carHeading*Math.PI/180))/9.7) * carSpeed;
+           Double Deltalong = ((-81.5 * Math.sin(carHeading*Math.PI/180))/9.7) * carSpeed;
 
            //point for array element 2
            Double lat2_2 = points[3].latitude - (DeltaLat*360/40075000);
@@ -1369,7 +1369,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
 
            //fills up the speedpolygon with different colours based on its speed
-           if (carSpeed < 5){
+           if (carSpeed < 2.8){
 
                if(speedPolygon==null){
                    speedPolygon= mMap.addPolygon(new PolygonOptions()
@@ -1392,7 +1392,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
            }
 
-           else if (carSpeed >= 5 && carSpeed <= 10){
+           else if (carSpeed >= 2.8 && carSpeed <= 4.2){
 
                if(speedPolygon==null){
                    speedPolygon= mMap.addPolygon(new PolygonOptions()
@@ -1414,7 +1414,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                }
            }
 
-           else if (carSpeed > 10 && carSpeed <= 15){
+           else if (carSpeed > 4.2 && carSpeed <= 5.5){
 
                if(speedPolygon==null){
                    speedPolygon= mMap.addPolygon(new PolygonOptions()
@@ -1436,7 +1436,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                }
            }
 
-           else if (carSpeed > 15 && carSpeed <= 20){
+           else if (carSpeed > 5.5 && carSpeed <= 6.9){
 
                if(speedPolygon==null){
                    speedPolygon= mMap.addPolygon(new PolygonOptions()
@@ -1458,7 +1458,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                }
            }
 
-           else if (carSpeed > 20 && carSpeed <= 25){
+           else if (carSpeed > 6.9 && carSpeed <= 8.3){
 
                if(speedPolygon==null){
                    speedPolygon= mMap.addPolygon(new PolygonOptions()
@@ -1480,7 +1480,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                }
            }
 
-           else if (carSpeed > 25 && carSpeed <= 28){
+           else if (carSpeed > 8.3 && carSpeed <= 9.7){
 
                if(speedPolygon==null){
                    speedPolygon= mMap.addPolygon(new PolygonOptions()
@@ -2061,6 +2061,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         } catch (MqttException e) {
             Log.d(TAG, "CallCar: "+e.toString());
         }
+    }
+
+    public void showTimePickerDialog(View view) {
+        Log.d(TAG, "TimePickerClicked");
+        //TODO Fix TimePickerDialogIssues
     }
     //TODO Extrapolating the vehicle speed heading if time is too long/delay
 }
