@@ -1715,9 +1715,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         contentinstancecontentdata.put("activity", activity);
         contentinstancecontentdata.put("activityConfidence", confidence);
         contentinstancecontentdata.put("timestampUtc", timeStamp);
-        contentinstancecontentdata.put("UUID", uuid);
+        contentinstancecontentdata.put("UUID", uuid.toString());
         contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin")
-                .put("con", contentinstancecontentdata);
+                .put("con", contentinstancecontentdata.toString());
         String to = "/server/server/aeSmartCampus1/Users/" + userName + "/Status";
         contentCreateUserStatus.getJSONObject("m2m:rqp").put("to",to);
         String contentCreateStatus = contentCreateUserStatus.toString();
