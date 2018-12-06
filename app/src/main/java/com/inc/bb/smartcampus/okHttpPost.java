@@ -88,7 +88,6 @@ public class okHttpPost extends AsyncTask<String, Void, Bundle> {
                 returnMessage.putString("returnMessage",responseBody);
                 returnMessage.putBoolean("isInRectangle",j);
 
-
                return returnMessage;
             }
             catch(JSONException e){

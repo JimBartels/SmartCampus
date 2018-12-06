@@ -952,7 +952,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 public void messageArrived(String topic, MqttMessage message) throws Exception {
                     String lastTimeUTC = UTCPacketLossCheck;
                     Long timeUnix = System.currentTimeMillis();
-                    oneM2MMessagesHandler(topic,message,timeUnix,lastTimeUTC);
+                    oneM2MMessagesHandler(topic,message,timeUnix);
 
                 }
             });
@@ -965,8 +965,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // Processes the messages that are incoming from oneM2M from a certain subscribed topic as
     // defined in subscribeToTopic. This is the handler for incoming car messages and if this is
     // from the RTK (accurate GPS) from the car or from the flowradar. Currently only RTK is used.
-    private void oneM2MMessagesHandler(String topic, MqttMessage message, Long timeUnix,
-                                       String lastTimeUTC) throws JSONException {
+    public void oneM2MMessagesHandler(String topic, MqttMessage message, Long timeUnix) throws JSONException {
         JSONObject messageCar = new JSONObject(new String(message.getPayload()));
         Log.d(TAG, "oneM2MMessagesHandler: Arrived");
 
@@ -1106,7 +1105,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 < 10 ? "0" : "") + Integer.parseInt(experimentNumberText.getText().toString());
         String runNumberString = (Integer.parseInt(runNumberText.getText().toString())
                 < 10 ? "0" : "") + Integer.parseInt(runNumberText.getText().toString());
-
 
         switch(messageType) {
             // Checks what message needs to be logged and makes a logging entry accordingly. Also
@@ -1696,7 +1694,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin")
                 .put("rn", formattedDate);
         String contentCreate = contentCreateGPS.toString();
-        String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc")
+        String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc") //TODO look at this
                 .getJSONObject("m2m:cin").getString("con");
 
         publishAndLogMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic,LOGGING_GPS,
