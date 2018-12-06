@@ -3,6 +3,8 @@ package com.inc.bb.smartcampus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.UUID;
+
 /**
  * Created by s163310 on 4/11/2018.
  */
@@ -180,7 +182,8 @@ public class OneM2MMqttJson {
         return m2mrequester;
     }
 
-    public JSONObject CreateContentInstanceCallTaxi(Double lat, Double lng, long timeStamp, String UserID) throws JSONException{
+
+    public JSONObject CreateContentInstanceCallTaxi(Double lat, Double lng, long timeStamp, String UserID, UUID uuid) throws JSONException{
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);
 
@@ -190,8 +193,37 @@ public class OneM2MMqttJson {
         payload.put("op", CREATE_OP);
         payload.put("ty", 4);
 
-        contentinstancecontent.put("rn", UserID + "-" + timeStamp);
-        contentinstancecontent.put("con", "latitude: " + lat + "," + " longitude: " + lng  + "," + " requestTime: " + timeStamp);
+        JSONObject contentinstancecontentdata = new JSONObject();
+        contentinstancecontentdata.put("longitude", lng);
+        contentinstancecontentdata.put("latitude", lat);
+        contentinstancecontentdata.put("requestTime", timeStamp);
+        contentinstancecontentdata.put("UUID", uuid);
+        contentinstancecontentdata.put("type", "not requesting");
+        contentinstancecontent.put("rn", "taxi");
+        contentinstancecontent.put("con",contentinstancecontentdata);
+        m2mcntrequester.put("m2m:cin", contentinstancecontent);
+        payload.put("pc", m2mcntrequester);
+        m2mrequester.put("m2m:rqp",payload);
+        return m2mrequester;
+    }
+
+    public JSONObject UpdateContentInstanceCallTaxi(Double lat, Double lng, long timeStamp, String UserID, boolean requesting, String uuid) throws JSONException{
+        payload.put("fr",oneM2MAeRi);
+        payload.put("key",oneM2MAePass);
+
+        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId + "/CallTaxi/taxi";
+        payload.put("to",topic);
+        payload.put("rqi",userId);
+        payload.put("op", UPDATE_OP);
+        payload.put("ty", 4);
+
+        JSONObject contentinstancecontentdata = new JSONObject();
+        contentinstancecontentdata.put("longitude", lng);
+        contentinstancecontentdata.put("latitude", lat);
+        contentinstancecontentdata.put("requestTime", timeStamp);
+        contentinstancecontentdata.put("UUID", uuid);
+        contentinstancecontentdata.put("type", requesting ? "requesting" : "not requesting");
+        contentinstancecontent.put("con",contentinstancecontentdata.toString());
         m2mcntrequester.put("m2m:cin", contentinstancecontent);
         payload.put("pc", m2mcntrequester);
         m2mrequester.put("m2m:rqp",payload);

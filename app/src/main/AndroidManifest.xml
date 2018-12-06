@@ -75,7 +75,6 @@
         <activity android:name=".VertigoActivity" />
         <activity android:name=".AtlasActivity" />
         <activity android:name=".AuditoriumActivity" />
-
     </application>
 
 </manifest>

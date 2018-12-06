@@ -219,6 +219,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private final static int LOGGING_VEHICLE = 3;
     private final static int LOGGING_HUAWEI_SENT = 4;
     private final static int LOGGING_HUAWEI_RECEIVED = 5;
+    private final static int LOGGING_TAXI_SENT = 6;
+    private final static int LOGGING_TAXI_RECEIVED = 7;
 
     //Logging layout widgets
     EditText runNumberText, experimentNumberText;
@@ -812,7 +814,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             String to = "/server/server/aeSmartCampus1/Users/" + userName + "/Status";
             contentCreateUserStatus.getJSONObject("m2m:rqp").put("to",to);
             contentCreateCallCar = VRUgps.CreateContentInstanceCallTaxi(null,null,
-                    0,userName);
+                    0,userName,null);
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -1016,6 +1018,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 newData = true;
             }
 
+            if(comparator.equals("/server/server/aeTechnolution/prius/GPS/subPrius")){
+
+            }
+
             if(newData) {
                 carLoc = new LatLng(carLat, carLon);
 
@@ -1041,7 +1047,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     handleCarNotification(deltaMeters);
                 }
 
-                pilotLogging(LOGGING_VEHICLE, dataGenerationTimestamp, contentCarString);
+                pilotLogging(LOGGING_VEHICLE, dataGenerationTimestamp, contentCarString, null);
             }
         }
 
@@ -1063,7 +1069,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // of messsage this is and if it needs to be logged or not.
     public void publishAndLogMessage(@NonNull MqttAndroidClient client, @NonNull final String msg,
                                      int qos, @NonNull final String topic, final int messageType,
-                                     final String logmsg, @NonNull final Long generationTimeStamp)
+                                     final String logmsg, @NonNull final Long generationTimeStamp, final String uuid)
             throws MqttException, UnsupportedEncodingException {
         byte[] encodedPayload = new byte[0];
         encodedPayload = msg.getBytes("UTF-8");
@@ -1079,7 +1085,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 if(messageType!=LOGGING_NOTNEEDED){
                     if(loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty()
                             && !experimentNumberText.getText().toString().isEmpty()){
-                pilotLogging(messageType, generationTimeStamp, logmsg);}}
+                pilotLogging(messageType, generationTimeStamp, logmsg, uuid);}}
             }
             @Override
             public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
@@ -1090,7 +1096,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     // Function that processes al logging depending on the messagetype (what kind of log), the data
     // and the generation timestamp that is needed to be put into the log.
-    private void pilotLogging(int messageType, long generationTimeStamp, String data) {
+    private void pilotLogging(int messageType, long generationTimeStamp, String data, String uuid) {
         String log;
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat mdformat = new SimpleDateFormat("yyyyMMdd");
@@ -1110,13 +1116,50 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             // Checks what message needs to be logged and makes a logging entry accordingly. Also
             // makes a new log file if not existing yet and adds it to the vector pointing to all
             // log files for uploading to firebase.
+            case LOGGING_TAXI_SENT:
+                Log.d(TAG, "pilotLogging: TAXI_SENT");
+                log = ",1," + userName + "," + "SENT,CELLULAR,AutoPilot.SmartphoneTaxiRequest,"
+                        + uuid + "," + userName + "," + data ;
+
+                String fileNameTaxiSent = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_" + userName
+                        +"_6.csv";
+
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_" + userName
+                        +"_6.csv",log);
+
+                if(fileNameVector==null){fileNameVector.add(fileNameTaxiSent);}
+                if(!fileNameVector.contains(fileNameTaxiSent) && fileNameVector !=null){fileNameVector.
+                        add(fileNameTaxiSent);}
+
+                break;
+
+            case LOGGING_TAXI_RECEIVED:
+                Log.d(TAG, "pilotLogging: TAXI_RECEIVED");
+                log = ",1," + userName + "," + "SENT,CELLULAR,AutoPilot.SmartphoneTaxiRequest,"
+                        + uuid + "," + userName + "," + data ;
+
+                String fileNameTaxiReceived = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_" + userName
+                        +"_7.csv";
+
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_" + userName
+                        +"_7.csv",log);
+
+                if(fileNameVector==null){fileNameVector.add(fileNameTaxiReceived);}
+                if(!fileNameVector.contains(fileNameTaxiReceived) && fileNameVector !=null){fileNameVector.
+                        add(fileNameTaxiReceived);}
+                break;
+
             case LOGGING_NOTNEEDED:
                 break;
 
             case LOGGING_GPS:
                 Log.d(TAG, "pilotLogging: GPS");
                 log = ",1," + userName + "," + "SENT,CELLULAR,AutoPilot.SmartphoneGPS,"
-                        + UUID.randomUUID().toString() + "," + userName + "," + data ;
+                        + uuid + "," + userName + "," + data ;
 
                 String fileNameGPS = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_" + userName
@@ -1135,7 +1178,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             case LOGGING_STATUS:
                 Log.d(TAG, "pilotLogging: Status");
                 log = ",2," + userName + "," + "SENT,CELLULAR,AutoPilot.SmartphoneUserActivity,"
-                        + UUID.randomUUID().toString() + "," + userName + ", " + data;
+                        + uuid + "," + userName + ", " + data;
 
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_" + userName
@@ -1187,7 +1230,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             case LOGGING_HUAWEI_SENT:
                 Log.d(TAG, "pilotLogging: HuaweiSent");
                 log = ",5," + userName + "," + "SENT,CELLULAR,AutoPilot.HuaweiGeofencingGPS," +
-                        UUID.randomUUID().toString() + ','
+                        uuid + ','
                         + userName + "," + data;
 
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
@@ -1249,23 +1292,32 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         publishAndLogMessage(onem2m,VRU.
                                 CreateContainer(userName).toString(),0,
                                 oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
-                                null);
+                                null, null);
                         publishAndLogMessage(onem2m,VRU.
                                 CreateUserContainer("Gps").toString(),0,
                                 oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
-                                null);
+                                null, null);
+                        publishAndLogMessage(onem2m,VRU.
+                                        CreateUserContainer("CallTaxiMotionPlanning").
+                                        toString(),0, oneM2MVRUReqTopic,LOGGING_NOTNEEDED,
+                                null, null, null);
+                        publishAndLogMessage(onem2m,VRU.
+                                CreateContentInstanceCallTaxi(0.00000, 0.00000,
+                                        System.currentTimeMillis(), userName,UUID.randomUUID()).toString(),0,
+                                oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
+                                null, null);
                         publishAndLogMessage(onem2m,VRU.
                                 CreateUserContainer("Status").toString(),0,
                                 oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
-                                null);
+                                null, null);
                         publishAndLogMessage(onem2m,VRU.
                                 CreateUserContainer("CallTaxi").toString(),0,
                                 oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
-                                null);
+                                null, null);
                         publishAndLogMessage(onem2m,VRU.
                                 CreateTaxiSubContainer().toString(),0,
                                 oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
-                                null);
+                                null, null);
                     } catch (JSONException e) {
                         e.printStackTrace();}
                     catch (UnsupportedEncodingException e) {
@@ -1312,7 +1364,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             if(loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty()
                     && !experimentNumberText.getText().toString().isEmpty()) {
                 pilotLogging(LOGGING_HUAWEI_RECEIVED, 150000000, output.
-                        getString("returnMessage"));
+                        getString("returnMessage"), null);
+                //TODO UUID
             }
 
             if (output.getBoolean("isInRectangle")) {
@@ -1657,17 +1710,21 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // broadcast receiver.
     private void publishUserStatus(String activity, Long timeStamp, int confidence)
             throws JSONException, MqttException, UnsupportedEncodingException {
-        String con = "{\"activity\":" + "\"" + activity + "\"" + "," +  "\"activity confidence\":"
-                + confidence + ",\"timestampUtc\":" + timeStamp + "}";
+        UUID uuid = UUID.randomUUID();
+        JSONObject contentinstancecontentdata = new JSONObject();
+        contentinstancecontentdata.put("activity", activity);
+        contentinstancecontentdata.put("activityConfidence", confidence);
+        contentinstancecontentdata.put("timestampUtc", timeStamp);
+        contentinstancecontentdata.put("UUID", uuid);
         contentCreateUserStatus.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin")
-                .put("con", con);
+                .put("con", contentinstancecontentdata);
         String to = "/server/server/aeSmartCampus1/Users/" + userName + "/Status";
         contentCreateUserStatus.getJSONObject("m2m:rqp").put("to",to);
         String contentCreateStatus = contentCreateUserStatus.toString();
         String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc")
                 .getJSONObject("m2m:cin").getString("con");
         publishAndLogMessage(onem2m,contentCreateStatus,0,oneM2MVRUReqTopic
-                ,LOGGING_STATUS,logmessage, timeStamp);} //
+                ,LOGGING_STATUS,logmessage, timeStamp, uuid.toString());} //
 
     // Function for creating the final json to be sent to the publishandlogmessage function for
     // sending and logging of the GPS information to OneM2M. The inputs concern the found lat,lon
@@ -1675,20 +1732,22 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy,
                                 Long formattedDate, String speedGPS, String manualBearing)
             throws JSONException, MqttException, UnsupportedEncodingException {
-
+        //TODO UUID
         String formattedDateString = "UTC"+ Long.toString(formattedDate);
         UTCPacketLossCheck = formattedDate.toString();
+        String uuid = UUID.randomUUID().toString();
         String topic = "/server/server/" + "aeSmartCampus1" + "/Users/" + userName + "/gps";
         String con = "{\"type\":5,\"id\":"+userName + ",\"timestampUtc\":" + formattedDate +
                 ",\"lon\":" + longitude + ",\"lat\":"+ latitude + ",\"speed\":"+ speedGPS +
-                ",\"heading\":"+manualBearing+ ",\"accuracy\":"+Accuracy+ "}";
+                ",\"heading\":"+manualBearing+ ",\"accuracy\":"+Accuracy + ", \"UUID\": " + uuid+ "}";
         String conHuawei = "{\"type\":5,\"id\":" + userName + ",\"timestampUtc\":" +
                 formattedDateString + ",\"lon\":" + longitude + ",\"lat\":"+ latitude +
                 ",\"speed\":"+ speedGPS + ",\"heading\":"+manualBearing+ ",\"accuracy\":"+
-                Accuracy+ "}";
+                Accuracy+ ", \"UUID\": " + uuid+ "}";
         Log.d(TAG, "publishGpsData: " + conHuawei);
         okHTTPPost(huaweiUrl,conHuawei);
         contentCreateGPS.getJSONObject("m2m:rqp").put("to",topic);
+        contentCreateGPS.getJSONObject("m2m:rqp").put("op",CREATE);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin")
                 .put("con", con);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin")
@@ -1698,10 +1757,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .getJSONObject("m2m:cin").getString("con");
 
         publishAndLogMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic,LOGGING_GPS,
-                logmessage,formattedDate);
+                logmessage,formattedDate, uuid);
         if(loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty()
                 && !experimentNumberText.getText().toString().isEmpty()){
-           pilotLogging(LOGGING_HUAWEI_SENT,formattedDate,conHuawei);
+           pilotLogging(LOGGING_HUAWEI_SENT,formattedDate,conHuawei, uuid);
         }
     }
 
@@ -2051,7 +2110,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // service via the subscription container CallTaxi_sub
     public void CallCar() {
         try {
-            publishAndLogMessage(onem2m,VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userName).toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null, null);
+            String uuid = UUID.randomUUID().toString();
+            publishAndLogMessage(onem2m,VRUgps.UpdateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userName,true,uuid).toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null, null, uuid);
         } catch (JSONException e) {
             Log.d(TAG, "CallCar: "+e.toString());
         } catch (UnsupportedEncodingException e){
@@ -2061,9 +2121,18 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
-    public void showTimePickerDialog(View view) {
-        Log.d(TAG, "TimePickerClicked");
-        //TODO Fix TimePickerDialogIssues
+    public void CallCarMotionPlanning() {
+        try {
+            String uuid = UUID.randomUUID().toString();
+            publishAndLogMessage(onem2m,VRUgps.UpdateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userName,true,uuid).toString(),0,oneM2MVRUReqTopic,LOGGING_TAXI_SENT,null, null,uuid.toString());
+        } catch (JSONException e) {
+            Log.d(TAG, "CallCar: "+e.toString());
+        } catch (UnsupportedEncodingException e){
+            Log.d(TAG, "CallCar: "+e.toString());
+        } catch (MqttException e) {
+            Log.d(TAG, "CallCar: "+e.toString());
+        }
     }
+
     //TODO Extrapolating the vehicle speed heading if time is too long/delay
 }
