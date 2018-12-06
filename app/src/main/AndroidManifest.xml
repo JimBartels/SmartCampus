@@ -62,7 +62,7 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAHgSeva0ncJnJbkPccPs941waEWqAvxPU" />
+            android:value="AIzaSyA4aZzQMDy6oJIFjiYaE9QxDZVAFqIGuzQ" />
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
@@ -74,7 +74,8 @@
         <activity android:name=".MetaforumActivity" />
         <activity android:name=".VertigoActivity" />
         <activity android:name=".AtlasActivity" />
-        <activity android:name=".AuditoriumActivity"></activity>
+        <activity android:name=".AuditoriumActivity" />
+
     </application>
 
 </manifest>
