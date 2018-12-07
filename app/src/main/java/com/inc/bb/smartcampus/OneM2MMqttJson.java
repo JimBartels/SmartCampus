@@ -140,7 +140,7 @@ public class OneM2MMqttJson {
 
         contentinstancecontent.put("rn", RnContentInstance);
         contentinstancecontent.put("con", 0);
-        m2mcntrequester.put("m2m:cin", contentinstancecontent.toString());
+        m2mcntrequester.put("m2m:cin", contentinstancecontent);
         payload.put("pc", m2mcntrequester);
         m2mrequester.put("m2m:rqp",payload);
         return m2mrequester;
@@ -183,7 +183,7 @@ public class OneM2MMqttJson {
     }
 
 
-    public JSONObject CreateContentInstanceCallTaxi(Double lat, Double lng, long timeStamp, String UserID, boolean requesting, String uuid) throws JSONException{
+    public JSONObject CreateContentInstanceCallTaxi(Double lat, Double lng, long timeStamp, String UserID, boolean valid, String uuid) throws JSONException{
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);
 
@@ -198,10 +198,10 @@ public class OneM2MMqttJson {
         contentinstancecontentdata.put("latitude", lat);
         contentinstancecontentdata.put("requestTime", timeStamp);
         contentinstancecontentdata.put("UUID", uuid);
-        contentinstancecontentdata.put("type", requesting ? "requesting" : "not requesting");
+        contentinstancecontentdata.put("valid", valid ? "true" : "false");
         contentinstancecontentdata.put("id",userId);
-        contentinstancecontent.put("con",contentinstancecontentdata.toString());
         contentinstancecontent.remove("rn");
+        contentinstancecontent.put("con",contentinstancecontentdata.toString());
         m2mcntrequester.put("m2m:cin", contentinstancecontent);
         payload.put("pc", m2mcntrequester);
         m2mrequester.put("m2m:rqp",payload);
