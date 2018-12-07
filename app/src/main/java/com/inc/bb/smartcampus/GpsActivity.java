@@ -1,6 +1,7 @@
 package com.inc.bb.smartcampus;
 
 import android.Manifest;
+import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -1020,7 +1021,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             if(comparator.equals("")){
                 //TODO parsing and comparator
-                LatLng[] points = null
+                LatLng[] points = null;
                 motionPlanningPath(points);
             }
 
@@ -2165,6 +2166,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         } catch (MqttException e) {
             Log.d(TAG, "CallCar: "+e.toString());
         }
+    }
+
+    //This piece of code shows the clock when the timebutton is clicked
+    public void showTimePickerDialog(View v) {
+        Log.d(TAG, "TimePickerClicked");
+        DialogFragment newFragment = new CampusCar();
+        newFragment.show(getFragmentManager(), "timePicker");
+
+
     }
 
     //TODO Extrapolating the vehicle speed heading if time is too long/delay
