@@ -200,7 +200,8 @@ public class OneM2MMqttJson {
         contentinstancecontentdata.put("UUID", uuid);
         contentinstancecontentdata.put("type", "not requesting");
         contentinstancecontent.put("rn", "taxi");
-        contentinstancecontent.put("con",contentinstancecontentdata);
+        contentinstancecontentdata.put("id",userId);
+        contentinstancecontent.put("con",contentinstancecontentdata.toString());
         m2mcntrequester.put("m2m:cin", contentinstancecontent);
         payload.put("pc", m2mcntrequester);
         m2mrequester.put("m2m:rqp",payload);
@@ -223,7 +224,9 @@ public class OneM2MMqttJson {
         contentinstancecontentdata.put("requestTime", timeStamp);
         contentinstancecontentdata.put("UUID", uuid);
         contentinstancecontentdata.put("type", requesting ? "requesting" : "not requesting");
+        contentinstancecontentdata.put("id", userId);
         contentinstancecontent.put("con",contentinstancecontentdata.toString());
+        contentinstancecontent.remove("rn");
         m2mcntrequester.put("m2m:cin", contentinstancecontent);
         payload.put("pc", m2mcntrequester);
         m2mrequester.put("m2m:rqp",payload);

@@ -1137,7 +1137,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             case LOGGING_TAXI_RECEIVED:
                 Log.d(TAG, "pilotLogging: TAXI_RECEIVED");
-                log = ",1," + userName + "," + "SENT,CELLULAR,AutoPilot.SmartphoneTaxiRequest,"
+                log = ",1," + userName + "," + "RECEIVED,CELLULAR,AutoPilot.SmartphoneTaxiRequest,"
                         + uuid + "," + userName + "," + data ;
 
                 String fileNameTaxiReceived = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
