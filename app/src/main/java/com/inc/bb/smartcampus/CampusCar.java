@@ -13,13 +13,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Switch;
 import android.widget.TimePicker;
 
 public class CampusCar extends Fragment {
     ListView list;
     ArrayAdapter adapter;
     String TAG = "CampusCar";
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -31,7 +34,9 @@ public class CampusCar extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         Button locButton = (Button) getView().findViewById(R.id.carbutton);
+        locButton.setHapticFeedbackEnabled(true);
         Drawable buttondrawable2 = ContextCompat.getDrawable(getActivity(),R.drawable.buttonshapebefore);
+
         locButton.setBackground(buttondrawable2);
         locButton.setOnClickListener(new View.OnClickListener() {
             @Override

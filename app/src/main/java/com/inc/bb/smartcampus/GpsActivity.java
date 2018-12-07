@@ -814,7 +814,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             String to = "/server/server/aeSmartCampus1/Users/" + userName + "/Status";
             contentCreateUserStatus.getJSONObject("m2m:rqp").put("to",to);
             contentCreateCallCar = VRUgps.CreateContentInstanceCallTaxi(null,null,
-                    0,userName,null);
+                    0,userName,false,null);
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -1018,8 +1018,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 newData = true;
             }
 
-            if(comparator.equals("/server/server/aeTechnolution/prius/GPS/subPrius")){
-
+            if(comparator.equals("")){
+                //TODO parsing and comparator
+                LatLng[] points = null
+                motionPlanningPath(points);
             }
 
             if(newData) {
@@ -1303,7 +1305,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                 null, null, null);
                         publishAndLogMessage(onem2m,VRU.
                                 CreateContentInstanceCallTaxi(0.00000, 0.00000,
-                                        System.currentTimeMillis(), userName,UUID.randomUUID()).toString(),0,
+                                        System.currentTimeMillis(), userName,false,UUID.randomUUID().toString()).toString(),0,
                                 oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
                                 null, null);
                         publishAndLogMessage(onem2m,VRU.
@@ -1876,6 +1878,24 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
+    // Removes last location of Huawei geofencing rectangle and adds the new location of the
+    // rectangle in the map, this function accepts array of LatLng points.
+    private void motionPlanningPath(LatLng[] points){
+        if(geoFencingPolygon==null){
+            geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
+                    .add(points)
+                    .zIndex(0)
+                    .strokeColor(Color.BLUE));
+        }
+        else{
+            geoFencingPolygon.remove();
+            geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
+                    .add(points)
+                    .zIndex(0)
+                    .strokeColor(Color.BLUE));
+        }
+    }
+
     // Uploads the log files storedto firebase by using a vector as dataformat (an dynamically
     // expandable array), currently called whenever the app is paused or destroyed.
     private void uploadLogFilesFirebase() {
@@ -2111,7 +2131,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public void CallCar() {
         try {
             String uuid = UUID.randomUUID().toString();
-            publishAndLogMessage(onem2m,VRUgps.UpdateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userName,true,uuid).toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null, null, uuid);
+            JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.
+                            getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(),
+                    userName,true,uuid);
+            String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
+                    getJSONObject("m2m:cin").getString("con");
+            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
+                    LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
+
         } catch (JSONException e) {
             Log.d(TAG, "CallCar: "+e.toString());
         } catch (UnsupportedEncodingException e){
@@ -2124,7 +2151,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public void CallCarMotionPlanning() {
         try {
             String uuid = UUID.randomUUID().toString();
-            publishAndLogMessage(onem2m,VRUgps.UpdateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userName,true,uuid).toString(),0,oneM2MVRUReqTopic,LOGGING_TAXI_SENT,null, null,uuid.toString());
+            JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.
+                    getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(),
+                    userName,true,uuid);
+            String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
+                    getJSONObject("m2m:cin").getString("con");
+            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
+                    LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
         } catch (JSONException e) {
             Log.d(TAG, "CallCar: "+e.toString());
         } catch (UnsupportedEncodingException e){
