@@ -53,8 +53,7 @@ public class MainActivity extends AppCompatActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-       // memoryLeakCanary();
+        memoryLeakCanary();
 
         //Firebase initialization and authentication client
         FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -75,15 +74,18 @@ public class MainActivity extends AppCompatActivity  {
         // is initiated
         editTextsListeners();
         loginButtonListener();
+
     }
+
+
 
     private void memoryLeakCanary() {
         if (LeakCanary.isInAnalyzerProcess(this)) {
             // This process is dedicated to LeakCanary for heap analysis.
             // You should not init your app in this process.
-            return;
         }
-        LeakCanary.install(getApplication());
+        else{
+        LeakCanary.install(getApplication());}
     }
 
     // Listener for the login button. If password andusername are not empty it goes to register

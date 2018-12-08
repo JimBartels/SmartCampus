@@ -108,6 +108,8 @@ import java.util.TimerTask;
 import java.util.UUID;
 import java.util.Vector;
 
+import okhttp3.OkHttpClient;
+
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants, okHttpPost.AsyncResponse, OnMapReadyCallback {
 
@@ -170,6 +172,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     Long lastTime;
 
     Thread oneM2MGPSThread;
+    Boolean threadRunnable = true;
 
     //MQTT oneM2M login credentials, subscription and request topics and JSONs.
     MqttAndroidClient onem2m;
@@ -272,6 +275,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public  String bearingAccuracy;
     public String speed;
 
+
     //Request code for the permissions intent (asking for some permission)
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
@@ -279,7 +283,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
         super.onCreate(savedInstanceState);
-        memoryLeakCanary();
+        //memoryLeakCanary();
 
         //Sets orientation so the screen is locked to portrait mode
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -1607,12 +1611,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // Executes an OkHTTPpost asynctask to send a json to a certain URL that is indicated by the url
     // and json. results of this is handled in process finish (used for Huawei communication).
     void okHTTPPost(String url, String json) {
-        okHttpPost post1 = new okHttpPost(this);
+        okHttpPost okHttpPost = new okHttpPost(this);
         String[] string = new String[3];
         string[0]=url;
         string[1]=json;
         string[2]=userName;
-        post1.execute(string);
+        okHttpPost.execute(string);
     }
 
     @Override
@@ -1875,13 +1879,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         if(fileNameVector!=null){uploadLogFilesFirebase();}
         FirebaseAuth.getInstance().signOut();
-
+        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
         stopTracking();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
         huaweiTimerTask.cancel();
 
         mNotificationManager.cancelAll();
-
+        oneM2MGPSThread.interrupt();
         super.onDestroy();
     }
 
