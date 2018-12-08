@@ -177,7 +177,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     String oneM2MVRUAePass = "smartcampuspassword";
     String oneM2MVRUReqTopic = "/oneM2M/req/aeSmartCampus1/server/json";
     String CsmartcampusSubscriptionTopic = "/oneM2M/resp/server/aeSmartCampus1/json";
-    String CsmartCampusCarsSubscriptionTopic = "/oneM2M/resp/server/Ctechnolution/json";
+    String CsmartCampusCarsSubscriptionTopic = "/oneM2M/resp/server/aeTechnolution/json";
     JSONObject contentCreateGPS, contentCreateUserStatus, contentCreateCallCar;
     //OneM2M op (operand) for in json op: fields.
     private final static int CREATE = 1;
@@ -891,7 +891,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void startTrackingUserActivity(){
         Intent intent1 = new Intent(GpsActivity.this, BackgroundDetectedActivitiesService.class);
         Log.d(TAG, "startTrackingUserActivity: ");
-        startService(intent1);
+        //startService(intent1);
     }
 
     // Builds the OneM2M broker connection, subscribes to the VRU ae Response topic and creates
@@ -975,12 +975,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(topic.equals(CsmartCampusCarsSubscriptionTopic)){
             Log.d(TAG, "oneM2MMessagesHandler: SubCar");
 
-            String comparator = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc")
-                    .getJSONArray("m2m:sgn").getJSONObject(0).getString("sur");
+           /* String comparator = messageCar.getJSONObject("m2m:rsp").getString("rqi");
             String contentCarString = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc")
                     .getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev")
-                    .getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
+                    .getJSONObject("rep").getJSONObject("m2m:cin").getString("con");*/
 
+            String comparator = messageCar.getJSONObject("m2m:rsp").getString("rqi");
+            String contentCarString = messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
+                    .getJSONArray("m2m:cin").getJSONObject(0).getString("con");
             Long dataGenerationTimestamp=null;
             boolean newData=false;
             Log.d(TAG, "oneM2MMessagesHandler: " + comparator);
@@ -1000,7 +1002,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 String[] carLatseparated = latitudeCar.split(":");
                 carLat = Double.parseDouble(carLatseparated[1]);
                 newData = true;}*/
-            if(comparator.equals("/server/server/aeTechnolution/prius/GPS/subPrius")){
+            if(comparator.equals("CREATE:prius/GPS")){
                 noRTK=false;
                 Log.d(TAG, "oneM2MMessagesHandler: RTK");
                 lastRTK = System.currentTimeMillis();
@@ -1602,6 +1604,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onStop() {
         if(fileNameVector!=null){uploadLogFilesFirebase();}
+        Log.e(TAG, "onStop:");
         super.onStop();
     }
 
@@ -1848,7 +1851,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onDestroy() {
-        Log.d(TAG, "destroy");
+        Log.e(TAG, "destroy");
 
         if(fileNameVector!=null){uploadLogFilesFirebase();}
         FirebaseAuth.getInstance().signOut();
@@ -1990,7 +1993,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                     rae.startResolutionForResult(GpsActivity.this,
                                             REQUEST_CHECK_SETTINGS);
                                 } catch (IntentSender.SendIntentException sie){
-
+                                    Log.e(TAG, "onFailure request location:" + sie.toString());
                                 }
                                 break;
 
@@ -2141,11 +2144,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
 
         } catch (JSONException e) {
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         } catch (UnsupportedEncodingException e){
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         } catch (MqttException e) {
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         }
     }
 
@@ -2160,21 +2163,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
                     LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
         } catch (JSONException e) {
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         } catch (UnsupportedEncodingException e){
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         } catch (MqttException e) {
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         }
-    }
-
-    //This piece of code shows the clock when the timebutton is clicked
-    public void showTimePickerDialog(View v) {
-        Log.d(TAG, "TimePickerClicked");
-        DialogFragment newFragment = new CampusCar();
-        newFragment.show(getFragmentManager(), "timePicker");
-
-
     }
 
     //TODO Extrapolating the vehicle speed heading if time is too long/delay
