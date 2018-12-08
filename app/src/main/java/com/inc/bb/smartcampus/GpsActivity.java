@@ -74,6 +74,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.leakcanary.LeakCanary;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -278,6 +279,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
         super.onCreate(savedInstanceState);
+        memoryLeakCanary();
 
         //Sets orientation so the screen is locked to portrait mode
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -360,6 +362,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if (checkPermissions()) {
             requestPermission();
         }
+    }
+
+    private void memoryLeakCanary() {
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            // This process is dedicated to LeakCanary for heap analysis.
+            // You should not init your app in this process.
+            return;
+        }
+        LeakCanary.install(getApplication());
     }
 
     // Starts location request and updates as well as the oneM2M connection and communication.
@@ -891,7 +902,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void startTrackingUserActivity(){
         Intent intent1 = new Intent(GpsActivity.this, BackgroundDetectedActivitiesService.class);
         Log.d(TAG, "startTrackingUserActivity: ");
-        //startService(intent1);
+        startService(intent1);
     }
 
     // Builds the OneM2M broker connection, subscribes to the VRU ae Response topic and creates
@@ -981,9 +992,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     .getJSONObject("rep").getJSONObject("m2m:cin").getString("con");*/
 
             String comparator = messageCar.getJSONObject("m2m:rsp").getString("rqi");
-            String contentCarString = messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
-                    .getJSONArray("m2m:cin").getJSONObject(0).getString("con");
+            JSONObject contentCar = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
+                    .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
             Long dataGenerationTimestamp=null;
+            String carUuid = null;
             boolean newData=false;
             Log.d(TAG, "oneM2MMessagesHandler: " + comparator);
 
@@ -1003,10 +1015,24 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 carLat = Double.parseDouble(carLatseparated[1]);
                 newData = true;}*/
             if(comparator.equals("CREATE:prius/GPS")){
-                noRTK=false;
+               noRTK=false;
                 Log.d(TAG, "oneM2MMessagesHandler: RTK");
                 lastRTK = System.currentTimeMillis();
-                String[] separated = contentCarString.split(",");
+                String longitudeCarString = contentCar.getString("lon");
+                carLon = Double.parseDouble(longitudeCarString);
+                carSpeed = (float) contentCar.getDouble("speed");
+                String latitudeCar = contentCar.getString("lat");
+                carHeading = (float) contentCar.getDouble("heading");
+                carUuid = contentCar.getString("UUID");
+                carLat = Double.parseDouble(latitudeCar);
+                newData = true;
+                if(loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty()
+                            && !experimentNumberText.getText().toString().isEmpty()){
+                pilotLogging(LOGGING_VEHICLE, 0, contentCar.toString(), carUuid);}
+            }
+                /* String[] separated = contentCarString.split(",");
+                JSONObject carString =  new JSONObject();
+                carString = contentCarString
                 String longitudeCarString = separated[1];
                 dataGenerationTimestamp = Long.parseLong(separated[2].split(":")[1].
                         replace(" ",""));
@@ -1018,8 +1044,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 carHeading = Float.parseFloat((separated[6].split(":"))[1]);
                 String[] carLatseparated = latitudeCar.split(":");
                 carLat = Double.parseDouble(carLatseparated[1]);
-                newData = true;
-            }
+                newData = true;} */
 
             if(comparator.equals("")){
                 //TODO parsing and comparator
@@ -1040,6 +1065,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             carHeading = 360 + carHeading;
                         }
                         carOverlay.setBearing(carHeading);
+
                     } // This is your code
                 };
                 mainHandler.post(myRunnable);
@@ -1051,8 +1077,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     Log.d(TAG, "Deltameter:" + deltaMeters);
                     handleCarNotification(deltaMeters);
                 }
-
-                pilotLogging(LOGGING_VEHICLE, dataGenerationTimestamp, contentCarString, null);
             }
         }
 
@@ -1199,8 +1223,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             case LOGGING_VEHICLE:
                 Log.d(TAG, "pilotLogging: Vehicle");
-                log = ",3," + userName + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + "112233"
-                        + generationTimeStamp + ",112233," + data;
+                log = ",3," + userName + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
 
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_"
@@ -1557,10 +1580,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
                }
            }
-
-
-
-
             }
         }
 
@@ -1851,6 +1870,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onDestroy() {
+        cancelRequestTaxi();
         Log.e(TAG, "destroy");
 
         if(fileNameVector!=null){uploadLogFilesFirebase();}
@@ -1858,10 +1878,30 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         stopTracking();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+        huaweiTimerTask.cancel();
 
         mNotificationManager.cancelAll();
 
         super.onDestroy();
+    }
+
+    private void cancelRequestTaxi() {
+        JSONObject callTaxi = null;
+        try {
+            callTaxi = VRUgps.CreateContentInstanceCallTaxi(0.000000, 0.000000, System.currentTimeMillis(),
+                    userName,false,null);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        try {
+            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
+                    LOGGING_NOTNEEDED,null, System.currentTimeMillis(),null);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
     }
 
     // Removes last location of Huawei geofencing rectangle and adds the new location of the
