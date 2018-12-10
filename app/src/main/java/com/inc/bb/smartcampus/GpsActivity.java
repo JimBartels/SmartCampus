@@ -64,7 +64,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -74,7 +77,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.squareup.leakcanary.LeakCanary;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -85,6 +87,7 @@ import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
@@ -96,6 +99,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -118,6 +122,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     //Maps
     private GoogleMap mMap;
+
+
+    //Motionplanning and calltaxi
+    Polygon polylineMP;
+    boolean motiongPlanningResponseReceived;
+    android.app.Fragment campusCar;
+
 
     //buildings
     private GroundOverlay fluxOverlay;
@@ -200,6 +211,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     //Notification global variables
     NotificationManager mNotificationManager;
     NotificationCompat.Builder mBuilder;
+    NotificationCompat.Builder mBuilderHuawei;
     int carNotificationConstant=0;
     int carNotificationConstant2 =0;
     double carLon = 5.623863;
@@ -283,7 +295,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
         super.onCreate(savedInstanceState);
-        //memoryLeakCanary();
 
         //Sets orientation so the screen is locked to portrait mode
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -359,22 +370,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         mGoogleApiClient.connect();
 
         // Huawei dummy message poster for faster rectangle updates
-        huaweiTimer();
+        //huaweiTimer();
 
         // Checks permissions at end of onCreate as a safety measure (should have been requested
         // already by GPS oneM2M thread).
         if (checkPermissions()) {
             requestPermission();
         }
-    }
-
-    private void memoryLeakCanary() {
-        if (LeakCanary.isInAnalyzerProcess(this)) {
-            // This process is dedicated to LeakCanary for heap analysis.
-            // You should not init your app in this process.
-            return;
-        }
-        LeakCanary.install(getApplication());
     }
 
     // Starts location request and updates as well as the oneM2M connection and communication.
@@ -431,12 +433,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                         switch (item.getItemId()) {
                             case R.id.action_campus:
-                                removeFragments();
+                                hideFragment(campusCar);
                                 break;
                             case R.id.action_car:
-                                android.app.Fragment fragment = new CampusCar();
-                                switchToFragment(fragment);
-
+                                if(campusCar==null){
+                                campusCar = new CampusCar();
+                                addFragment(campusCar);
+                                }
+                                showFragment(campusCar);
                                 break;
                             case R.id.action_settings:
                                 break;
@@ -452,15 +456,26 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void removeFragments() {
         android.app.FragmentManager fm = getFragmentManager();
         for (int i = 0; i < fm.getBackStackEntryCount(); ++i) {
-            fm.popBackStack();}
+            }
     }
 
     // Switches the fragmentcontainer which contains google maps (initially) to a certain other
     // fragment, this is passed to this function from its implementation.
-    private void switchToFragment(Fragment fragment) {
+    private void addFragment(Fragment fragment) {
         android.app.FragmentManager manager = getFragmentManager();
-        manager.beginTransaction().replace(R.id.map, fragment).addToBackStack(null).commit();
+        manager.beginTransaction().add(R.id.map, fragment).addToBackStack(null).commit();
     }
+
+    private void hideFragment(Fragment fragment) {
+        android.app.FragmentManager manager = getFragmentManager();
+        manager.beginTransaction().hide(fragment).addToBackStack(null).commit();
+    }
+
+    private void showFragment(Fragment fragment) {
+        android.app.FragmentManager manager = getFragmentManager();
+        manager.beginTransaction().show(fragment).addToBackStack(null).commit();
+    }
+
 
     @Override
     protected void onPause() {
@@ -717,6 +732,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         };
         mMap.setOnGroundOverlayClickListener(listener);
+
+        motionPlanningPath(null);
+
     }
 
     //Puts car somewhere on the map, to be later called when coordinates change.
@@ -750,8 +768,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .setVibrate(vibrationPattern)
                 .setOngoing(true);// notification cannot be removed user
         Intent intent = new Intent(getApplicationContext(), GpsActivity.class);
-        PendingIntent pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        mBuilder.setContentIntent(pi);
+        PendingIntent pi = PendingIntent.getActivity(this, 0, intent, intent.FLAG_ACTIVITY_SINGLE_TOP);
+       //mBuilder.setContentIntent(intent);
 
     }
 
@@ -766,13 +784,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         .setSound(AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND)
                         .setContentText(AUTONOMOUS_CAR_40M_NOTIFICATION)
                         .setStyle(new NotificationCompat.BigTextStyle())
+                        .setContentTitle("Autonomous car warning")
                         .setAutoCancel(false);
                 mNotificationManager.notify(AUTONOMOUS_CAR_40M_NOTIFICATION_ID, mBuilder.build());
                 notificationArray[AUTONOMOUS_CAR_40M_NOTIFICATION_ID] = true;
                 carNotificationConstant=1;}
             else if(carNotificationConstant==1){
                 mBuilder.setPriority(NotificationCompat.PRIORITY_MAX)
+                        .setContentText(AUTONOMOUS_CAR_40M_NOTIFICATION)
                         .setVibrate(null)
+                        .setContentTitle("Autonomous car warning")
                         .setStyle(new NotificationCompat.BigTextStyle()
                                 .bigText(AUTONOMOUS_CAR_40M_NOTIFICATION));
                 mNotificationManager.notify(AUTONOMOUS_CAR_40M_NOTIFICATION_ID, mBuilder.build());
@@ -786,13 +807,17 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 mBuilder.setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(AUTONOMOUS_CAR_100M_NOTIFICATION));
                 mBuilder.setSound(null);
+                mBuilder.setContentTitle("Autonomous car warning");
+                mBuilder.setContentText(AUTONOMOUS_CAR_100M_NOTIFICATION);
                 mNotificationManager.notify(AUTONOMOUS_CAR_100M_NOTIFICATION_ID, mBuilder.build());
                 notificationArray[AUTONOMOUS_CAR_100M_NOTIFICATION_ID]=true;}
             else if(carNotificationConstant2==1){
                 mBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                mBuilder.setContentText(AUTONOMOUS_CAR_100M_NOTIFICATION);
                 mBuilder.setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(AUTONOMOUS_CAR_100M_NOTIFICATION));
                 mBuilder.setSound(null);
+                mBuilder.setContentTitle("Autonomous car warning");
                 mNotificationManager.notify(AUTONOMOUS_CAR_100M_NOTIFICATION_ID, mBuilder.build());
                 notificationArray[AUTONOMOUS_CAR_100M_NOTIFICATION_ID]=true;}
         }
@@ -913,7 +938,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // UserID container.
     private MqttAndroidClient buildOneM2MVRU(MqttAndroidClient mMqttAndroidClient,
                                              String userId1) {
-        userId1 = userId1.replace("s","suser");
+       // userId1 = userId1.replace("s","suser");
         String mqttBrokerUrl = "tcp://vmi137365.contaboserver.net:1883";
         mMqttAndroidClient = getMqttClient(getApplicationContext(), mqttBrokerUrl, userName);
         mMqttAndroidClient.setCallback(new MqttCallbackExtended() {
@@ -921,7 +946,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             public void connectComplete(boolean reconnect, String serverURI) {
                 subscribeToTopic(CsmartcampusSubscriptionTopic);
                 subscribeToTopic(CsmartCampusCarsSubscriptionTopic);
-
                 if (reconnect) {
                     Log.d(TAG, ("Reconnected to : " + serverURI));
                     subscribeToTopic(CsmartcampusSubscriptionTopic);
@@ -996,8 +1020,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     .getJSONObject("rep").getJSONObject("m2m:cin").getString("con");*/
 
             String comparator = messageCar.getJSONObject("m2m:rsp").getString("rqi");
-            JSONObject contentCar = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
-                    .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
             Long dataGenerationTimestamp=null;
             String carUuid = null;
             boolean newData=false;
@@ -1019,20 +1041,23 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 carLat = Double.parseDouble(carLatseparated[1]);
                 newData = true;}*/
             if(comparator.equals("CREATE:prius/GPS")){
-               noRTK=false;
-                Log.d(TAG, "oneM2MMessagesHandler: RTK");
-                lastRTK = System.currentTimeMillis();
-                String longitudeCarString = contentCar.getString("lon");
-                carLon = Double.parseDouble(longitudeCarString);
-                carSpeed = (float) contentCar.getDouble("speed");
-                String latitudeCar = contentCar.getString("lat");
-                carHeading = (float) contentCar.getDouble("heading");
-                carUuid = contentCar.getString("UUID");
-                carLat = Double.parseDouble(latitudeCar);
-                newData = true;
-                if(loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty()
-                            && !experimentNumberText.getText().toString().isEmpty()){
-                pilotLogging(LOGGING_VEHICLE, 0, contentCar.toString(), carUuid);}
+                JSONObject contentCar = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
+                        .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
+                    noRTK = false;
+                    Log.d(TAG, "oneM2MMessagesHandler: RTK");
+                    lastRTK = System.currentTimeMillis();
+                    String longitudeCarString = contentCar.getString("lon");
+                    carLon = Double.parseDouble(longitudeCarString);
+                    carSpeed = (float) contentCar.getDouble("speed");
+                    String latitudeCar = contentCar.getString("lat");
+                    carHeading = (float) contentCar.getDouble("heading");
+                    carUuid = contentCar.getString("UUID");
+                    carLat = Double.parseDouble(latitudeCar);
+                    newData = true;
+                    if (loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty()
+                            && !experimentNumberText.getText().toString().isEmpty()) {
+                        pilotLogging(LOGGING_VEHICLE, 0, contentCar.toString(), carUuid);
+                    }
             }
                 /* String[] separated = contentCarString.split(",");
                 JSONObject carString =  new JSONObject();
@@ -1050,10 +1075,36 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 carLat = Double.parseDouble(carLatseparated[1]);
                 newData = true;} */
 
-            if(comparator.equals("")){
-                //TODO parsing and comparator
-                LatLng[] points = null;
-                motionPlanningPath(points);
+            if(comparator.equals("CREATE:prius/Motionplanning")) {
+                Log.d(TAG, "oneM2MMessagesHandler: motionplanning");
+                JSONObject contentMP = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
+                        .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
+                if (contentMP.getString("mobileId").equals(userName)) {
+                    Log.d(TAG, "oneM2MMessagesHandler: motionplanning2");
+                    cancelRequestTaxi();
+                    motiongPlanningResponseReceived = true;
+                    JSONArray jsonArray = contentMP.getJSONArray("coords");
+
+                    LatLng[] points = new LatLng[jsonArray.length()];
+                    double[] rectangleLat = new double[jsonArray.length()];
+                    double[] rectangleLon = new double[jsonArray.length()];
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                       // Array points1[][] =  new Array[jsonArray.length()][2];
+                        //points[i][1] = jsonArr
+                        JSONArray jArrayIter = jsonArray.getJSONArray(i);
+                        Log.d(TAG, "doInBackground: " + jArrayIter);
+                        rectangleLat[i] = jArrayIter.getDouble(0);
+                        rectangleLon[i] = jArrayIter.getDouble(1);
+                    }
+                    for (int i = 0; i < rectangleLat.length; i++) {
+                        points[i] = new LatLng(rectangleLat[i], rectangleLon[i]);
+                        Log.d(TAG, "oneM2MMessagesHandler: "+ rectangleLat[i] + "," + rectangleLon[i]);
+                    }
+                    Log.d(TAG, "oneM2MMessagesHandler: motionplanning3");
+                    motionPlanningPath(points);
+                    String carMPUuid = contentMP.getString("responseUUID");
+                    pilotLogging(LOGGING_TAXI_RECEIVED, 0, contentMP.toString(), carMPUuid);
+                }
             }
 
             if(newData) {
@@ -1399,14 +1450,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         getString("returnMessage"), null);
                 //TODO UUID
             }
-
-            if (output.getBoolean("isInRectangle")) {
-                handleCarNotificationHuawei(true);
-            }
-
-            if (output.getBoolean("isInRectangle")) {
-                handleCarNotificationHuawei(false);
-            }
+            handleCarNotificationHuawei(output.getBoolean("isInRectangle"));
 
             LatLng[] points = new LatLng[5];
             double[] rectangleLat = output.getDoubleArray("rectangleLat");
@@ -1423,7 +1467,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             Log.d(TAG, "processFinish: " + output.getString("error"));
             handleCarNotificationHuawei(false);
         }
-        handleCarNotificationHuawei(false);
+        //handleCarNotificationHuawei(false);
     }
 
     // Makes a tansformation of the speed into distance between points of the existing Huawei
@@ -1590,6 +1634,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // Makes a notification whenever user is in the rectangle of the Huawei geofencing rectangle.
     // inZone is boolean whether the user is in the zone or not.
     private void handleCarNotificationHuawei(boolean inZone) {
+        Log.d(TAG, "handleCarNotificationHuawei: " + inZone);
         if(inZone){
             long[] vibrationPattern = {Long.valueOf(0),Long.valueOf(500)};
             if(!notificationArray[HUAWEI_NOTIFICATION_ID]){
@@ -1602,11 +1647,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .setVibrate(vibrationPattern);
         mNotificationManager.notify(HUAWEI_NOTIFICATION_ID, mBuilder.build());
         notificationArray[HUAWEI_NOTIFICATION_ID] = true;}
+        }
         if(!inZone){
             cancelNotification(HUAWEI_NOTIFICATION_ID);
             Log.d(TAG, "handleCarNotificationHuawei: Inzone false");
         }
-    }}
+    }
 
     // Executes an OkHTTPpost asynctask to send a json to a certain URL that is indicated by the url
     // and json. results of this is handled in process finish (used for Huawei communication).
@@ -1673,12 +1719,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 bearing = speedGPSandBearing[1];}
 
             //Sending GPS to oneM2M
-            try {
+              /*  try {
                 if (speedGPS == null) {speedGPS = "0.0";
                 }
-                if(mCurrentlocation!=null){
-                publishGpsData(Latitude,Longitude,Accuracy, mCurrentlocation.getTime(),
-                        speedGPS,bearing);}
+            if(mCurrentlocation!=null){
+                //publishGpsData(Latitude,Longitude,Accuracy, timestampUTC,
+                //        speedGPS,bearing);
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (MqttException e) {
@@ -1686,6 +1733,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
+               */
 
             // Old clock for car notifications, now performed whenever a message arrives.
             /*Double deltaMeters;
@@ -1762,17 +1810,17 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                 Long formattedDate, String speedGPS, String manualBearing)
             throws JSONException, MqttException, UnsupportedEncodingException {
         //TODO UUID
-        String formattedDateString = "UTC"+ Long.toString(formattedDate);
+        /*String formattedDateString = "UTC"+ Long.toString(formattedDate);
         UTCPacketLossCheck = formattedDate.toString();
         String uuid = UUID.randomUUID().toString();
         String topic = "/server/server/" + "aeSmartCampus1" + "/Users/" + userName + "/gps";
         String con = "{\"type\":5,\"id\":"+userName + ",\"timestampUtc\":" + formattedDate +
                 ",\"lon\":" + longitude + ",\"lat\":"+ latitude + ",\"speed\":"+ speedGPS +
-                ",\"heading\":"+manualBearing+ ",\"accuracy\":"+Accuracy + ", \"UUID\": " + uuid+ "}";
+                ",\"heading\":"+manualBearing+ ",\"accuracy\":"+Accuracy + ",\"UUID\": " +  "\"" + uuid + "\"" + "}";
         String conHuawei = "{\"type\":5,\"id\":" + userName + ",\"timestampUtc\":" +
                 formattedDateString + ",\"lon\":" + longitude + ",\"lat\":"+ latitude +
                 ",\"speed\":"+ speedGPS + ",\"heading\":"+manualBearing+ ",\"accuracy\":"+
-                Accuracy+ ", \"UUID\": " + uuid+ "}";
+                Accuracy+ ",\"UUID\": " + "\"" + uuid + "\"" + "}";
         Log.d(TAG, "publishGpsData: " + conHuawei);
         okHTTPPost(huaweiUrl,conHuawei);
         contentCreateGPS.getJSONObject("m2m:rqp").put("to",topic);
@@ -1782,7 +1830,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin")
                 .put("rn", formattedDate);
         String contentCreate = contentCreateGPS.toString();
-        String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc") //TODO look at this
+        String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc")
                 .getJSONObject("m2m:cin").getString("con");
 
         publishAndLogMessage(onem2m,contentCreate,0,oneM2MVRUReqTopic,LOGGING_GPS,
@@ -1790,7 +1838,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty()
                 && !experimentNumberText.getText().toString().isEmpty()){
            pilotLogging(LOGGING_HUAWEI_SENT,formattedDate,conHuawei, uuid);
-        }
+        }*/
     }
 
     // Calculates the manual speed and bearing if google does not provide any (when inside for
@@ -1882,30 +1930,38 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         mFusedLocationClient.removeLocationUpdates(mLocationCallback);
         stopTracking();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
-        huaweiTimerTask.cancel();
+        //huaweiTimerTask.cancel();
 
         mNotificationManager.cancelAll();
         oneM2MGPSThread.interrupt();
         super.onDestroy();
     }
 
-    private void cancelRequestTaxi() {
+    public void cancelRequestTaxi() {
         JSONObject callTaxi = null;
+        String uuid =  UUID.randomUUID().toString();
         try {
             callTaxi = VRUgps.CreateContentInstanceCallTaxi(0.000000, 0.000000, System.currentTimeMillis(),
-                    userName,false,null);
+                    userName,false,uuid);
         } catch (JSONException e) {
             e.printStackTrace();
         }
         try {
             publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
-                    LOGGING_NOTNEEDED,null, System.currentTimeMillis(),null);
+                    LOGGING_TAXI_SENT,null, System.currentTimeMillis(),uuid);
         } catch (MqttException e) {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
 
+    }
+    public void motionPlanningTimedOutHandler() {
+        if (!motiongPlanningResponseReceived) {
+            //cancelRequestTaxi();
+            TextView responseMessage = (TextView) findViewById(R.id.responseMessage);
+            responseMessage.setText("Request timed out");
+        }
     }
 
     // Removes last location of Huawei geofencing rectangle and adds the new location of the
@@ -1929,18 +1985,25 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // Removes last location of Huawei geofencing rectangle and adds the new location of the
     // rectangle in the map, this function accepts array of LatLng points.
     private void motionPlanningPath(LatLng[] points){
-        if(geoFencingPolygon==null){
-            geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
+        points =  new LatLng[4];
+        points[0] = new LatLng(51.447893883296565,5.48882099800934);
+        points[1] = new LatLng(51.447893883296565,5.48882099800934);
+        points[2] = new LatLng(51.447893883296565,5.48882099800934);
+        points[3] = new LatLng(51.447893883296565,5.48882099800934);
+        if(polylineMP==null){
+            polylineMP = mMap.addPolygon((new PolygonOptions()
                     .add(points)
-                    .zIndex(0)
-                    .strokeColor(Color.BLUE));
+                    .zIndex(1)
+                    .strokeColor(Color.BLUE)));
+            Log.d(TAG, "motionPlanningPath: ");
         }
         else{
-            geoFencingPolygon.remove();
-            geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
+            polylineMP.remove();
+            polylineMP = mMap.addPolygon(new PolygonOptions()
                     .add(points)
-                    .zIndex(0)
+                    .zIndex(1)
                     .strokeColor(Color.BLUE));
+            Log.d(TAG, "motionPlanningPath: ");
         }
     }
 
@@ -2175,7 +2238,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     // Sends a message to OneM2M CallCar container when button is clicked
     // for calling a taxi. This message is then forwarded to Csmartcampus topic for IBM rebalancing
-    // service via the subscription container CallTaxi_sub
+    // service via the subscription container CallTaxi_sub and also Motionplanning of NEC
     public void CallCar() {
         try {
             String uuid = UUID.randomUUID().toString();
@@ -2187,25 +2250,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
                     LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
 
-        } catch (JSONException e) {
-            Log.e(TAG, "CallCar: "+e.toString());
-        } catch (UnsupportedEncodingException e){
-            Log.e(TAG, "CallCar: "+e.toString());
-        } catch (MqttException e) {
-            Log.e(TAG, "CallCar: "+e.toString());
-        }
-    }
-
-    public void CallCarMotionPlanning() {
-        try {
-            String uuid = UUID.randomUUID().toString();
-            JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.
-                    getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(),
-                    userName,true,uuid);
-            String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
-                    getJSONObject("m2m:cin").getString("con");
-            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
-                    LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
         } catch (JSONException e) {
             Log.e(TAG, "CallCar: "+e.toString());
         } catch (UnsupportedEncodingException e){

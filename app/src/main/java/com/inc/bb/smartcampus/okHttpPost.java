@@ -71,6 +71,7 @@ public class okHttpPost extends AsyncTask<String, Void, Bundle> {
                     if(jObjectIter.getString("_id").replace(".0","").equals(userId)){
                         j = true;
                     }
+                    else{j = false;}
                 }
                 JSONObject jRectangleObject = jArray1.getJSONObject(1);
                 JSONArray jCoordinates = jRectangleObject.getJSONObject("query").getJSONObject("geo_shape").getJSONObject("location").getJSONObject("shape").getJSONArray("coordinates").getJSONArray(0);

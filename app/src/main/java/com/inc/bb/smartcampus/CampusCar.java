@@ -8,6 +8,7 @@ import android.app.FragmentTransaction;
 import android.app.TimePickerDialog;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.v4.content.ContextCompat;
 import android.text.format.DateFormat;
 import android.util.Log;
@@ -20,9 +21,11 @@ import android.widget.EditText;
 import android.widget.DatePicker;
 import android.widget.ListView;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.TimePicker;
 
 import java.util.Calendar;
+import java.util.Timer;
 
 import javax.annotation.Nullable;
 
@@ -97,17 +100,59 @@ public class CampusCar extends Fragment
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        Button locButton = (Button) getView().findViewById(R.id.carbutton);
+        Button locButton = (Button) getView().findViewById(R.id.requestbutton);
+        Button cancelbutton = (Button) getView().findViewById(R.id.cancelbutton);
         locButton.setHapticFeedbackEnabled(true);
         Drawable buttondrawable2 = ContextCompat.getDrawable(getActivity(),R.drawable.buttonshapebefore);
+        final TextView responseMessage = getView().findViewById(R.id.responseMessage);
 
         locButton.setBackground(buttondrawable2);
         locButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 ((GpsActivity) getActivity()).CallCar();
+                makeTimeOutTimer2();
+                makeTimeOutTimer();
+                responseMessage.setText("Request sent");
+            }
+        });
+        cancelbutton.setBackground(buttondrawable2);
+        cancelbutton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ((GpsActivity) getActivity()).cancelRequestTaxi();
+                responseMessage.setText("Request cancelled");
             }
         });
     }
 
+    private void makeTimeOutTimer2() {
+        new CountDownTimer(5000, 1000) {
+
+            @Override
+            public void onTick(long l) {
+                ((GpsActivity) getActivity()).CallCar();
+            }
+
+            public void onFinish() {
+                ((GpsActivity) getActivity()).cancelRequestTaxi();
+                ((GpsActivity) getActivity()).cancelRequestTaxi();
+                ((GpsActivity) getActivity()).cancelRequestTaxi();
+            }
+        }.start();
+    }
+
+    private void makeTimeOutTimer() {
+        new CountDownTimer(6000, 1000) {
+
+            @Override
+            public void onTick(long l) {
+
+            }
+
+            public void onFinish() {
+                ((GpsActivity) getActivity()).cancelRequestTaxi();
+            }
+        }.start();
+    }
 }

@@ -23,7 +23,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.squareup.leakcanary.LeakCanary;
 
 public class MainActivity extends AppCompatActivity  {
 
@@ -53,7 +52,6 @@ public class MainActivity extends AppCompatActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        memoryLeakCanary();
 
         //Firebase initialization and authentication client
         FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -75,17 +73,6 @@ public class MainActivity extends AppCompatActivity  {
         editTextsListeners();
         loginButtonListener();
 
-    }
-
-
-
-    private void memoryLeakCanary() {
-        if (LeakCanary.isInAnalyzerProcess(this)) {
-            // This process is dedicated to LeakCanary for heap analysis.
-            // You should not init your app in this process.
-        }
-        else{
-        LeakCanary.install(getApplication());}
     }
 
     // Listener for the login button. If password andusername are not empty it goes to register
