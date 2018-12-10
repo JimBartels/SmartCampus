@@ -27,45 +27,47 @@
             app:layout_constraintStart_toStartOf="parent" />
 
         <Button
-            android:id="@+id/v"
+            android:id="@+id/pickTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="172dp"
             android:layout_marginEnd="8dp"
             android:onClick="showTimePickerDialog"
             android:text="@string/pick_time"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editText2" />
-
-
-
-        <EditText
-            android:id="@+id/editText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:ems="10"
-            android:inputType="time"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <EditText
-            android:id="@+id/editText2"
+
+        <Button
+            android:id="@+id/pickPlace"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
-            android:ems="10"
-            android:inputType="date"
+            android:text="PLACE"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/pickTime" />
+
+        <TextView
+            android:id="@+id/timeDisplay"
+            android:layout_width="266dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="TextView"
+            app:layout_constraintEnd_toStartOf="@+id/pickTime"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editText" />
+            tools:layout_editor_absoluteY="172dp" />
+
+        <TextView
+            android:id="@+id/placeDisplay"
+            android:layout_width="266dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="TextView"
+            app:layout_constraintEnd_toStartOf="@+id/pickPlace"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:layout_editor_absoluteY="220dp" />
 
     </android.support.constraint.ConstraintLayout>
 
