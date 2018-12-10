@@ -3,36 +3,37 @@ package com.inc.bb.smartcampus;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.app.TimePickerDialog;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.DatePicker;
 import android.widget.ListView;
-import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.TimePicker;
 
 import java.util.Calendar;
 
-import javax.annotation.Nullable;
-
-public class CampusCar extends Fragment
+public class CampusCar extends DialogFragment
         implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener {
-    ListView list;
-    ArrayAdapter adapter;
+
+    int hourofday = 0;
+    int minuteofday = 0;
+    TextView TimeView;
+
+    public TextView timetextview;
+    public ListView placelistview;
+    public ArrayAdapter<String> adapter;
+    public String[] buildings = {"Vertigo", "Flux", "Metaforum", "Atlas", "Auditorium"};
 
 
-    /*(@Override
+    @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
@@ -47,19 +48,22 @@ public class CampusCar extends Fragment
         int day = c.get(Calendar.DAY_OF_MONTH);
 
 
+
         // Create a new instance of TimePickerDialog and return it
         return new TimePickerDialog(getActivity(), this, hour, minute,
                 DateFormat.is24HourFormat(getActivity()));
 
-
-
-
-    }*/
+    }
 
     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
         // Do something with the time chosen by the user
         Log.d("TimePicked", Integer.toString(hourOfDay));
         Log.d("TimePicked", Integer.toString(minute));
+        hourofday = hourOfDay;
+        minuteofday = minute;
+        Log.d("TimePickedChanged", Integer.toString(minuteofday));
+        Log.d("TimePickedChanged", Integer.toString(hourofday));
+        ((GpsActivity) getActivity()).changeDialogFragmentTimeTextView(hourOfDay, minute);
 
     }
 
@@ -67,47 +71,67 @@ public class CampusCar extends Fragment
         // Do something with the date chosen by the user
     }
 
-    /*@Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Button locButton = (Button) getView().findViewById(R.id.carbutton);
-        Drawable buttondrawable2 = ContextCompat.getDrawable(getActivity(),R.drawable.buttonshapebefore);
-        locButton.setBackground(buttondrawable2);
-        locButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ((GpsActivity) getActivity()).CallCar();
-            }
-        });
-    }*/
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        //Let Fragment enter the screen
         View view = inflater.inflate(R.layout.fragment_campus_car, container, false);
+
+        //Assign default values to TextViews
+        View timetextview = view.findViewById(R.id.TimeView);
+        //((TextView)timetextview).setText("CHOOSE TIME ...");
+        final View placetextview = view.findViewById(R.id.PlaceView);
+        //((TextView)placetextview).setText("CHOOSE DESTINATION ...");
+
+        //Identify the listview for places
+        placelistview = (ListView) view.findViewById(R.id.placeListView);
+
+        //Create and set adapter to listview
+        adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1,buildings);
+        placelistview.setAdapter(adapter);
+
+
+        // Set an item click listener for ListView
+        placelistview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // Get the selected item text from ListView
+                String selectedItem = (String) parent.getItemAtPosition(position);
+                Log.d("selected item:", selectedItem);
+
+                //Change indicated location textview
+                ((GpsActivity) getActivity()).changeDialogFragmentPlaceTextView(selectedItem);
+
+
+            }
+        });
+
+        //Button click listener in the fragment
+        Button confirmationbutton = (Button)view.findViewById(R.id.ConfirmationButton);
+        confirmationbutton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d("ConfirmationButtonClick", "success");
+                ((GpsActivity) getActivity()).DatetoMillis();
+
+
+
+            }
+        });
+
+
+
+
+
+
+
+
 
         //TODO: Get Firebase Data
 
 
         return view;
-    }
-
-
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Button locButton = (Button) getView().findViewById(R.id.carbutton);
-        locButton.setHapticFeedbackEnabled(true);
-        Drawable buttondrawable2 = ContextCompat.getDrawable(getActivity(),R.drawable.buttonshapebefore);
-
-        locButton.setBackground(buttondrawable2);
-        locButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ((GpsActivity) getActivity()).CallCar();
-            }
-        });
     }
 
 }

@@ -1,9 +1,9 @@
 package com.inc.bb.smartcampus;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.UUID;
 
 /**
  * Created by s163310 on 4/11/2018.
@@ -183,7 +183,7 @@ public class OneM2MMqttJson {
     }
 
 
-    public JSONObject CreateContentInstanceCallTaxi(Double lat, Double lng, long timeStamp, String UserID, boolean valid, String uuid) throws JSONException{
+    public JSONObject CreateContentInstanceCallTaxi(Double lat, Double lng, long requestTimeinMillis, LatLng REQUESTLOCATION, long timeStamp, String UserID, boolean valid, String uuid) throws JSONException{
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);
 
@@ -196,6 +196,8 @@ public class OneM2MMqttJson {
         JSONObject contentinstancecontentdata = new JSONObject();
         contentinstancecontentdata.put("longitude", lng);
         contentinstancecontentdata.put("latitude", lat);
+        contentinstancecontentdata.put("UTC_timerequest", requestTimeinMillis);
+        contentinstancecontentdata.put("desired location", REQUESTLOCATION);
         contentinstancecontentdata.put("requestTime", timeStamp);
         contentinstancecontentdata.put("UUID", uuid);
         contentinstancecontentdata.put("valid", valid ? "true" : "false");

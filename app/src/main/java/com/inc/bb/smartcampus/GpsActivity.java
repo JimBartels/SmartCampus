@@ -95,10 +95,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
@@ -270,6 +272,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public  String bearing;
     public  String bearingAccuracy;
     public String speed;
+
+    //Views from the CampusCar Fragment
+    public TextView timetextview;
+    public TextView placetextview;
+    public LatLng REQUESTLOCATION = new LatLng(0, 0);
 
     //Request code for the permissions intent (asking for some permission)
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -814,7 +821,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     null,0);
             String to = "/server/server/aeSmartCampus1/Users/" + userName + "/Status";
             contentCreateUserStatus.getJSONObject("m2m:rqp").put("to",to);
-            contentCreateCallCar = VRUgps.CreateContentInstanceCallTaxi(null,null,
+            contentCreateCallCar = VRUgps.CreateContentInstanceCallTaxi(null,null, 0, REQUESTLOCATION,
                     0,userName,false,null);
 
         } catch (JSONException e) {
@@ -1307,7 +1314,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                         toString(),0, oneM2MVRUReqTopic,LOGGING_NOTNEEDED,
                                 null, null, null);
                         publishAndLogMessage(onem2m,VRU.
-                                CreateContentInstanceCallTaxi(0.00000, 0.00000,
+                                CreateContentInstanceCallTaxi(0.00000, 0.00000,  0, REQUESTLOCATION,
                                         System.currentTimeMillis(), userName,false,UUID.randomUUID().toString()).toString(),0,
                                 oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
                                 null, null);
@@ -2132,17 +2139,105 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // Sends a message to OneM2M CallCar container when button is clicked
     // for calling a taxi. This message is then forwarded to Csmartcampus topic for IBM rebalancing
     // service via the subscription container CallTaxi_sub
-    public void CallCar() {
+
+
+
+
+
+    public void DatetoMillis()    {
+        //Specifying the pattern of input date and time
+        //CallCar needs the  indicated time and date from user in CampusCarFragment in UTC
+
+        //Create dateformat to be transmitted to CallCar()
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy hh:mm");
+        String hour_minute = timetextview.getText().toString();
+        Date c = Calendar.getInstance().getTime();
+
+        //Adapt message to inserted values
+        SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
+        String formattedDate = df.format(c);
+        String dateString = formattedDate + " " + hour_minute;
+        try{
+            //formatting the dateString to convert it into a Date
+            Date date = sdf.parse(dateString);
+            System.out.println("Given Time in milliseconds : "+date.getTime());
+            Long requestTimeinMillis = date.getTime();
+            CallCar(requestTimeinMillis);
+
+            Calendar calendar = Calendar.getInstance();
+            //Setting the Calendar date and time to the given date and time
+            calendar.setTime(date);
+            System.out.println("Given Time in milliseconds : "+calendar.getTimeInMillis());
+            //Long requestTimeinMillis = calendar.getTimeInMillis();
+
+        }catch(ParseException e){
+            e.printStackTrace();
+        }
+
+    }
+
+    public void CallCar(long requestTimeinMillis) {
+
+        //assign a latlong to the chosen location in CampusCarFragment
+        String place = placetextview.getText().toString();
+        switch(place) {
+            case "Vertigo":
+                REQUESTLOCATION = VERTIGO;
+
+                break;
+            case "Metaforum":
+                REQUESTLOCATION = METAFORUM;
+
+                break;
+            case "Auditorium":
+                REQUESTLOCATION = AUDITORIUM;
+
+                break;
+            case "Flux":
+                REQUESTLOCATION = FLUX;
+
+                break;
+            case "Atlas":
+                REQUESTLOCATION = ATLAS;
+
+                break;
+
+        }
+
+
+
+
         try {
             String uuid = UUID.randomUUID().toString();
             JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.
-                            getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(),
+                            getLatitude(), mCurrentlocation.getLongitude(), requestTimeinMillis, REQUESTLOCATION, System.currentTimeMillis(),
                     userName,true,uuid);
             String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
                     getJSONObject("m2m:cin").getString("con");
             publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
                     LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
 
+        } catch (JSONException e) {
+            Log.e(TAG, "CallCar: "+e.toString());
+        } catch (UnsupportedEncodingException e){
+            Log.e(TAG, "CallCar: "+e.toString());
+        } catch (MqttException e) {
+            Log.e(TAG, "CallCar: "+e.toString());
+        }
+
+
+    }
+
+    public void CallCarMotionPlanning() {
+        try {
+            String uuid = UUID.randomUUID().toString();
+            JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.
+                    getLatitude(), mCurrentlocation.getLongitude(), 0, REQUESTLOCATION, System.currentTimeMillis(),
+                    userName,true,uuid);
+            String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
+                    getJSONObject("m2m:cin").getString("con");
+            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
+                    LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
         } catch (JSONException e) {
             Log.e(TAG, "CallCar: "+e.toString());
         } catch (UnsupportedEncodingException e){
@@ -2152,23 +2247,27 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
-    public void CallCarMotionPlanning() {
-        try {
-            String uuid = UUID.randomUUID().toString();
-            JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.
-                    getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(),
-                    userName,true,uuid);
-            String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
-                    getJSONObject("m2m:cin").getString("con");
-            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
-                    LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
-        } catch (JSONException e) {
-            Log.e(TAG, "CallCar: "+e.toString());
-        } catch (UnsupportedEncodingException e){
-            Log.e(TAG, "CallCar: "+e.toString());
-        } catch (MqttException e) {
-            Log.e(TAG, "CallCar: "+e.toString());
-        }
+    //This piece of code shows the clock when the timebutton is clicked
+    public void showTimePickerDialog(View v) {
+        Log.d(TAG, "TimePickerClicked");
+        DialogFragment newFragment = new CampusCar();
+        newFragment.show(getFragmentManager(), "timePicker");
+
+
+    }
+
+   //Changes timetextview in CampusCarFragment to values chosen by user
+    public void changeDialogFragmentTimeTextView(int hourOfDay, int minute){
+        timetextview = findViewById(R.id.TimeView);
+        timetextview.setText(Integer.toString(hourOfDay) + ":" + Integer.toString(minute));
+
+    }
+
+    //Changes timetextview in CampusCarFragment to values chosen by user
+    public void changeDialogFragmentPlaceTextView(String selectedItem){
+        placetextview = findViewById(R.id.PlaceView);
+        placetextview.setText(selectedItem);
+
     }
 
     //TODO Extrapolating the vehicle speed heading if time is too long/delay
