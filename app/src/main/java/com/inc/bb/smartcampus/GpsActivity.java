@@ -1719,12 +1719,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 bearing = speedGPSandBearing[1];}
 
             //Sending GPS to oneM2M
-                try {
+              /*  try {
                 if (speedGPS == null) {speedGPS = "0.0";
                 }
             if(mCurrentlocation!=null){
-                publishGpsData(Latitude,Longitude,Accuracy, timestampUTC,
-                        speedGPS,bearing);
+                //publishGpsData(Latitude,Longitude,Accuracy, timestampUTC,
+                //        speedGPS,bearing);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -1733,6 +1733,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
+               */
 
             // Old clock for car notifications, now performed whenever a message arrives.
             /*Double deltaMeters;
@@ -1808,7 +1809,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy,
                                 Long formattedDate, String speedGPS, String manualBearing)
             throws JSONException, MqttException, UnsupportedEncodingException {
-        String formattedDateString = "UTC"+ Long.toString(formattedDate);
+        //TODO UUID
+        /*String formattedDateString = "UTC"+ Long.toString(formattedDate);
         UTCPacketLossCheck = formattedDate.toString();
         String uuid = UUID.randomUUID().toString();
         String topic = "/server/server/" + "aeSmartCampus1" + "/Users/" + userName + "/gps";
@@ -1836,7 +1838,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty()
                 && !experimentNumberText.getText().toString().isEmpty()){
            pilotLogging(LOGGING_HUAWEI_SENT,formattedDate,conHuawei, uuid);
-        }
+        }*/
     }
 
     // Calculates the manual speed and bearing if google does not provide any (when inside for
