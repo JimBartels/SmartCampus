@@ -74,6 +74,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.leakcanary.LeakCanary;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -106,6 +107,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.Vector;
+
+import okhttp3.OkHttpClient;
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants, okHttpPost.AsyncResponse, OnMapReadyCallback {
@@ -169,6 +172,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     Long lastTime;
 
     Thread oneM2MGPSThread;
+    Boolean threadRunnable = true;
 
     //MQTT oneM2M login credentials, subscription and request topics and JSONs.
     MqttAndroidClient onem2m;
@@ -177,7 +181,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     String oneM2MVRUAePass = "smartcampuspassword";
     String oneM2MVRUReqTopic = "/oneM2M/req/aeSmartCampus1/server/json";
     String CsmartcampusSubscriptionTopic = "/oneM2M/resp/server/aeSmartCampus1/json";
-    String CsmartCampusCarsSubscriptionTopic = "/oneM2M/resp/server/Ctechnolution/json";
+    String CsmartCampusCarsSubscriptionTopic = "/oneM2M/resp/server/aeTechnolution/json";
     JSONObject contentCreateGPS, contentCreateUserStatus, contentCreateCallCar;
     //OneM2M op (operand) for in json op: fields.
     private final static int CREATE = 1;
@@ -271,6 +275,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public  String bearingAccuracy;
     public String speed;
 
+
     //Request code for the permissions intent (asking for some permission)
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
@@ -278,6 +283,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
         super.onCreate(savedInstanceState);
+        //memoryLeakCanary();
 
         //Sets orientation so the screen is locked to portrait mode
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -360,6 +366,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if (checkPermissions()) {
             requestPermission();
         }
+    }
+
+    private void memoryLeakCanary() {
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            // This process is dedicated to LeakCanary for heap analysis.
+            // You should not init your app in this process.
+            return;
+        }
+        LeakCanary.install(getApplication());
     }
 
     // Starts location request and updates as well as the oneM2M connection and communication.
@@ -815,7 +830,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             String to = "/server/server/aeSmartCampus1/Users/" + userName + "/Status";
             contentCreateUserStatus.getJSONObject("m2m:rqp").put("to",to);
             contentCreateCallCar = VRUgps.CreateContentInstanceCallTaxi(null,null,
-                    0,userName,null);
+                    0,userName,false,null);
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -975,13 +990,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(topic.equals(CsmartCampusCarsSubscriptionTopic)){
             Log.d(TAG, "oneM2MMessagesHandler: SubCar");
 
-            String comparator = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc")
-                    .getJSONArray("m2m:sgn").getJSONObject(0).getString("sur");
+           /* String comparator = messageCar.getJSONObject("m2m:rsp").getString("rqi");
             String contentCarString = messageCar.getJSONObject("m2m:rqp").getJSONObject("pc")
                     .getJSONArray("m2m:sgn").getJSONObject(0).getJSONObject("nev")
-                    .getJSONObject("rep").getJSONObject("m2m:cin").getString("con");
+                    .getJSONObject("rep").getJSONObject("m2m:cin").getString("con");*/
 
+            String comparator = messageCar.getJSONObject("m2m:rsp").getString("rqi");
+            JSONObject contentCar = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
+                    .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
             Long dataGenerationTimestamp=null;
+            String carUuid = null;
             boolean newData=false;
             Log.d(TAG, "oneM2MMessagesHandler: " + comparator);
 
@@ -1000,11 +1018,25 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 String[] carLatseparated = latitudeCar.split(":");
                 carLat = Double.parseDouble(carLatseparated[1]);
                 newData = true;}*/
-            if(comparator.equals("/server/server/aeTechnolution/prius/GPS/subPrius")){
-                noRTK=false;
+            if(comparator.equals("CREATE:prius/GPS")){
+               noRTK=false;
                 Log.d(TAG, "oneM2MMessagesHandler: RTK");
                 lastRTK = System.currentTimeMillis();
-                String[] separated = contentCarString.split(",");
+                String longitudeCarString = contentCar.getString("lon");
+                carLon = Double.parseDouble(longitudeCarString);
+                carSpeed = (float) contentCar.getDouble("speed");
+                String latitudeCar = contentCar.getString("lat");
+                carHeading = (float) contentCar.getDouble("heading");
+                carUuid = contentCar.getString("UUID");
+                carLat = Double.parseDouble(latitudeCar);
+                newData = true;
+                if(loggingSwitch.isChecked() && !runNumberText.getText().toString().isEmpty()
+                            && !experimentNumberText.getText().toString().isEmpty()){
+                pilotLogging(LOGGING_VEHICLE, 0, contentCar.toString(), carUuid);}
+            }
+                /* String[] separated = contentCarString.split(",");
+                JSONObject carString =  new JSONObject();
+                carString = contentCarString
                 String longitudeCarString = separated[1];
                 dataGenerationTimestamp = Long.parseLong(separated[2].split(":")[1].
                         replace(" ",""));
@@ -1016,11 +1048,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 carHeading = Float.parseFloat((separated[6].split(":"))[1]);
                 String[] carLatseparated = latitudeCar.split(":");
                 carLat = Double.parseDouble(carLatseparated[1]);
-                newData = true;
-            }
+                newData = true;} */
 
-            if(comparator.equals("/server/server/aeTechnolution/prius/GPS/subPrius")){
-
+            if(comparator.equals("")){
+                //TODO parsing and comparator
+                LatLng[] points = null;
+                motionPlanningPath(points);
             }
 
             if(newData) {
@@ -1036,6 +1069,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             carHeading = 360 + carHeading;
                         }
                         carOverlay.setBearing(carHeading);
+
                     } // This is your code
                 };
                 mainHandler.post(myRunnable);
@@ -1047,8 +1081,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     Log.d(TAG, "Deltameter:" + deltaMeters);
                     handleCarNotification(deltaMeters);
                 }
-
-                pilotLogging(LOGGING_VEHICLE, dataGenerationTimestamp, contentCarString, null);
             }
         }
 
@@ -1195,8 +1227,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             case LOGGING_VEHICLE:
                 Log.d(TAG, "pilotLogging: Vehicle");
-                log = ",3," + userName + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + "112233"
-                        + generationTimeStamp + ",112233," + data;
+                log = ",3," + userName + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
 
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_"
@@ -1304,7 +1335,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                 null, null, null);
                         publishAndLogMessage(onem2m,VRU.
                                 CreateContentInstanceCallTaxi(0.00000, 0.00000,
-                                        System.currentTimeMillis(), userName,UUID.randomUUID()).toString(),0,
+                                        System.currentTimeMillis(), userName,false,UUID.randomUUID().toString()).toString(),0,
                                 oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
                                 null, null);
                         publishAndLogMessage(onem2m,VRU.
@@ -1553,10 +1584,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
                }
            }
-
-
-
-
             }
         }
 
@@ -1584,12 +1611,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // Executes an OkHTTPpost asynctask to send a json to a certain URL that is indicated by the url
     // and json. results of this is handled in process finish (used for Huawei communication).
     void okHTTPPost(String url, String json) {
-        okHttpPost post1 = new okHttpPost(this);
+        okHttpPost okHttpPost = new okHttpPost(this);
         String[] string = new String[3];
         string[0]=url;
         string[1]=json;
         string[2]=userName;
-        post1.execute(string);
+        okHttpPost.execute(string);
     }
 
     @Override
@@ -1600,6 +1627,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onStop() {
         if(fileNameVector!=null){uploadLogFilesFirebase();}
+        Log.e(TAG, "onStop:");
         super.onStop();
     }
 
@@ -1846,17 +1874,38 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onDestroy() {
-        Log.d(TAG, "destroy");
+        cancelRequestTaxi();
+        Log.e(TAG, "destroy");
 
         if(fileNameVector!=null){uploadLogFilesFirebase();}
         FirebaseAuth.getInstance().signOut();
-
+        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
         stopTracking();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+        huaweiTimerTask.cancel();
 
         mNotificationManager.cancelAll();
-
+        oneM2MGPSThread.interrupt();
         super.onDestroy();
+    }
+
+    private void cancelRequestTaxi() {
+        JSONObject callTaxi = null;
+        try {
+            callTaxi = VRUgps.CreateContentInstanceCallTaxi(0.000000, 0.000000, System.currentTimeMillis(),
+                    userName,false,null);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        try {
+            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
+                    LOGGING_NOTNEEDED,null, System.currentTimeMillis(),null);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
     }
 
     // Removes last location of Huawei geofencing rectangle and adds the new location of the
@@ -1874,6 +1923,24 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     .add(points)
                     .zIndex(0)
                     .strokeColor(Color.LTGRAY));
+        }
+    }
+
+    // Removes last location of Huawei geofencing rectangle and adds the new location of the
+    // rectangle in the map, this function accepts array of LatLng points.
+    private void motionPlanningPath(LatLng[] points){
+        if(geoFencingPolygon==null){
+            geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
+                    .add(points)
+                    .zIndex(0)
+                    .strokeColor(Color.BLUE));
+        }
+        else{
+            geoFencingPolygon.remove();
+            geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
+                    .add(points)
+                    .zIndex(0)
+                    .strokeColor(Color.BLUE));
         }
     }
 
@@ -1970,7 +2037,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                     rae.startResolutionForResult(GpsActivity.this,
                                             REQUEST_CHECK_SETTINGS);
                                 } catch (IntentSender.SendIntentException sie){
-
+                                    Log.e(TAG, "onFailure request location:" + sie.toString());
                                 }
                                 break;
 
@@ -2112,36 +2179,40 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public void CallCar() {
         try {
             String uuid = UUID.randomUUID().toString();
-            publishAndLogMessage(onem2m,VRUgps.UpdateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userName,true,uuid).toString(),0,oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null, null, uuid);
+            JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.
+                            getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(),
+                    userName,true,uuid);
+            String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
+                    getJSONObject("m2m:cin").getString("con");
+            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
+                    LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
+
         } catch (JSONException e) {
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         } catch (UnsupportedEncodingException e){
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         } catch (MqttException e) {
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         }
     }
 
     public void CallCarMotionPlanning() {
         try {
             String uuid = UUID.randomUUID().toString();
-            publishAndLogMessage(onem2m,VRUgps.UpdateContentInstanceCallTaxi(mCurrentlocation.getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(), userName,true,uuid).toString(),0,oneM2MVRUReqTopic,LOGGING_TAXI_SENT,null, null,uuid.toString());
+            JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.
+                    getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(),
+                    userName,true,uuid);
+            String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
+                    getJSONObject("m2m:cin").getString("con");
+            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
+                    LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
         } catch (JSONException e) {
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         } catch (UnsupportedEncodingException e){
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         } catch (MqttException e) {
-            Log.d(TAG, "CallCar: "+e.toString());
+            Log.e(TAG, "CallCar: "+e.toString());
         }
-    }
-
-    //This piece of code shows the clock when the timebutton is clicked
-    public void showTimePickerDialog(View v) {
-        Log.d(TAG, "TimePickerClicked");
-        DialogFragment newFragment = new CampusCar();
-        newFragment.show(getFragmentManager(), "timePicker");
-
-
     }
 
     //TODO Extrapolating the vehicle speed heading if time is too long/delay
