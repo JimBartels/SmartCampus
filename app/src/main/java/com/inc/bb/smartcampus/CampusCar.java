@@ -127,7 +127,7 @@ public class CampusCar extends Fragment
     }
 
     private void makeTimeOutTimer2() {
-        new CountDownTimer(5000, 1000) {
+        new CountDownTimer(10000, 1000) {
 
             @Override
             public void onTick(long l) {
@@ -143,7 +143,7 @@ public class CampusCar extends Fragment
     }
 
     private void makeTimeOutTimer() {
-        new CountDownTimer(6000, 1000) {
+        new CountDownTimer(11000, 1000) {
 
             @Override
             public void onTick(long l) {
