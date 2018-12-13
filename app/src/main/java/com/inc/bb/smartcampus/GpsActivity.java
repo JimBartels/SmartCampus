@@ -13,6 +13,7 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -62,6 +63,7 @@ import com.google.android.gms.maps.model.GroundOverlay;
 import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
@@ -467,7 +469,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
-        /*try {
+        try {
             // Customise the styling of the base map using a JSON object defined
             // in a raw resource file.
             boolean success = googleMap.setMapStyle(
@@ -479,7 +481,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         } catch (Resources.NotFoundException e) {
             Log.e(TAG, "Can't find style. Error: ", e);
-        }*/
+        }
 
         if (checkPermissions()) {
             mMap.setMyLocationEnabled(true);
@@ -2211,7 +2213,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             String uuid = UUID.randomUUID().toString();
             JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.
                             getLatitude(), mCurrentlocation.getLongitude(), requestTimeinMillis, REQUESTLOCATION, System.currentTimeMillis(),
-                    userName,true,uuid);
+                    userName,true, uuid);
             String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
                     getJSONObject("m2m:cin").getString("con");
             publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
@@ -2248,7 +2250,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
     //This piece of code shows the clock when the timebutton is clicked
-    public void showTimePickerDialog(View v) {
+    public void showTimePickerDialog(View view) {
         Log.d(TAG, "TimePickerClicked");
         DialogFragment newFragment = new CampusCar();
         newFragment.show(getFragmentManager(), "timePicker");

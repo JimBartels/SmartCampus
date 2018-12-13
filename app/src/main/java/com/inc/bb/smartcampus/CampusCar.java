@@ -32,7 +32,6 @@ public class CampusCar extends DialogFragment
     public ArrayAdapter<String> adapter;
     public String[] buildings = {"Vertigo", "Flux", "Metaforum", "Atlas", "Auditorium"};
 
-
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
@@ -48,12 +47,13 @@ public class CampusCar extends DialogFragment
         int day = c.get(Calendar.DAY_OF_MONTH);
 
 
-
         // Create a new instance of TimePickerDialog and return it
         return new TimePickerDialog(getActivity(), this, hour, minute,
                 DateFormat.is24HourFormat(getActivity()));
 
+
     }
+
 
     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
         // Do something with the time chosen by the user
@@ -81,14 +81,14 @@ public class CampusCar extends DialogFragment
         //Assign default values to TextViews
         View timetextview = view.findViewById(R.id.TimeView);
         //((TextView)timetextview).setText("CHOOSE TIME ...");
-        final View placetextview = view.findViewById(R.id.PlaceView);
+        View placetextview = view.findViewById(R.id.PlaceView);
         //((TextView)placetextview).setText("CHOOSE DESTINATION ...");
 
         //Identify the listview for places
         placelistview = (ListView) view.findViewById(R.id.placeListView);
 
         //Create and set adapter to listview
-        adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1,buildings);
+        adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, buildings);
         placelistview.setAdapter(adapter);
 
 
@@ -103,29 +103,30 @@ public class CampusCar extends DialogFragment
                 //Change indicated location textview
                 ((GpsActivity) getActivity()).changeDialogFragmentPlaceTextView(selectedItem);
 
-
             }
         });
 
         //Button click listener in the fragment
-        Button confirmationbutton = (Button)view.findViewById(R.id.ConfirmationButton);
+        Button confirmationbutton = (Button) view.findViewById(R.id.ConfirmationButton);
         confirmationbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Log.d("ConfirmationButtonClick", "success");
                 ((GpsActivity) getActivity()).DatetoMillis();
 
-
-
             }
         });
 
+        //Button click listener for placebutton
+        Button placebutton = (Button) view.findViewById(R.id.placeButton);
+        placebutton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d("PlaceButtonClick", "success");
 
+            }
 
-
-
-
-
+        });
 
 
         //TODO: Get Firebase Data
@@ -133,5 +134,8 @@ public class CampusCar extends DialogFragment
 
         return view;
     }
+
+
+
 
 }
