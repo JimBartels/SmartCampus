@@ -1,28 +1,20 @@
 package com.inc.bb.smartcampus;
 
 import android.app.DatePickerDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.app.TimePickerDialog;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
-import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.DatePicker;
 import android.widget.ListView;
-import android.widget.Switch;
 import android.widget.TimePicker;
-
-import java.util.Calendar;
 
 import javax.annotation.Nullable;
 
@@ -93,13 +85,12 @@ public class CampusCar extends Fragment
     }
 
 
-
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         Button locButton = (Button) getView().findViewById(R.id.carbutton);
         locButton.setHapticFeedbackEnabled(true);
-        Drawable buttondrawable2 = ContextCompat.getDrawable(getActivity(),R.drawable.buttonshapebefore);
+        Drawable buttondrawable2 = ContextCompat.getDrawable(getActivity(), R.drawable.buttonshapebefore);
 
         locButton.setBackground(buttondrawable2);
         locButton.setOnClickListener(new View.OnClickListener() {

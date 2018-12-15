@@ -21,6 +21,7 @@ public class MyTextWatcher implements TextWatcher {
         this.myView = myView;
         this.anotherEditText = anotherEditText;
     }
+
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
     }
@@ -29,16 +30,19 @@ public class MyTextWatcher implements TextWatcher {
     public void onTextChanged(CharSequence s, int start, int before, int count) {
         textwatcherCheck = checkIfBothChanged();
 
-        }
+    }
 
     private boolean checkIfBothChanged() {
-        if(editText.getText().toString().length()>0){
-            if(anotherEditText.getText().toString().length()>0){
+        if (editText.getText().toString().length() > 0) {
+            if (anotherEditText.getText().toString().length() > 0) {
                 return true;
-            }}
-        return false;}
+            }
+        }
+        return false;
+    }
 
 
     @Override
-    public void afterTextChanged(Editable s){}
+    public void afterTextChanged(Editable s) {
+    }
 }

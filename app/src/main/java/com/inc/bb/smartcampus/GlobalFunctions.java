@@ -10,13 +10,13 @@ package com.inc.bb.smartcampus;
 
 import android.content.Context;
 import android.content.res.Resources;
-
 import android.support.v7.app.AppCompatActivity;
 
 public class GlobalFunctions extends AppCompatActivity {
     Context mContext;
+
     // constructor
-    public GlobalFunctions(Context context){
+    public GlobalFunctions(Context context) {
         this.mContext = context;
     }
 
