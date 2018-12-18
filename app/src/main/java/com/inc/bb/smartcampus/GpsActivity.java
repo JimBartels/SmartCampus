@@ -398,7 +398,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 startTrackingUserActivity();
 
                 //Onem2m building of broker
-                onem2m = buildOneM2MVRU(onem2m,userName);
+                onem2m = buildOneM2MVRU(onem2m);
 
             }
         });
@@ -936,8 +936,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     // Builds the OneM2M broker connection, subscribes to the VRU ae Response topic and creates
     // UserID container.
-    private MqttAndroidClient buildOneM2MVRU(MqttAndroidClient mMqttAndroidClient,
-                                             String userId1) {
+    private MqttAndroidClient buildOneM2MVRU(MqttAndroidClient mMqttAndroidClient) {
        // userId1 = userId1.replace("s","suser");
         String mqttBrokerUrl = "tcp://vmi137365.contaboserver.net:1883";
         mMqttAndroidClient = getMqttClient(getApplicationContext(), mqttBrokerUrl, userName);
@@ -1209,14 +1208,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         + experimentNumberString + "_Run" + runNumberString + "_" + userName
                         +"_6.csv";
 
+                if(fileNameVector==null){fileNameVector.add(fileNameTaxiSent);
+                addHeaderToLogFile(fileNameTaxiSent);}
+                if(!fileNameVector.contains(fileNameTaxiSent) && fileNameVector !=null){
+                    fileNameVector.add(fileNameTaxiSent);
+                    addHeaderToLogFile(fileNameTaxiSent);}
+
+
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_" + userName
                         +"_6.csv",log);
-
-                if(fileNameVector==null){fileNameVector.add(fileNameTaxiSent);}
-                if(!fileNameVector.contains(fileNameTaxiSent) && fileNameVector !=null){fileNameVector.
-                        add(fileNameTaxiSent);}
-
                 break;
 
             case LOGGING_TAXI_RECEIVED:
@@ -1228,13 +1229,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         + experimentNumberString + "_Run" + runNumberString + "_" + userName
                         +"_7.csv";
 
+                if(fileNameVector==null){fileNameVector.add(fileNameTaxiReceived);
+                    addHeaderToLogFile(fileNameTaxiReceived);}
+                if(!fileNameVector.contains(fileNameTaxiReceived) && fileNameVector !=null){
+                    fileNameVector.add(fileNameTaxiReceived);
+                    addHeaderToLogFile(fileNameTaxiReceived);}
+
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_" + userName
                         +"_7.csv",log);
 
-                if(fileNameVector==null){fileNameVector.add(fileNameTaxiReceived);}
-                if(!fileNameVector.contains(fileNameTaxiReceived) && fileNameVector !=null){fileNameVector.
-                        add(fileNameTaxiReceived);}
                 break;
 
             case LOGGING_NOTNEEDED:
@@ -1249,13 +1253,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         + experimentNumberString + "_Run" + runNumberString + "_" + userName
                         +"_1.csv";
 
+                if(fileNameVector==null){fileNameVector.add(fileNameGPS);
+                    addHeaderToLogFile(fileNameGPS);}
+                if(!fileNameVector.contains(fileNameGPS) && fileNameVector !=null){
+                    fileNameVector.add(fileNameGPS);
+                    addHeaderToLogFile(fileNameGPS);}
+
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_" + userName
                         +"_1.csv",log);
-
-                if(fileNameVector==null){fileNameVector.add(fileNameGPS);}
-                if(!fileNameVector.contains(fileNameGPS) && fileNameVector !=null){fileNameVector.
-                        add(fileNameGPS);}
 
                 break;
 
@@ -1264,50 +1270,59 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 log = ",2," + userName + "," + "SENT,CELLULAR,AutoPilot.SmartphoneUserActivity,"
                         + uuid + "," + userName + ", " + data;
 
-                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
-                        + experimentNumberString + "_Run" + runNumberString + "_" + userName
-                        +"_2.csv",log);
-
                 String fileNameStatus = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_" + userName
                         +"_2.csv";
 
-                if(fileNameVector==null){fileNameVector.add(fileNameStatus);}
-                if(!fileNameVector.contains(fileNameStatus)){fileNameVector.add(fileNameStatus);}
+                if(fileNameVector==null){fileNameVector.add(fileNameStatus);
+                    addHeaderToLogFile(fileNameStatus);}
+                if(!fileNameVector.contains(fileNameStatus) && fileNameVector !=null){
+                    fileNameVector.add(fileNameStatus);
+                    addHeaderToLogFile(fileNameStatus);}
+
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_" + userName
+                        +"_2.csv",log);
                 break;
 
             case LOGGING_VEHICLE:
                 Log.d(TAG, "pilotLogging: Vehicle");
                 log = ",3," + userName + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
 
-                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
-                        + experimentNumberString + "_Run" + runNumberString + "_"
-                        +userName + "_3.csv",log);
-
                 String fileNameCar = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_"
                         + userName+"_3.csv";
 
-                if(fileNameVector==null){fileNameVector.add(fileNameCar);}
-                if(!fileNameVector.contains(fileNameCar)){fileNameVector.add(fileNameCar);}
+                if(fileNameVector==null){fileNameVector.add(fileNameCar);
+                    addHeaderToLogFile(fileNameCar);}
+                if(!fileNameVector.contains(fileNameCar) && fileNameVector !=null){
+                    fileNameVector.add(fileNameCar);
+                    addHeaderToLogFile(fileNameCar);}
 
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_"
+                        +userName + "_3.csv",log);
                 break;
+
             case LOGGING_HUAWEI_RECEIVED:
                 Log.d(TAG, "pilotLogging: HuaweiReceived");
 
                 log = ",4," + userName + "," + "RECEIVED,CELLULAR,AutoPilot." +
                         "HuaweiGeofencingRectangle," + " ,3172," + data;
 
-                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
-                        + experimentNumberString + "_Run" + runNumberString + "_"
-                        + userName + "_4.csv",log);
-
                 String fileNameHR = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_"
                         + userName +"_4.csv";
 
-                if(fileNameVector==null){fileNameVector.add(fileNameHR);}
-                if(!fileNameVector.contains(fileNameHR)){fileNameVector.add(fileNameHR);}
+                if(fileNameVector==null){fileNameVector.add(fileNameHR);
+                    addHeaderToLogFile(fileNameHR);}
+                if(!fileNameVector.contains(fileNameHR) && fileNameVector !=null){
+                    fileNameVector.add(fileNameHR);
+                    addHeaderToLogFile(fileNameHR);}
+
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_"
+                        + userName + "_4.csv",log);
                 break;
 
             case LOGGING_HUAWEI_SENT:
@@ -1316,16 +1331,20 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         uuid + ','
                         + userName + "," + data;
 
-                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
-                        + experimentNumberString + "_Run" + runNumberString + "_"
-                        + userName+ "_5.csv",log);
-
                 String fileNameHS = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_"
                         + userName+"_5.csv";
 
-                if(fileNameVector==null){fileNameVector.add(fileNameHS);}
-                if(!fileNameVector.contains(fileNameHS)){fileNameVector.add(fileNameHS);}
+                if(fileNameVector==null){fileNameVector.add(fileNameHS);
+                    addHeaderToLogFile(fileNameHS);}
+                if(!fileNameVector.contains(fileNameHS) && fileNameVector !=null){
+                    fileNameVector.add(fileNameHS);
+                    addHeaderToLogFile(fileNameHS);}
+
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_"
+                        + userName+ "_5.csv",log);
+                break;
         }
     }
 
@@ -1345,6 +1364,23 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         try {
             FileOutputStream out = openFileOutput(Filename,Context.MODE_APPEND);
             out.write((String.valueOf(System.currentTimeMillis())+ entryFile).getBytes());
+            Log.d(TAG, "write to log");
+            out.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            Log.d(TAG,"writeToLogFile" + e.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "writeToLogFile" + e.toString());
+        }
+    }
+
+    // Makes a header file at first for the logfile if the file did not exist yet
+    private void addHeaderToLogFile(String Filename) {
+        String entryFile = "log_timestamp,log_applicationid,log_stationid,log_action,log_communicationprofile,log_messagetype,log_messageuuid,stationId,data" + "\n";
+        try {
+            FileOutputStream out = openFileOutput(Filename,Context.MODE_APPEND);
+            out.write((String.valueOf(entryFile).getBytes());
             Log.d(TAG, "write to log");
             out.close();
         } catch (FileNotFoundException e) {
@@ -1719,7 +1755,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 bearing = speedGPSandBearing[1];}
 
             //Sending GPS to oneM2M
-                try {
+               try {
                 if (speedGPS == null) {speedGPS = "0.0";
                 }
             if(mCurrentlocation!=null){
@@ -1733,7 +1769,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-
 
             // Old clock for car notifications, now performed whenever a message arrives.
             /*Double deltaMeters;
@@ -1826,8 +1861,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         contentCreateGPS.getJSONObject("m2m:rqp").put("op",CREATE);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin")
                 .put("con", con);
-        contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin")
-                .put("rn", formattedDate);
         String contentCreate = contentCreateGPS.toString();
         String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc")
                 .getJSONObject("m2m:cin").getString("con");
@@ -1947,7 +1980,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
         try {
             publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
-                    LOGGING_TAXI_SENT,null, System.currentTimeMillis(),uuid);
+                    LOGGING_TAXI_SENT,callTaxi.toString(), System.currentTimeMillis(),uuid);
         } catch (MqttException e) {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {

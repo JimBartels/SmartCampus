@@ -112,7 +112,6 @@ public class CampusCar extends Fragment
             public void onClick(View view) {
                 ((GpsActivity) getActivity()).CallCar();
                 makeTimeOutTimer2();
-                makeTimeOutTimer();
                 responseMessage.setText("Request sent");
             }
         });
@@ -135,9 +134,7 @@ public class CampusCar extends Fragment
             }
 
             public void onFinish() {
-                ((GpsActivity) getActivity()).cancelRequestTaxi();
-                ((GpsActivity) getActivity()).cancelRequestTaxi();
-                ((GpsActivity) getActivity()).cancelRequestTaxi();
+                makeTimeOutTimer();
             }
         }.start();
     }
@@ -147,11 +144,10 @@ public class CampusCar extends Fragment
 
             @Override
             public void onTick(long l) {
-
+                    ((GpsActivity) getActivity()).cancelRequestTaxi();
             }
 
-            public void onFinish() {
-                ((GpsActivity) getActivity()).cancelRequestTaxi();
+            public void onFinish(){
             }
         }.start();
     }
