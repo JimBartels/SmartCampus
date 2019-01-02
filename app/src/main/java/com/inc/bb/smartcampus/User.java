@@ -9,6 +9,7 @@ public class User {
     public String password;
     public String latitude;
     public String longitude;
+    public String salt;
 
     public User(String studentnumber, String password, String latitude, String longitude){
         this.studentnumber = studentnumber;

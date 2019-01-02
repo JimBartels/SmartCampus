@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity  {
         loginButtonListener();
     }
 
-    // Listener for the login button. If password andusername are not empty it goes to register
+    // Listener for the login button. If password and username are not empty it goes to register
     // function.
     private void loginButtonListener() {
         mFirebaseBtn.setOnClickListener(new View.OnClickListener() {
@@ -117,11 +117,11 @@ public class MainActivity extends AppCompatActivity  {
                             FirebaseUser user = mAuth.getCurrentUser();
                             userId=studentNumber.replace("@random.com", "");
                             updateDisplayName(user);
-                            writeNewUser(userId,studentNumber, pass, longitude,latitude);
+                            writeNewUser(userId, studentNumber, pass, longitude,latitude);
                             checkUserLoggedInAndGPSActivityIntent(user);
                         }
 
-                        // !task.isSuccessful means that creating a new user was not succesful and
+                        // !task.isSuccessful means that creating a new user was not successful and
                         // exception is sent back (reason why) to the app
                         else if(!task.isSuccessful())
                         {

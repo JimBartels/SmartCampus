@@ -122,7 +122,7 @@ public class PasswordUtils {
         byte[] securePassword = hash(password.toCharArray(), salt.getBytes());
 
         // the following functions require API 26, so something we need to look into later
-        returnValue = Base64.getEncoder().encodeToString(securePassword);
+        returnValue = android.util.Base64.encode().encodeToString(securePassword);
 
         return returnValue;
     }

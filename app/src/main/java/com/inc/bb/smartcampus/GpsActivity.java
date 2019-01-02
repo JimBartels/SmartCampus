@@ -395,7 +395,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         huaweiTimerTask =  new TimerTask() {
             @Override
             public void run() {
-                String conHuawei = "{\"type\":5,\"id\":" + "fenceRequester" + ",\"timestampUtc\":" + 0 + ",\"lon\":" + 0 + ",\"lat\":"+ 0 + ",\"speed\":"+ 0 + ",\"heading\":"+0+ ",\"accuracy\":"+0+ "}";
+                String conHuawei = "{\"type\":5,\"id\":" + "fenceRequester" + ",\"timestampUtc\":" +
+                        0 + ",\"lon\":" + 0 + ",\"lat\":"+ 0 + ",\"speed\":"+ 0 + ",\"heading\":"+0+ ",\"accuracy\":"+0+ "}";
                 okHTTPPost(huaweiUrl,conHuawei);
             }
         };
