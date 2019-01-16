@@ -10,7 +10,7 @@ import com.google.android.gms.location.DetectedActivity;
 
 import java.util.ArrayList;
 
-public class DetectedActivitiesIntentService  extends IntentService {
+public class DetectedActivitiesIntentService extends IntentService {
 
     protected static final String TAG = DetectedActivitiesIntentService.class.getSimpleName();
 
@@ -37,10 +37,10 @@ public class DetectedActivitiesIntentService  extends IntentService {
         ArrayList<DetectedActivity> detectedActivities = (ArrayList) result.getProbableActivities();
 
         int maxConf = Integer.MIN_VALUE;
-        int maxConfType=0;
+        int maxConfType = 0;
 
         for (DetectedActivity activity : detectedActivities) {
-            if(activity.getConfidence() > maxConf){
+            if (activity.getConfidence() > maxConf) {
                 maxConf = activity.getConfidence();
                 maxConfType = activity.getType();
             }

@@ -17,92 +17,87 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 
-
-
-
 /**
  * Created by s163310 on 3/8/2018.
  */
 
 public class okHttpPost extends AsyncTask<String, Void, Bundle> {
 
-    String TAG = "OkHttpPost ";
-    public interface AsyncResponse{
-        void processFinish(Bundle output);
-    }
     public AsyncResponse delegate = null;
+    String TAG = "OkHttpPost ";
 
-    public okHttpPost(AsyncResponse delegate){
-        this.delegate=delegate;
+    public okHttpPost(AsyncResponse delegate) {
+        this.delegate = delegate;
     }
+
     @Override
     protected Bundle doInBackground(String... strings) {
-        try{
+        try {
             String userId = strings[2];
-            boolean j=false;
+            boolean j = false;
             Bundle returnMessage = new Bundle();
-        OkHttpClient client = new OkHttpClient();
-        MediaType mediaType = MediaType.parse("application/json");
-        RequestBody body = RequestBody.create(mediaType, strings[1]);
-        Request request = new Request.Builder()
-                .url(strings[0])
-                .post(body)
-                .addHeader("Content-Type", "application/json")
-               // .addHeader("X-M2M-Origin", "Cae-guest")
-               // .addHeader("X-M2M-Key", "guestguest")
-               // .addHeader("Accept", "application/json")
-               // .addHeader("Cache-Control", "no-cache")
-               // .addHeader("Postman-Token", "8036b953-7456-48d3-b446-77702913fd82")
-                .build();
-        Response response = client.newCall(request).execute();
-        if(response.isSuccessful()){
-            String responseBody = response.body().string();
-            if(responseBody!=null){
-            try{
-                JSONArray jArray1 = new JSONArray(responseBody);
-                JSONObject jsonObject = jArray1.getJSONObject(0);
-                JSONArray jArrayHits = jsonObject.getJSONObject("hits").getJSONArray("hits");
-                int i=0;
-                for(i=0 ; i<jArrayHits.length();i++){
-                    JSONObject jObjectIter = jArrayHits.getJSONObject(i);
-                    Log.d(TAG, "doInBackground: " + jObjectIter);
-                    Log.d(TAG, "doInBackground: " + jObjectIter.getString("_id"));
+            OkHttpClient client = new OkHttpClient();
+            MediaType mediaType = MediaType.parse("application/json");
+            RequestBody body = RequestBody.create(mediaType, strings[1]);
+            Request request = new Request.Builder()
+                    .url(strings[0])
+                    .post(body)
+                    .addHeader("Content-Type", "application/json")
+                    // .addHeader("X-M2M-Origin", "Cae-guest")
+                    // .addHeader("X-M2M-Key", "guestguest")
+                    // .addHeader("Accept", "application/json")
+                    // .addHeader("Cache-Control", "no-cache")
+                    // .addHeader("Postman-Token", "8036b953-7456-48d3-b446-77702913fd82")
+                    .build();
+            Response response = client.newCall(request).execute();
+            if (response.isSuccessful()) {
+                String responseBody = response.body().string();
+                if (responseBody != null) {
+                    try {
+                        JSONArray jArray1 = new JSONArray(responseBody);
+                        JSONObject jsonObject = jArray1.getJSONObject(0);
+                        JSONArray jArrayHits = jsonObject.getJSONObject("hits").getJSONArray("hits");
+                        int i = 0;
+                        for (i = 0; i < jArrayHits.length(); i++) {
+                            JSONObject jObjectIter = jArrayHits.getJSONObject(i);
+                            Log.d(TAG, "doInBackground: " + jObjectIter);
+                            Log.d(TAG, "doInBackground: " + jObjectIter.getString("_id"));
 
-                    if(jObjectIter.getString("_id").replace(".0","").equals(userId)){
-                        j = true;
+                            if (jObjectIter.getString("_id").replace(".0", "").equals(userId)) {
+                                j = true;
+                            }
+                        }
+                        JSONObject jRectangleObject = jArray1.getJSONObject(1);
+                        JSONArray jCoordinates = jRectangleObject.getJSONObject("query").getJSONObject("geo_shape").getJSONObject("location").getJSONObject("shape").getJSONArray("coordinates").getJSONArray(0);
+                        double[] rectangleLat = new double[5];
+                        double[] rectangleLon = new double[5];
+                        for (i = 0; i < jCoordinates.length(); i++) {
+                            JSONArray jObjectIter = jCoordinates.getJSONArray(i);
+                            Log.d(TAG, "doInBackground: " + jObjectIter);
+                            rectangleLat[i] = jObjectIter.getDouble(0);
+                            rectangleLon[i] = jObjectIter.getDouble(1);
+                        }
+                        returnMessage.putDoubleArray("rectangleLat", rectangleLat);
+                        returnMessage.putDoubleArray("rectangleLon", rectangleLon);
+                        Log.d(TAG, "doInBackground: " + jCoordinates);
+                        returnMessage.putString("returnMessage", responseBody);
+                        returnMessage.putBoolean("isInRectangle", j);
+
+                        return returnMessage;
+                    } catch (JSONException e) {
+                        Log.e(TAG, "doInBackground: " + e.toString());
                     }
-                }
-                JSONObject jRectangleObject = jArray1.getJSONObject(1);
-                JSONArray jCoordinates = jRectangleObject.getJSONObject("query").getJSONObject("geo_shape").getJSONObject("location").getJSONObject("shape").getJSONArray("coordinates").getJSONArray(0);
-                double[] rectangleLat = new double[5];
-                double[] rectangleLon = new double[5];
-                for(i=0 ; i<jCoordinates.length();i++){
-                    JSONArray jObjectIter = jCoordinates.getJSONArray(i);
-                    Log.d(TAG, "doInBackground: " + jObjectIter);
-                    rectangleLat[i] = jObjectIter.getDouble(0);
-                    rectangleLon[i] = jObjectIter.getDouble(1);
-                }
-                returnMessage.putDoubleArray("rectangleLat",rectangleLat);
-                returnMessage.putDoubleArray("rectangleLon",rectangleLon);
-                Log.d(TAG, "doInBackground: " + jCoordinates);
-                returnMessage.putString("returnMessage",responseBody);
-                returnMessage.putBoolean("isInRectangle",j);
 
-               return returnMessage;
+                    returnMessage.putString("returnMessage", responseBody);
+                    returnMessage.putBoolean("isInRectangle", j);
+                    return returnMessage;
+                }
             }
-            catch(JSONException e){
-                Log.e(TAG, "doInBackground: " + e.toString());
-            }
-
-            returnMessage.putString("returnMessage",responseBody);
-            returnMessage.putBoolean("isInRectangle",j);
-            return returnMessage; }
-            }
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             Bundle returnError = new Bundle();
-            returnError.putString("error",e.toString());
-            return returnError;}
+            returnError.putString("error", e.toString());
+            return returnError;
+        }
         return null;
     }
 
@@ -110,5 +105,9 @@ public class okHttpPost extends AsyncTask<String, Void, Bundle> {
     protected void onPostExecute(Bundle result) {
         delegate.processFinish(result);
         super.onPostExecute(result);
+    }
+
+    public interface AsyncResponse {
+        void processFinish(Bundle output);
     }
 }
