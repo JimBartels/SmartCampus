@@ -10,7 +10,7 @@ public class AuditoriumFloorZero extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+// dit is een leuke comment
         Log.d(TAG, "This is floor zero ");
         setContentView(R.layout.activity_auditorium_zero);
     }
