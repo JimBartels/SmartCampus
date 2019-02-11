@@ -11,6 +11,7 @@ import com.google.android.gms.location.DetectedActivity;
 import java.util.ArrayList;
 
 public class DetectedActivitiesIntentService  extends IntentService {
+    public static volatile boolean shouldContinue = true;
 
     protected static final String TAG = DetectedActivitiesIntentService.class.getSimpleName();
 
@@ -27,6 +28,7 @@ public class DetectedActivitiesIntentService  extends IntentService {
     @SuppressWarnings("unchecked")
     @Override
     protected void onHandleIntent(Intent intent) {
+        if(!shouldContinue){stopSelf();}
         Log.d(TAG, "onHandleIntent:");
         ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
         Long ActivityTimeStamp = result.getTime();

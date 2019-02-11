@@ -75,6 +75,20 @@
         <activity android:name=".VertigoActivity" />
         <activity android:name=".AtlasActivity" />
         <activity android:name=".AuditoriumActivity" />
+
+        <service
+            android:name=".GoogleFusedLocations"
+            android:exported="false" />
+        <service
+            android:name=".PilotLogging"
+            android:exported="false" />
+        <service android:name=".OneM2MForwardCommunications" />
+        <service
+            android:name=".OneM2MBackwardCommunications"
+            android:exported="false" />
+        <service
+            android:name=".HuaweiCommunications"
+            android:exported="false"></service>
     </application>
 
 </manifest>
