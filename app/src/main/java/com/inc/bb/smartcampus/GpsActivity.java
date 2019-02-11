@@ -1378,13 +1378,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
   /*private void addHeatMap() {
         List<LatLng> list = null;
 
-        // Get the data: latitude/longitude positions of police stations.
+        // Get the data
         try {
             list = readItems(R.raw.heat_maps);
         } catch (JSONException e) {
             Toast.makeText(this, "Problem reading list of locations.", Toast.LENGTH_LONG).show();
         }
-      // Create a heat map tile provider, passing it the latlngs of the police stations.
+      // Create a heat map tile provider, passing it the latlngs of the conentrated buildings/areas
       HeatmapTileProvider heatmapTileProvider = new HeatmapTileProvider().Builder.build();
         // Add a tile overlay to the map, using the heat map tile provider.
         TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
