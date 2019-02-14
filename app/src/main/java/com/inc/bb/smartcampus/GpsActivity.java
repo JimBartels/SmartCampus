@@ -1,7 +1,6 @@
 package com.inc.bb.smartcampus;
 
 import android.Manifest;
-import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -66,8 +65,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -99,7 +96,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -111,8 +107,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.Vector;
-
-import okhttp3.OkHttpClient;
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants, okHttpPost.AsyncResponse, OnMapReadyCallback {
@@ -259,6 +253,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private final static int AUTONOMOUS_CAR_40M_NOTIFICATION_ID = 0;
     private final static int AUTONOMOUS_CAR_100M_NOTIFICATION_ID = 1;
     private final static int HUAWEI_NOTIFICATION_ID = 3;
+    private final static int TAXI_COMING = 4;
     Boolean[] notificationArray = new Boolean[10];
     LatLng carLoc;
 
@@ -1077,6 +1072,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             if(comparator.equals("CREATE:prius/Motionplanning")) {
                 Log.d(TAG, "oneM2MMessagesHandler: motionplanning");
+                mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
+                        .setContentText("")
+                        .setStyle(new NotificationCompat.BigTextStyle())
+                        .setContentTitle("Autonomous car coming to your location")
+                        .setOngoing(false)
+                        .setAutoCancel(true);
+                mNotificationManager.notify(TAXI_COMING, mBuilder.build());
+                notificationArray[TAXI_COMING] = true;
+                Log.d(TAG, "Notification Built");
                 JSONObject contentMP = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
                 if (contentMP.getString("mobileId").equals(userName)) {
@@ -1105,6 +1109,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     String carMPUuid = contentMP.getString("responseUUID");
                     pilotLogging(LOGGING_TAXI_RECEIVED, 0, contentMP.toString(), carMPUuid);
                 }
+
             }
 
             if(newData) {
