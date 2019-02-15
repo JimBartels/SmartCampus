@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.TextView;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.DetectedActivity;
@@ -66,6 +67,9 @@ public class OneM2MForwardCommunications extends IntentService {
     BroadcastReceiver broadcastReceiverUserActivity;
     OneM2MMqttJson VRUgps;
 
+    //Motionplanning variables
+    boolean motiongPlanningResponseReceived = false;
+
     //Message types for logging (what kind of log is needed)
     private final static int LOGGING_NOTNEEDED = 0;
     private final static int LOGGING_GPS = 1;
@@ -93,7 +97,8 @@ public class OneM2MForwardCommunications extends IntentService {
     private final static int DELETE = 4;
 
     //Broadcast variables
-    BroadcastReceiver locationsBroadcastReceiver;
+    BroadcastReceiver locationsBroadcastReceiver,cancelTaxiRequestBroadcastReceiver,
+            callTaxiBroadcastReceiver;
 
     //Logging layout check variables
     BroadcastReceiver layoutResponseBroadcastReceiver;
@@ -109,7 +114,6 @@ public class OneM2MForwardCommunications extends IntentService {
 
     @Override
     public void onCreate() {
-        //Firebase initialization
         Log.d(TAG, "onCreate: ");
         super.onCreate();
     }
@@ -126,9 +130,34 @@ public class OneM2MForwardCommunications extends IntentService {
         createBroadcastReceiverUserActivity();
         createBroadcastReceiverLocations();
         createBroadcastReceiverLayoutResponse();
+        createBroadcastReceiverTaxiReceived();
+        createBroadcastReceiverCallTaxi();
+    }
 
-        //Creates settings to be passed to google's fusion location client and sets callback
-        //This is the core of the app
+    private void createBroadcastReceiverTaxiReceived() {
+        cancelTaxiRequestBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                cancelRequestTaxi();
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("CancelTaxiRequest");
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                cancelTaxiRequestBroadcastReceiver, intentFilter);
+    }
+
+    private void createBroadcastReceiverCallTaxi() {
+        callTaxiBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                callTaxi();
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("CampusCar.REQUEST_TAXI");
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                callTaxiBroadcastReceiver, intentFilter);
     }
 
     private void createBroadcastReceiverLayoutResponse() {
@@ -149,6 +178,49 @@ public class OneM2MForwardCommunications extends IntentService {
         intentFilter.addAction("GpsActivity.LAYOUT_RESPONSE");
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 layoutResponseBroadcastReceiver, intentFilter);
+    }
+
+
+    public void cancelRequestTaxi() {
+        JSONObject callTaxi = null;
+        String uuid =  UUID.randomUUID().toString();
+        try {
+            callTaxi = VRUgps.CreateContentInstanceCallTaxi(0.000000, 0.000000, System.currentTimeMillis(),
+                    userName,false,uuid);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        try {
+            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
+                    LOGGING_TAXI_SENT,callTaxi.toString(), System.currentTimeMillis(),uuid);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    // Sends a message to OneM2M CallCar container when button is clicked
+    // for calling a taxi. This message is then forwarded to Csmartcampus topic for IBM rebalancing
+    // service via the subscription container CallTaxi_sub and also Motionplanning of NEC
+    public void callTaxi() {
+        try {
+            String uuid = UUID.randomUUID().toString();
+            JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(Latitude, Longitude, System.currentTimeMillis(),
+                    userName,true,uuid);
+            String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
+                    getJSONObject("m2m:cin").getString("con");
+            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
+                    LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
+
+        } catch (JSONException e) {
+            Log.e(TAG, "CallCar: "+e.toString());
+        } catch (UnsupportedEncodingException e){
+            Log.e(TAG, "CallCar: "+e.toString());
+        } catch (MqttException e) {
+            Log.e(TAG, "CallCar: "+e.toString());
+        }
     }
 
     // Builds the OneM2M broker connection, subscribes to the VRU ae Response topic and creates

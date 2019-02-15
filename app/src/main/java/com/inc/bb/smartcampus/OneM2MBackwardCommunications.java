@@ -5,19 +5,10 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.Context;
 import android.content.IntentFilter;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.DetectedActivity;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
@@ -342,6 +333,45 @@ public class OneM2MBackwardCommunications extends IntentService {
                 carLat = Double.parseDouble(carLatseparated[1]);
                 newData = true;} */
 
+            if(comparator.equals("CREATE:prius/Motionplanning")) {
+                Log.d(TAG, "oneM2MMessagesHandler: motionplanning");
+                JSONObject contentMP = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
+                        .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
+
+                if (contentMP.getString("mobileId").equals(userName)) {
+                    Log.d(TAG, "oneM2MMessagesHandler: motionplanning2");
+                    sendBroadcastCancelRequestTaxi();
+                    JSONArray jsonArray = contentMP.getJSONArray("coords");
+                    double[] pathLat = new double[jsonArray.length()];
+                    double[] pathLon = new double[jsonArray.length()];
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        // Array points1[][] =  new Array[jsonArray.length()][2];
+                        //points[i][1] = jsonArr
+                        JSONArray jArrayIter = jsonArray.getJSONArray(i);
+                        Log.d(TAG, "doInBackground: " + jArrayIter);
+                        pathLat[i] = jArrayIter.getDouble(0);
+                        pathLon[i] = jArrayIter.getDouble(1);
+                    }
+
+                    sendBroadcastUIMotionplanningPath(new double[][] {pathLat,pathLon});
+
+                    Log.d(TAG, "oneM2MMessagesHandler: motionplanning3");
+                    String carMPUuid = contentMP.getString("responseUUID");
+                    if (isLoggingSwitched) {
+                        Intent logIntent = new Intent();
+                        logIntent.setAction("OneM2M.BackwardLogging");
+                        Log.d(TAG, "oneM2MMessagesHandler: LoggingRTK");
+                        logIntent.putExtra("messageType", LOGGING_TAXI_RECEIVED);
+                        logIntent.putExtra("logmsg", contentMP.toString());
+                        logIntent.putExtra("uuid", carMPUuid);
+                        logIntent.putExtra("username", userName);
+                        logIntent.putExtra("runNumber", runNumber);
+                        logIntent.putExtra("experimentNumber", experimentNumber);
+                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
+                    }
+                }
+            }
+
             /*if(comparator.equals("CREATE:prius/Motionplanning")) {
                 Log.d(TAG, "oneM2MMessagesHandler: motionplanning");
                 JSONObject contentMP = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
@@ -398,6 +428,50 @@ public class OneM2MBackwardCommunications extends IntentService {
                 Log.d(TAG, "Latency:" + latencyFromGPSTillReceive);
             }
         }*/
+    }
+
+    private void sendBroadcastUIMotionplanningPath(double[][] latlonMP) {
+        double pathLat[] = latlonMP[0];
+        double pathLon[] = latlonMP[1];
+        Intent intent = new Intent();
+        intent.putExtra("MPlat",pathLat);
+        intent.putExtra("MPlon",pathLon);
+        intent.setAction("OneM2MBackwardCommunications.SEND_MP_PATH");
+        Log.d(TAG, "sendBroadcastUIMotionplanningPath: Sending path");
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    private void sendBroadcastCancelRequestTaxi() {
+            Intent intent = new Intent();
+            intent.setAction("CancelTaxiReqeust");
+            Log.d(TAG, "sending a cancel request");
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    private double[][] postProcessPoints(JSONArray jsonArray) throws JSONException {
+        try {
+            jsonArray =  new JSONArray("[[5.621214253494322, 51.47541059025025], [5.62127524763604, 51.475414772315744], [5.621370026817552, 51.47542036701487], [5.621431033732289, 51.475423463795856], [5.621525336217586, 51.47542763410312], [5.621586811299805, 51.47543052413571], [5.621686078097918, 51.47543577362394], [5.6217127532141555, 51.475437616451075], [5.621754960615094, 51.475441168483165], [5.621777771327359, 51.475442825617584], [5.621804479938089, 51.47544432684967], [5.62192585944452, 51.475449421577636], [5.6219879087030415, 51.47545171301037], [5.622081089551268, 51.47545450933263], [5.622145680331274, 51.47545601531449], [5.622239820552249, 51.47545782358931], [5.622269561278942, 51.47545853851768], [5.622300592164824, 51.47545949717022], [5.6223330419872255, 51.475460791228514], [5.622365270457825, 51.475462323643285], [5.622523187565648, 51.47547133377415], [5.622553721542004, 51.47547279116144], [5.622584413966011, 51.475474027814386], [5.622614759538166, 51.47547496030522], [5.622675902757946, 51.4754759728059], [5.622828960260933, 51.47547763351552], [5.622858988131518, 51.47547783876785], [5.622950487000901, 51.475478018293174], [5.622982119969601, 51.47547849843513], [5.623013969071093, 51.475479708016636], [5.623045883723711, 51.475482221004874], [5.623076598106441, 51.47548647465342], [5.6231059416003415, 51.47549374768511], [5.62313154166378, 51.475505142661895], [5.623149987385574, 51.475520725568366], [5.623159264476144, 51.47553943601829], [5.623157218570495, 51.475559060768404], [5.623141664033958, 51.475577917268296]]");
+        } catch (JSONException e) {
+            Log.d(TAG, "motionPlanningPath: " + e.toString());
+            e.printStackTrace();
+        }
+
+        LatLng[] points = new LatLng[jsonArray.length()];
+        double[] rectangleLat = new double[jsonArray.length()];
+        double[] rectangleLon = new double[jsonArray.length()];
+        for (int i = 0; i < jsonArray.length(); i++) {
+            // Array points1[][] =  new Array[jsonArray.length()][2];
+            //points[i][1] = jsonArr
+            JSONArray jArrayIter = jsonArray.getJSONArray(i);
+            Log.d(TAG, "motionPlanningPath: " + jArrayIter);
+            rectangleLat[i] = jArrayIter.getDouble(0);
+            rectangleLon[i] = jArrayIter.getDouble(1);
+        }
+        /*for (int i = 0; i < rectangleLat.length; i++) {
+            points[i] = new LatLng(rectangleLon[i], rectangleLat[i]);
+            Log.d(TAG, "motionPlanningPath: "+ rectangleLat[i] + "," + rectangleLon[i]);
+        }*/
+        return new double[][]{rectangleLat, rectangleLon};
     }
 
     // Difference in meters (birds flight) using 'haversine' formula, gives back distance between

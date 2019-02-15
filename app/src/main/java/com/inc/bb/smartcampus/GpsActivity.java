@@ -10,18 +10,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
-import android.content.pm.ActivityInfo;
+
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.location.Location;
+
 import android.net.Uri;
-import android.os.Build;
+
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
+
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -37,22 +36,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResolvableApiException;
-import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.location.DetectedActivity;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResponse;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -63,56 +46,29 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
-import com.google.android.gms.maps.model.TileOverlay;
-import com.google.android.gms.maps.model.TileOverlayOptions;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.api.client.googleapis.json.GoogleJsonError;
+
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
+
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 
-import org.eclipse.paho.android.service.MqttAndroidClient;
-import org.eclipse.paho.client.mqttv3.IMqttActionListener;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
-import org.eclipse.paho.client.mqttv3.IMqttToken;
-import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+
 import org.osmdroid.config.Configuration;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.text.SimpleDateFormat;
+
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Enumeration;
+;
 import java.util.List;
-import java.util.Locale;
-import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
-import java.util.Vector;
+
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants, OnMapReadyCallback {
@@ -123,7 +79,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private GoogleMap mMap;
 
     //Motionplanning and calltaxi
-    Polygon polylineMP;
+    Polyline polylineMP=null;
     boolean motiongPlanningResponseReceived;
     android.app.Fragment campusCar;
 
@@ -161,6 +117,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     BroadcastReceiver broadcastReceiver,broadcastReceiverCarRTK;
     BroadcastReceiver broadcastReceiverLayoutChecker;
     BroadcastReceiver broadcastReceiverCarDataHuawei;
+    BroadcastReceiver broadcastReceiverMotionplanningPath;
 
     //Notification global variables
     NotificationManager mNotificationManager;
@@ -191,6 +148,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private final static int AUTONOMOUS_CAR_40M_NOTIFICATION_ID = 0;
     private final static int AUTONOMOUS_CAR_100M_NOTIFICATION_ID = 1;
     private final static int HUAWEI_NOTIFICATION_ID = 3;
+    private final static int TAXI_COMING_NOTIFICATION_ID = 4;
     Boolean[] notificationArray = new Boolean[10];
     LatLng carLoc;
 
@@ -220,7 +178,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onCreate(savedInstanceState);
 
         //Sets orientation so the screen is locked to portrait mode
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+       // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         //Assigning of notification sound from downloaded google translate sound and filling of
         //notification array (fills up if notifications are active).
@@ -241,6 +199,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         //Authentication check
         FirebaseUser user = mAuth.getCurrentUser();
         userCheck(user);
+
 
         //Sets layout to activity.gps xml layout
         setContentView(R.layout.activity_gps);
@@ -291,6 +250,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         startHuaweiCommunications();
     }
 
+
+
     private void startPilotLoggingService() {
         Intent intent = new Intent(getApplicationContext(), PilotLogging.class);
         Log.d(TAG, "startPilotLogging: ");
@@ -333,10 +294,35 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
     private void createBroadcastReceivers() {
+        createBroadcastReceiverMotionplanningPath();
         createBroadcastReceiverLayoutChecker();
         createBroadcastReceiverResolutionGPS();
         createBroadcastReceiverCarDataRTK();
         createBroadcastReceiverCarDataHuawei();
+    }
+
+    private void createBroadcastReceiverMotionplanningPath() {
+        broadcastReceiverMotionplanningPath = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                buildTaxiUnderwayNotification();
+                double[] MPlat = intent.getDoubleArrayExtra("MPlat");
+                double[] MPlon = intent.getDoubleArrayExtra("MPlon");
+                LatLng[] points = new LatLng[5];
+                for (int i = 0; i < MPlat.length; i++) {
+                        points[i] = new LatLng(MPlat[i], MPlon[i]);
+                        Log.d(TAG, "oneM2MMessagesHandler: "+ MPlat[i] + "," +
+                                MPlon[i]);
+                    }
+                //Function that use the points in the rectangle for visualization of position and speed
+                motionPlanningPath(points);
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("OneM2MBackwardCommunications.SEND_MP_PATH");
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                broadcastReceiverMotionplanningPath, intentFilter);
+
     }
 
     private void createBroadcastReceiverCarDataHuawei() {
@@ -436,7 +422,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                 break;
                             case R.id.action_car:
                                 if(campusCar==null){
-                                //campusCar = new CampusCar();
+                                campusCar = new CampusCar();
                                 addFragment(campusCar);
                                 }
                                 showFragment(campusCar);
@@ -455,7 +441,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void removeFragments() {
         android.app.FragmentManager fm = getFragmentManager();
         for (int i = 0; i < fm.getBackStackEntryCount(); ++i) {
-            }
+        }
     }
 
     // Switches the fragmentcontainer which contains google maps (initially) to a certain other
@@ -474,7 +460,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         android.app.FragmentManager manager = getFragmentManager();
         manager.beginTransaction().show(fragment).addToBackStack(null).commit();
     }
-
     @Override
     protected void onPause() {
         broadcastUploadLogs();
@@ -731,8 +716,34 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         };
         mMap.setOnGroundOverlayClickListener(listener);
         //addHeatMap();
-        motionPlanningPath(null);
 
+    }
+
+
+    // Removes last location of Huawei geofencing rectangle and adds the new location of the
+    // rectangle in the map, this function accepts array of LatLng points.
+    private void motionPlanningPath(LatLng[] points) {
+
+        /*LatLng points[] =  new LatLng[4];
+        points[0] = new LatLng(51.447893883296565,5.48882099800934);
+        points[1] = new LatLng(51.447893883296565,5.48882099800934);
+        points[2] = new LatLng(51.4476933362316231, 5.4886143623624634);
+        points[3] = new LatLng(51.447780623423362, 5.488190624624625);*/
+        if(polylineMP==null){
+            polylineMP = mMap.addPolyline((new PolylineOptions()
+                    .add(points)
+                    .zIndex(0)
+                    .color(Color.BLUE)));
+            Log.d(TAG, "motionPlanningPath: ");
+        }
+        else{
+            polylineMP.remove();
+            polylineMP = mMap.addPolyline(new PolylineOptions()
+                    .add(points)
+                    .zIndex(0)
+                    .color(Color.BLUE));
+            Log.d(TAG, "motionPlanningPath: ");
+        }
     }
 
     //Puts car somewhere on the map, to be later called when coordinates change.
@@ -746,6 +757,20 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .zIndex(1)
                 .bearing(315));
     }
+
+    //Creates notification when the taxi starts to go to your location
+    private void buildTaxiUnderwayNotification(){
+        mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
+                .setContentText("")
+                .setStyle(new NotificationCompat.BigTextStyle())
+                .setContentTitle("Autonomous car coming to your location")
+                .setOngoing(false)
+                .setAutoCancel(true);
+        mNotificationManager.notify(TAXI_COMING_NOTIFICATION_ID, mBuilder.build());
+        notificationArray[TAXI_COMING_NOTIFICATION_ID] = true;
+        Log.d(TAG, "TaxiUnderway notification Built");
+    }
+
 
     // Builds common notification settings; vibration pattern, title etc which is being sent from
     // the implementation.
@@ -1193,14 +1218,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     }*/ //TODO integrate taxi request in service
 
-    public void motionPlanningTimedOutHandler() {
-        if (!motiongPlanningResponseReceived) {
-            //cancelRequestTaxi();
-            TextView responseMessage = (TextView) findViewById(R.id.responseMessage);
-            responseMessage.setText("Request timed out");
-        }
-    }
-
     // Removes last location of Huawei geofencing rectangle and adds the new location of the
     // rectangle in the map, this function accepts array of LatLng points.
     private void geoFencingCarPolygon(LatLng[] points){
@@ -1216,31 +1233,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     .add(points)
                     .zIndex(0)
                     .strokeColor(Color.LTGRAY));
-        }
-    }
-
-    // Removes last location of Huawei geofencing rectangle and adds the new location of the
-    // rectangle in the map, this function accepts array of LatLng points.
-    private void motionPlanningPath(LatLng[] points){
-        points =  new LatLng[4];
-        points[0] = new LatLng(51.447893883296565,5.48882099800934);
-        points[1] = new LatLng(51.447893883296565,5.48882099800934);
-        points[2] = new LatLng(51.447893883296565,5.48882099800934);
-        points[3] = new LatLng(51.447893883296565,5.48882099800934);
-        if(polylineMP==null){
-            polylineMP = mMap.addPolygon((new PolygonOptions()
-                    .add(points)
-                    .zIndex(1)
-                    .strokeColor(Color.BLUE)));
-            Log.d(TAG, "motionPlanningPath: ");
-        }
-        else{
-            polylineMP.remove();
-            polylineMP = mMap.addPolygon(new PolygonOptions()
-                    .add(points)
-                    .zIndex(1)
-                    .strokeColor(Color.BLUE));
-            Log.d(TAG, "motionPlanningPath: ");
         }
     }
 
@@ -1350,29 +1342,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             startActivity(loginIntent);}
         }
     }
-
-    // Sends a message to OneM2M CallCar container when button is clicked
-    // for calling a taxi. This message is then forwarded to Csmartcampus topic for IBM rebalancing
-    // service via the subscription container CallTaxi_sub and also Motionplanning of NEC
-    /*public void CallCar() {
-        try {
-            String uuid = UUID.randomUUID().toString();
-            JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(mCurrentlocation.
-                            getLatitude(), mCurrentlocation.getLongitude(), System.currentTimeMillis(),
-                    userName,true,uuid);
-            String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
-                    getJSONObject("m2m:cin").getString("con");
-            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
-                    LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
-
-        } catch (JSONException e) {
-            Log.e(TAG, "CallCar: "+e.toString());
-        } catch (UnsupportedEncodingException e){
-            Log.e(TAG, "CallCar: "+e.toString());
-        } catch (MqttException e) {
-            Log.e(TAG, "CallCar: "+e.toString());
-        }
-    }*/ //TODO integrate taxi call into services
 
 
   /*private void addHeatMap() {
