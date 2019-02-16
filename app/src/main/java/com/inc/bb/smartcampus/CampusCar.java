@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -129,15 +130,16 @@ public class CampusCar extends Fragment
     }
 
     private void requestTaxi() {
+        Log.d("CampusCar", "requestTaxi: ");
         Intent intent = new Intent();
         intent.setAction("CampusCar.REQUEST_TAXI");
-        getActivity().sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
     }
 
     private void cancelRequestTaxi() {
         Intent intent = new Intent();
         intent.setAction("CancelTaxiRequest");
-        getActivity().sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
     }
 
     private void createBroadcastReceiverMotionplanningPath() {
@@ -149,7 +151,7 @@ public class CampusCar extends Fragment
         };
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("OneM2MBackwardCommunications.SEND_MP_PATH");
-        getActivity().registerReceiver(
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(
                 broadcastReceiverTaxiReceived, intentFilter);
 
     }

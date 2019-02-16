@@ -81,6 +81,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     //Motionplanning and calltaxi
     Polyline polylineMP=null;
     boolean motiongPlanningResponseReceived;
+    boolean taxiNotificationNeeded = true;
     android.app.Fragment campusCar;
 
     //heatmaps
@@ -250,8 +251,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         startHuaweiCommunications();
     }
 
-
-
     private void startPilotLoggingService() {
         Intent intent = new Intent(getApplicationContext(), PilotLogging.class);
         Log.d(TAG, "startPilotLogging: ");
@@ -299,6 +298,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceiverResolutionGPS();
         createBroadcastReceiverCarDataRTK();
         createBroadcastReceiverCarDataHuawei();
+        createBroadcastReceiverTaxiNotifcationNeeded();
     }
 
     private void createBroadcastReceiverMotionplanningPath() {
@@ -308,7 +308,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 buildTaxiUnderwayNotification();
                 double[] MPlat = intent.getDoubleArrayExtra("MPlat");
                 double[] MPlon = intent.getDoubleArrayExtra("MPlon");
-                LatLng[] points = new LatLng[5];
+                LatLng[] points = new LatLng[MPlat.length];
                 for (int i = 0; i < MPlat.length; i++) {
                         points[i] = new LatLng(MPlat[i], MPlon[i]);
                         Log.d(TAG, "oneM2MMessagesHandler: "+ MPlat[i] + "," +
@@ -325,6 +325,21 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     }
 
+    private void createBroadcastReceiverTaxiNotifcationNeeded() {
+        BroadcastReceiver broadcastReceiverTaxiNotificationNeeded = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                taxiNotificationNeeded = intent.getBooleanExtra("taxiNotificationNeeded",
+                        false);
+                Log.d(TAG, "onReceive: TaxiNotification" + taxiNotificationNeeded);
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("TaxiNotificationBoolean");
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                broadcastReceiverTaxiNotificationNeeded, intentFilter);
+
+    }
     private void createBroadcastReceiverCarDataHuawei() {
         broadcastReceiverCarDataHuawei = new BroadcastReceiver() {
             @Override
@@ -433,7 +448,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         return true;
                     }
                 });
-    } //TODO make campusCar an activity instead of fragment
+    }
 
     // Removes all fragments that are on the stack, fragments are stored on top of eachother on a
     // stack (sort of memory) and can be popped (removed), this goes back to initial google maps
@@ -760,6 +775,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     //Creates notification when the taxi starts to go to your location
     private void buildTaxiUnderwayNotification(){
+        if(taxiNotificationNeeded){
         mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
                 .setContentText("")
                 .setStyle(new NotificationCompat.BigTextStyle())
@@ -769,6 +785,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         mNotificationManager.notify(TAXI_COMING_NOTIFICATION_ID, mBuilder.build());
         notificationArray[TAXI_COMING_NOTIFICATION_ID] = true;
         Log.d(TAG, "TaxiUnderway notification Built");
+        taxiNotificationNeeded = false;
+        }
     }
 
 
@@ -1216,7 +1234,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             e.printStackTrace();
         }
 
-    }*/ //TODO integrate taxi request in service
+    }*/
 
     // Removes last location of Huawei geofencing rectangle and adds the new location of the
     // rectangle in the map, this function accepts array of LatLng points.

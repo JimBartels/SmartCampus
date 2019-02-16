@@ -349,8 +349,8 @@ public class OneM2MBackwardCommunications extends IntentService {
                         //points[i][1] = jsonArr
                         JSONArray jArrayIter = jsonArray.getJSONArray(i);
                         Log.d(TAG, "doInBackground: " + jArrayIter);
-                        pathLat[i] = jArrayIter.getDouble(0);
-                        pathLon[i] = jArrayIter.getDouble(1);
+                        pathLat[i] = jArrayIter.getDouble(1);
+                        pathLon[i] = jArrayIter.getDouble(0);
                     }
 
                     sendBroadcastUIMotionplanningPath(new double[][] {pathLat,pathLon});
@@ -443,7 +443,7 @@ public class OneM2MBackwardCommunications extends IntentService {
 
     private void sendBroadcastCancelRequestTaxi() {
             Intent intent = new Intent();
-            intent.setAction("CancelTaxiReqeust");
+            intent.setAction("CancelTaxiRequest.Received");
             Log.d(TAG, "sending a cancel request");
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }

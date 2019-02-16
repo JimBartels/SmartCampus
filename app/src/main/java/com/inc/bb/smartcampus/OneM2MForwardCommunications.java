@@ -67,9 +67,6 @@ public class OneM2MForwardCommunications extends IntentService {
     BroadcastReceiver broadcastReceiverUserActivity;
     OneM2MMqttJson VRUgps;
 
-    //Motionplanning variables
-    boolean motiongPlanningResponseReceived = false;
-
     //Message types for logging (what kind of log is needed)
     private final static int LOGGING_NOTNEEDED = 0;
     private final static int LOGGING_GPS = 1;
@@ -139,10 +136,12 @@ public class OneM2MForwardCommunications extends IntentService {
             @Override
             public void onReceive(Context context, Intent intent) {
                 cancelRequestTaxi();
+                Log.d(TAG, "onReceive: CancelTaxi");
             }
         };
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("CancelTaxiRequest");
+        intentFilter.addAction("CancelTaxiRequest.Received");
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 cancelTaxiRequestBroadcastReceiver, intentFilter);
     }
@@ -151,6 +150,7 @@ public class OneM2MForwardCommunications extends IntentService {
         callTaxiBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                Log.d(TAG, "onReceive: CallTaxi Receiver");
                 callTaxi();
             }
         };
@@ -193,12 +193,16 @@ public class OneM2MForwardCommunications extends IntentService {
         try {
             publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
                     LOGGING_TAXI_SENT,callTaxi.toString(), System.currentTimeMillis(),uuid);
+
         } catch (MqttException e) {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-
+        Intent intent = new Intent();
+        intent.setAction("TaxiNotificationBoolean");
+        intent.putExtra("taxiNotificationNeeded",true);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     // Sends a message to OneM2M CallCar container when button is clicked
@@ -211,6 +215,7 @@ public class OneM2MForwardCommunications extends IntentService {
                     userName,true,uuid);
             String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
                     getJSONObject("m2m:cin").getString("con");
+            Log.d(TAG, "callTaxi: " + callTaxi);
             publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
                     LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
 
@@ -493,9 +498,16 @@ public class OneM2MForwardCommunications extends IntentService {
             throws JSONException, MqttException, UnsupportedEncodingException {
         String formattedDateString = "UTC" + Long.toString(formattedDate);
         String topic = "/server/server/" + "aeSmartCampus1" + "/Users/" + userName + "/gps";
-        String con = "{\"type\":5,\"id\":" + userName + ",\"timestampUtc\":" + formattedDate +
+        /*String con = "{\"type\":5,\"id\":" + userName + ",\"timestampUtc\":" + formattedDate +
                 ",\"lon\":" + longitude + ",\"lat\":" + latitude + ",\"speed\":" + speedGPS +
-                ",\"heading\":" + manualBearing + ",\"accuracy\":" + Accuracy + ",\"UUID\": " + "\"" + uuid + "\"" + "}";
+                ",\"heading\":" + manualBearing + ",\"accuracy\":" + Accuracy + ",\"UUID\": " + "\"" + uuid + "\"" + "}";*/
+        JSONObject jsonObject = new JSONObject();
+        String con =  jsonObject.put("type",5).put("id",userName)
+                .put("timestampUtc",formattedDate).put("lon",longitude)
+                .put("lat",latitude).put("speed",speedGPS)
+                .put("heading",manualBearing).put("accuracy",Accuracy)
+                .put("UUID",uuid).toString();
+
         contentCreateGPS.getJSONObject("m2m:rqp").put("to", topic);
         contentCreateGPS.getJSONObject("m2m:rqp").put("op", CREATE);
         contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc").getJSONObject("m2m:cin")

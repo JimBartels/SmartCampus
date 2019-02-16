@@ -187,7 +187,7 @@ public class OneM2MMqttJson {
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);
 
-        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId + "/CallTaxi";
+        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + UserID + "/CallTaxi";
         payload.put("to",topic);
         payload.put("rqi",userId);
         payload.put("op", CREATE_OP);
@@ -199,7 +199,9 @@ public class OneM2MMqttJson {
         contentinstancecontentdata.put("requestTime", timeStamp);
         contentinstancecontentdata.put("UUID", uuid);
         contentinstancecontentdata.put("valid", valid ? "true" : "false");
-        contentinstancecontentdata.put("id",userId);
+        contentinstancecontentdata.put("id",UserID);
+        //String con = "{\"longitude\":" + lng + ",\"latitude\":" + lat + ",\"requestTime\":" + timeStamp +
+        //        ",\"UUID\":" + "\"" + uuid + "\"" + ",\"valid\":" + valid + ",\"id\":" + UserID +"}";
         contentinstancecontent.remove("rn");
         contentinstancecontent.put("con",contentinstancecontentdata.toString());
         m2mcntrequester.put("m2m:cin", contentinstancecontent);
