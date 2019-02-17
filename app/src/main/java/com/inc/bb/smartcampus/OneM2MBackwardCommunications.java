@@ -261,6 +261,15 @@ public class OneM2MBackwardCommunications extends IntentService {
         broadcastIsLoggingEnabled();
         JSONObject messageCar = new JSONObject(new String(message.getPayload()));
         Log.d(TAG, "oneM2MMessagesHandler: Arrived");
+        if (topic.equals(CsmartcampusSubscriptionTopic)) {
+            JSONObject contentUsers = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
+                    .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
+            String userId = contentUsers.getString("id");
+            Double longitude = contentUsers.getDouble("lon");
+            Double latitude = contentUsers.getDouble("lat");
+            broadcastUserData(userId,longitude,latitude);
+            //TODO Logging?
+        }
 
         if (topic.equals(CsmartCampusCarsSubscriptionTopic)) {
             Log.d(TAG, "oneM2MMessagesHandler: SubCar");
@@ -428,6 +437,15 @@ public class OneM2MBackwardCommunications extends IntentService {
                 Log.d(TAG, "Latency:" + latencyFromGPSTillReceive);
             }
         }*/
+    }
+
+    private void broadcastUserData(String userId, Double longitude, Double latitude) {
+        Intent intent = new Intent();
+        intent.putExtra("VRUId", userId);
+        intent.putExtra("longitude", longitude);
+        intent.putExtra("latitude", latitude);
+        intent.setAction("VRUData");
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     private void sendBroadcastUIMotionplanningPath(double[][] latlonMP) {

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -63,8 +64,22 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     @Override
     protected void onHandleIntent(Intent intent) {
         username = intent.getStringExtra("userName");
+        createTimerDummy();
         createBroadcastReceiverLayoutResponse();
-        createBroadcastReceiverLocations();
+        //createBroadcastReceiverLocations();
+    }
+
+    private void createTimerDummy() {
+        final Handler handler = new Handler();
+        final int delay = 1000; //milliseconds
+
+        handler.postDelayed(new Runnable(){
+            public void run(){
+                //do something
+                publishGpsData(0.0000,0.0000,null,null,null,null,UUID.randomUUID().toString());
+                handler.postDelayed(this, delay);
+            }
+        }, delay);
     }
 
     private void createBroadcastReceiverLayoutResponse() {
