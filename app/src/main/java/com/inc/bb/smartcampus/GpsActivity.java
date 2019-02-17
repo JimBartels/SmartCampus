@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -179,7 +180,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onCreate(savedInstanceState);
 
         //Sets orientation so the screen is locked to portrait mode
-       // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         //Assigning of notification sound from downloaded google translate sound and filling of
         //notification array (fills up if notifications are active).
