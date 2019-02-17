@@ -267,6 +267,7 @@ public class OneM2MBackwardCommunications extends IntentService {
             String userId = contentUsers.getString("id");
             Double longitude = contentUsers.getDouble("lon");
             Double latitude = contentUsers.getDouble("lat");
+            Log.d(TAG, "oneM2MMessagesHandler: " +userId);
             broadcastUserData(userId,longitude,latitude);
             //TODO Logging?
         }

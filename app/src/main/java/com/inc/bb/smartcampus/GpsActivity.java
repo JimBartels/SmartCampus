@@ -174,7 +174,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public String speed;
 
     //Cockpit VRU Data variables
-    List<Circle> VRUCircleList;
+    List<Circle> VRUCircleList = new ArrayList<Circle>();
     Vector<String> VRUIdVector =  new Vector<>();
 
     //Request code for the permissions intent (asking for some permission)
@@ -240,16 +240,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         // Huawei dummy message poster for faster rectangle updates
         //huaweiTimer();
-
-        // Checks permissions at end of onCreate as a safety measure (should have been requested
-        // already by GPS oneM2M thread).
-        if (checkPermissions()) {
-            startLocationService();
-        }
-        if(!checkPermissions()){
-            requestPermission();
-        }
-
         //Starts all background services
         //startOneM2MForwardCommunications();
         startOneM2MBackwardCommunications();
@@ -313,7 +303,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         broadcastReceiverVRUData = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                String userId = intent.getStringExtra("userId");
+                String userId = intent.getStringExtra("VRUId");
                 Double latitude = intent.getDoubleExtra("latitude",0);
                 Double longitude = intent.getDoubleExtra("longitude",0);
                 //Function that use the points in the rectangle for visualization of position and speed
@@ -324,33 +314,38 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         intentFilter.addAction("VRUData");
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 broadcastReceiverVRUData, intentFilter);
-
-
     }
 
     private void buildVRUCircle(String userId, Double latitude, Double longitude) {
+        Log.d(TAG, "buildVRUCircle: " + userId);
+        Log.d(TAG, "buildVRUCircle: " +VRUIdVector.contains(userId));
         if(VRUIdVector==null){
+            Log.d(TAG, "buildVRUCircle: null");
             VRUIdVector.add(userId);
             Circle circle = mMap.addCircle(new CircleOptions()
                     .center(new LatLng(latitude, longitude))
-                    .radius(1)
+                    .radius(4)
                     .strokeColor(Color.BLUE)
                     .fillColor(Color.BLUE));
             circle.setTag(userId);
             VRUCircleList.add(circle);
         }
         if(VRUIdVector.contains(userId)){
+            Log.d(TAG, "buildVRUCircle: Iterer");
             for(Circle circle : VRUCircleList){
-                if(circle.getTag().equals(userId)){
+                Log.d(TAG, "buildVRUCircle: Iterer1"+ circle.getTag());
+                if(circle.getTag()!=null && circle.getTag().equals(userId)){
+                    Log.d(TAG, "buildVRUCircle: ItererTRUE");
                     circle.setCenter(new LatLng(latitude,longitude));
                 }
             }
         }
         else {
+            Log.d(TAG, "buildVRUCircle: else");
             VRUIdVector.add(userId);
             Circle circle = mMap.addCircle(new CircleOptions()
                     .center(new LatLng(latitude, longitude))
-                    .radius(1)
+                    .radius(4)
                     .strokeColor(Color.BLUE)
                     .fillColor(Color.BLUE));
             circle.setTag(userId);
