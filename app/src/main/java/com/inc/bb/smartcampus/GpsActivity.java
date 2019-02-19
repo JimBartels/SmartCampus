@@ -343,6 +343,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         else {
             Log.d(TAG, "buildVRUCircle: else");
             VRUIdVector.add(userId);
+            if(userId.equals("2")||userId.equals("3")){
+                Circle circle = mMap.addCircle(new CircleOptions()
+                        .center(new LatLng(latitude, longitude))
+                        .radius(4)
+                        .strokeColor(Color.GREEN)
+                        .fillColor(Color.GREEN));
+                circle.setTag(userId);
+                VRUCircleList.add(circle);
+            }
             Circle circle = mMap.addCircle(new CircleOptions()
                     .center(new LatLng(latitude, longitude))
                     .radius(4)
