@@ -259,6 +259,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         startTrackingUserActivity();
         startPilotLoggingService();
         startHuaweiCommunications();
+        addHeatMap();
     }
 
     private void startPilotLoggingService() {
@@ -1418,7 +1419,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .data(list)
                 .build();
         // Add a tile overlay to the map, using the heat map tile provider.
-        TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+//        TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
     }
 
     private ArrayList<LatLng> readItems(int resource) throws JSONException {
