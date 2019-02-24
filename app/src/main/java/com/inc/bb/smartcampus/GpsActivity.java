@@ -37,6 +37,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -51,25 +53,32 @@ import com.google.android.gms.maps.model.PolygonOptions;
 
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.TileOverlay;
+import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
+import com.google.maps.android.heatmaps.HeatmapTileProvider.Builder;
 
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.File;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-;
-import java.util.List;
 
+import java.util.List;
+import java.util.Scanner;
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants, OnMapReadyCallback {
@@ -1104,6 +1113,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onStart() {
         super.onStart();
+        addHeatMap();
     }
 
     @Override
@@ -1116,6 +1126,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onResume() {
         super.onResume();
+        addHeatMap();
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
         if(checkPermissions()){
         }
@@ -1363,17 +1374,49 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
 
-  /*private void addHeatMap() {
+//  private void addHeatMap() {
+//        List<LatLng> list = null;
+//
+//        // Get the data
+//        try {
+//            list = readItems(R.raw.heat_maps);
+//        } catch (JSONException e) {
+//            Toast.makeText(this, "Problem reading list of locations.", Toast.LENGTH_LONG).show();
+//        }
+//      // Create a heat map tile provider, passing it the latlngs of the conentrated buildings/areas
+//      HeatmapTileProvider.Builder heatmapTileProvider = new HeatmapTileProvider().Builder;
+//        // Add a tile overlay to the map, using the heat map tile provider.
+//        TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+//    }
+//
+//    private ArrayList<LatLng> readItems(int resource) throws JSONException {
+//        ArrayList<LatLng> list = new ArrayList<LatLng>();
+//        InputStream inputStream = getResources().openRawResource(resource);
+//        String json = new Scanner(inputStream).useDelimiter("\\A").next();
+//        JSONArray array = new JSONArray(json);
+//        for (int i = 0; i < array.length(); i++) {
+//            JSONObject object = array.getJSONObject(i);
+//            double lat = object.getDouble("lat");
+//            double lng = object.getDouble("lng");
+//            list.add(new LatLng(lat, lng));
+//        }
+//        return list;
+//    }
+
+    private void addHeatMap() {
         List<LatLng> list = null;
 
-        // Get the data
+        // Get the data: latitude/longitude positions of police stations.
         try {
             list = readItems(R.raw.heat_maps);
         } catch (JSONException e) {
             Toast.makeText(this, "Problem reading list of locations.", Toast.LENGTH_LONG).show();
         }
-      // Create a heat map tile provider, passing it the latlngs of the conentrated buildings/areas
-      HeatmapTileProvider heatmapTileProvider = new HeatmapTileProvider().Builder.build();
+
+        // Create a heat map tile provider, passing it the latlngs of the police stations.
+        mProvider = new HeatmapTileProvider.Builder()
+                .data(list)
+                .build();
         // Add a tile overlay to the map, using the heat map tile provider.
         TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
     }
@@ -1390,5 +1433,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             list.add(new LatLng(lat, lng));
         }
         return list;
-    }*/
+    }
+
 }
