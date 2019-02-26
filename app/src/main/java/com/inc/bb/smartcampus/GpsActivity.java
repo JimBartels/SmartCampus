@@ -741,7 +741,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         };
         mMap.setOnGroundOverlayClickListener(listener);
-        //addHeatMap();
+        addHeatMap();
 
     }
 
@@ -1409,22 +1409,21 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         // Get the data: latitude/longitude positions of police stations.
         try {
-            list = readItems(R.raw.heat_maps);
+            list = readItems(R.raw.heat_map);
         } catch (JSONException e) {
             Toast.makeText(this, "Problem reading list of locations.", Toast.LENGTH_LONG).show();
         }
 
         // Create a heat map tile provider, passing it the latlngs of the police stations.
-        mProvider = new HeatmapTileProvider.Builder()
-                .data(list)
-                .build();
+        HeatmapTileProvider provider = new HeatmapTileProvider.Builder().data(list).build();
         // Add a tile overlay to the map, using the heat map tile provider.
-//        TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
     }
 
     private ArrayList<LatLng> readItems(int resource) throws JSONException {
         ArrayList<LatLng> list = new ArrayList<LatLng>();
         InputStream inputStream = getResources().openRawResource(resource);
+
         String json = new Scanner(inputStream).useDelimiter("\\A").next();
         JSONArray array = new JSONArray(json);
         for (int i = 0; i < array.length(); i++) {
@@ -1433,6 +1432,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             double lng = object.getDouble("lng");
             list.add(new LatLng(lat, lng));
         }
+
         return list;
     }
 
