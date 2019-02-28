@@ -10,18 +10,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
-
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-
 import android.net.Uri;
-
 import android.os.Bundle;
-
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -50,19 +46,14 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
-
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
-import com.google.maps.android.heatmaps.HeatmapTileProvider.Builder;
-
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -72,13 +63,13 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.File;
-
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-
 import java.util.List;
 import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants, OnMapReadyCallback {
@@ -89,7 +80,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private GoogleMap mMap;
 
     //Motionplanning and calltaxi
-    Polyline polylineMP=null;
+    Polyline polylineMP = null;
     boolean motiongPlanningResponseReceived;
     boolean taxiNotificationNeeded = true;
     android.app.Fragment campusCar;
@@ -120,12 +111,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     FirebaseAuth mAuth = FirebaseAuth.getInstance();
 
     //Initial values for speed and bearing calculations
-    Double lastLat=0.00;
-    Double lastLon=0.00;
+    Double lastLat = 0.00;
+    Double lastLon = 0.00;
     Long lastTime;
 
     //Service broadcast receivers
-    BroadcastReceiver broadcastReceiver,broadcastReceiverCarRTK;
+    BroadcastReceiver broadcastReceiver, broadcastReceiverCarRTK;
     BroadcastReceiver broadcastReceiverLayoutChecker;
     BroadcastReceiver broadcastReceiverCarDataHuawei;
     BroadcastReceiver broadcastReceiverMotionplanningPath;
@@ -133,12 +124,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     //Notification global variables
     NotificationManager mNotificationManager;
     NotificationCompat.Builder mBuilder;
-    int carNotificationConstant=0;
-    int carNotificationConstant2 =0;
+    int carNotificationConstant = 0;
+    int carNotificationConstant2 = 0;
     double carLon = 5.623863;
     double carLat = 51.475792;
-    Float carHeading=null;
-    Float carSpeed=null;
+    Float carHeading = null;
+    Float carSpeed = null;
 
     //Logging files
     File file;
@@ -175,9 +166,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     String passwordStored;
     String userNameStored;
 
-    public  String longitude;
-    public  String latitude;
-    public  String bearing;
+    public String longitude;
+    public String latitude;
+    public String bearing;
     public String speed;
 
     //Request code for the permissions intent (asking for some permission)
@@ -193,12 +184,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         //Assigning of notification sound from downloaded google translate sound and filling of
         //notification array (fills up if notifications are active).
-        AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND =  Uri.parse("android.resource://"+ getPackageName() +
+        AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND = Uri.parse("android.resource://" + getPackageName() +
                 "/" + R.raw.translate_tts);
-        Arrays.fill(notificationArray,false);
+        Arrays.fill(notificationArray, false);
 
         //Get data from intent from MainActivity
-        password  = getIntent().getStringExtra("password");
+        password = getIntent().getStringExtra("password");
         userName = getIntent().getStringExtra("userId");
         userNameStored = getIntent().getStringExtra("userNameStored");
         passwordStored = getIntent().getStringExtra("passwordStored");
@@ -249,7 +240,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if (checkPermissions()) {
             startLocationService();
         }
-        if(!checkPermissions()){
+        if (!checkPermissions()) {
             requestPermission();
         }
 
@@ -272,7 +263,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void startOneM2MBackwardCommunications() {
         Intent intent = new Intent(getApplicationContext(), OneM2MBackwardCommunications.class);
         Log.d(TAG, "startOneM2MBackwardCommunications: ");
-        intent.putExtra("username",userName);
+        intent.putExtra("username", userName);
         getApplicationContext().startService(intent);
 
     }
@@ -280,7 +271,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     //Starts the location service that is responsible for initiating the googlefusedlocations client
     //and implements a callback whenever new location data is received to the UI thread and
     // Onem2m/Huawei.
-    private void startLocationService(){
+    private void startLocationService() {
         Intent intent1 = new Intent(getApplicationContext(), GoogleFusedLocations.class);
         Log.d(TAG, "startLocationService: ");
         getApplicationContext().startService(intent1);
@@ -288,17 +279,17 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     //Starts the service responsible for foward communications to onem2m, this receives data from
     //Locationservice and sends this info to onem2m.
-    private void startOneM2MForwardCommunications(){
+    private void startOneM2MForwardCommunications() {
         Intent intent1 = new Intent(getApplicationContext(), OneM2MForwardCommunications.class);
-        intent1.putExtra("username",userName);
+        intent1.putExtra("username", userName);
         Log.d(TAG, "startOneM2MForwardCommunications: ");
         getApplicationContext().startService(intent1);
     }
 
     //Starts total Huawei communications service
-    private void startHuaweiCommunications(){
+    private void startHuaweiCommunications() {
         Intent intent1 = new Intent(getApplicationContext(), HuaweiCommunications.class);
-        intent1.putExtra("username",userName);
+        intent1.putExtra("username", userName);
         Log.d(TAG, "startOneM2MForwardCommunications: ");
         getApplicationContext().startService(intent1);
     }
@@ -321,10 +312,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 double[] MPlon = intent.getDoubleArrayExtra("MPlon");
                 LatLng[] points = new LatLng[MPlat.length];
                 for (int i = 0; i < MPlat.length; i++) {
-                        points[i] = new LatLng(MPlat[i], MPlon[i]);
-                        Log.d(TAG, "oneM2MMessagesHandler: "+ MPlat[i] + "," +
-                                MPlon[i]);
-                    }
+                    points[i] = new LatLng(MPlat[i], MPlon[i]);
+                    Log.d(TAG, "oneM2MMessagesHandler: " + MPlat[i] + "," +
+                            MPlon[i]);
+                }
                 //Function that use the points in the rectangle for visualization of position and speed
                 motionPlanningPath(points);
             }
@@ -351,16 +342,17 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 broadcastReceiverTaxiNotificationNeeded, intentFilter);
 
     }
+
     private void createBroadcastReceiverCarDataHuawei() {
         broadcastReceiverCarDataHuawei = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                handleCarNotificationHuawei(intent.getBooleanExtra("isInRectangle",false));
+                handleCarNotificationHuawei(intent.getBooleanExtra("isInRectangle", false));
                 double[] rectangleLat = intent.getDoubleArrayExtra("rectangleLat");
                 double[] rectangleLon = intent.getDoubleArrayExtra("rectangleLon");
                 LatLng[] points = new LatLng[5];
-                for(int  i=0 ; i<rectangleLat.length;i++){
-                    points[i] = new LatLng(rectangleLat[i],rectangleLon[i]);
+                for (int i = 0; i < rectangleLat.length; i++) {
+                    points[i] = new LatLng(rectangleLat[i], rectangleLon[i]);
                 }
                 //Function that use the points in the rectangle for visualization of position and speed
                 speedPolygon(points);
@@ -379,7 +371,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             public void onReceive(Context context, Intent intent) {
                 try {
                     int REQUEST_CHECK_SETTINGS = 0x1;
-                    GoogleFusedLocations.rae.startResolutionForResult(GpsActivity.this,REQUEST_CHECK_SETTINGS);
+                    GoogleFusedLocations.rae.startResolutionForResult(GpsActivity.this, REQUEST_CHECK_SETTINGS);
                     startTrackingUserActivity();
                 } catch (IntentSender.SendIntentException e) {
                     e.printStackTrace();
@@ -399,11 +391,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 boolean isLoggingSwitched = loggingSwitch.isChecked();
                 boolean isExperimentEmpty = experimentNumberText.getText().toString().isEmpty();
                 boolean isRunEmpty = runNumberText.getText().toString().isEmpty();
-                if(isLoggingSwitched && !isExperimentEmpty && !isRunEmpty){
-                    broadcastUIInfo(true, runNumberText.getText().toString(),experimentNumberText.getText().toString());
+                if (isLoggingSwitched && !isExperimentEmpty && !isRunEmpty) {
+                    broadcastUIInfo(true, runNumberText.getText().toString(), experimentNumberText.getText().toString());
+                } else {
+                    broadcastUIInfo(false, null, null);
                 }
-                else{
-                broadcastUIInfo(false, null,null);}
             }
         };
         IntentFilter intentFilter = new IntentFilter();
@@ -417,7 +409,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         intent.setAction("GpsActivity.LAYOUT_RESPONSE");
         Log.d(TAG, "responding to layout check");
         intent.putExtra("loggingEnabled", isLoggingEnabled);
-        if(isLoggingEnabled) {
+        if (isLoggingEnabled) {
             intent.putExtra("runNumber", runNumber);
             intent.putExtra("experimentNumber", experimentNumber);
         }
@@ -447,9 +439,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                 hideFragment(campusCar);
                                 break;
                             case R.id.action_car:
-                                if(campusCar==null){
-                                campusCar = new CampusCar();
-                                addFragment(campusCar);
+                                if (campusCar == null) {
+                                    campusCar = new CampusCar();
+                                    addFragment(campusCar);
                                 }
                                 showFragment(campusCar);
                                 break;
@@ -486,6 +478,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         android.app.FragmentManager manager = getFragmentManager();
         manager.beginTransaction().show(fragment).addToBackStack(null).commit();
     }
+
     @Override
     protected void onPause() {
         broadcastUploadLogs();
@@ -755,14 +748,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         points[1] = new LatLng(51.447893883296565,5.48882099800934);
         points[2] = new LatLng(51.4476933362316231, 5.4886143623624634);
         points[3] = new LatLng(51.447780623423362, 5.488190624624625);*/
-        if(polylineMP==null){
+        if (polylineMP == null) {
             polylineMP = mMap.addPolyline((new PolylineOptions()
                     .add(points)
                     .zIndex(0)
                     .color(Color.BLUE)));
             Log.d(TAG, "motionPlanningPath: ");
-        }
-        else{
+        } else {
             polylineMP.remove();
             polylineMP = mMap.addPolyline(new PolylineOptions()
                     .add(points)
@@ -774,29 +766,29 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     //Puts car somewhere on the map, to be later called when coordinates change.
     private void setupCarOverlay() {
-        BitmapDrawable carBitmapDrawable=(BitmapDrawable)getResources().getDrawable(R.drawable.caricon);
-        carBitmap =carBitmapDrawable.getBitmap();
+        BitmapDrawable carBitmapDrawable = (BitmapDrawable) getResources().getDrawable(R.drawable.caricon);
+        carBitmap = carBitmapDrawable.getBitmap();
 
         carOverlay = mMap.addGroundOverlay(new GroundOverlayOptions()
-                .position(new LatLng(50.967455, 5.943757),4)
+                .position(new LatLng(50.967455, 5.943757), 4)
                 .image(BitmapDescriptorFactory.fromBitmap(carBitmap))
                 .zIndex(1)
                 .bearing(315));
     }
 
     //Creates notification when the taxi starts to go to your location
-    private void buildTaxiUnderwayNotification(){
-        if(taxiNotificationNeeded){
-        mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
-                .setContentText("")
-                .setStyle(new NotificationCompat.BigTextStyle())
-                .setContentTitle("Autonomous car coming to your location")
-                .setOngoing(false)
-                .setAutoCancel(true);
-        mNotificationManager.notify(TAXI_COMING_NOTIFICATION_ID, mBuilder.build());
-        notificationArray[TAXI_COMING_NOTIFICATION_ID] = true;
-        Log.d(TAG, "TaxiUnderway notification Built");
-        taxiNotificationNeeded = false;
+    private void buildTaxiUnderwayNotification() {
+        if (taxiNotificationNeeded) {
+            mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
+                    .setContentText("")
+                    .setStyle(new NotificationCompat.BigTextStyle())
+                    .setContentTitle("Autonomous car coming to your location")
+                    .setOngoing(false)
+                    .setAutoCancel(true);
+            mNotificationManager.notify(TAXI_COMING_NOTIFICATION_ID, mBuilder.build());
+            notificationArray[TAXI_COMING_NOTIFICATION_ID] = true;
+            Log.d(TAG, "TaxiUnderway notification Built");
+            taxiNotificationNeeded = false;
         }
     }
 
@@ -804,7 +796,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // Builds common notification settings; vibration pattern, title etc which is being sent from
     // the implementation.
     private void buildCarNotification(String title) {
-        long[] vibrationPattern = {Long.valueOf(0),Long.valueOf(500)};
+        long[] vibrationPattern = {Long.valueOf(0), Long.valueOf(500)};
         mNotificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -831,7 +823,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void handleCarNotification(Double deltaMeters) {
         if (deltaMeters <= 40 && !notificationArray[AUTONOMOUS_CAR_40M_NOTIFICATION_ID]) {
             cancelNotification(AUTONOMOUS_CAR_100M_NOTIFICATION_ID);
-            if(carNotificationConstant==0){
+            if (carNotificationConstant == 0) {
                 mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
                         .setSound(AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND)
                         .setContentText(AUTONOMOUS_CAR_40M_NOTIFICATION)
@@ -840,8 +832,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         .setAutoCancel(false);
                 mNotificationManager.notify(AUTONOMOUS_CAR_40M_NOTIFICATION_ID, mBuilder.build());
                 notificationArray[AUTONOMOUS_CAR_40M_NOTIFICATION_ID] = true;
-                carNotificationConstant=1;}
-            else if(carNotificationConstant==1){
+                carNotificationConstant = 1;
+            } else if (carNotificationConstant == 1) {
                 mBuilder.setPriority(NotificationCompat.PRIORITY_MAX)
                         .setContentText(AUTONOMOUS_CAR_40M_NOTIFICATION)
                         .setVibrate(null)
@@ -852,9 +844,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 notificationArray[AUTONOMOUS_CAR_40M_NOTIFICATION_ID] = true;
             }
         }
-        if(deltaMeters >= 40 && deltaMeters <= 100 && !notificationArray[1]) {
+        if (deltaMeters >= 40 && deltaMeters <= 100 && !notificationArray[1]) {
             cancelNotification(AUTONOMOUS_CAR_40M_NOTIFICATION_ID);
-            if(carNotificationConstant2==0){
+            if (carNotificationConstant2 == 0) {
                 mBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
                 mBuilder.setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(AUTONOMOUS_CAR_100M_NOTIFICATION));
@@ -862,8 +854,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 mBuilder.setContentTitle("Autonomous car warning");
                 mBuilder.setContentText(AUTONOMOUS_CAR_100M_NOTIFICATION);
                 mNotificationManager.notify(AUTONOMOUS_CAR_100M_NOTIFICATION_ID, mBuilder.build());
-                notificationArray[AUTONOMOUS_CAR_100M_NOTIFICATION_ID]=true;}
-            else if(carNotificationConstant2==1){
+                notificationArray[AUTONOMOUS_CAR_100M_NOTIFICATION_ID] = true;
+            } else if (carNotificationConstant2 == 1) {
                 mBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
                 mBuilder.setContentText(AUTONOMOUS_CAR_100M_NOTIFICATION);
                 mBuilder.setStyle(new NotificationCompat.BigTextStyle()
@@ -871,17 +863,18 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 mBuilder.setSound(null);
                 mBuilder.setContentTitle("Autonomous car warning");
                 mNotificationManager.notify(AUTONOMOUS_CAR_100M_NOTIFICATION_ID, mBuilder.build());
-                notificationArray[AUTONOMOUS_CAR_100M_NOTIFICATION_ID]=true;}
+                notificationArray[AUTONOMOUS_CAR_100M_NOTIFICATION_ID] = true;
+            }
         }
-        if(deltaMeters>100) {
+        if (deltaMeters > 100) {
             cancelNotification(AUTONOMOUS_CAR_40M_NOTIFICATION_ID);
             cancelNotification(AUTONOMOUS_CAR_100M_NOTIFICATION_ID);
         }
-        if(deltaMeters>48){
-            carNotificationConstant=0;
+        if (deltaMeters > 48) {
+            carNotificationConstant = 0;
         }
-        if(deltaMeters>100){
-            carNotificationConstant2=0;
+        if (deltaMeters > 100) {
+            carNotificationConstant2 = 0;
         }
     }
 
@@ -889,15 +882,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // notifcationarray with the element of this ID is set to false and the notifcation itself is
     // cancelled via notifcationmanager.
     public void cancelNotification(int id) {
-        if(notificationArray[id]){
+        if (notificationArray[id]) {
             mNotificationManager.cancel(id);
-            notificationArray[id]=false;}
+            notificationArray[id] = false;
+        }
     }
 
     // Starts the tracking of UserActivity via BackgroundDetectedAcitiviesService, which sends
     // activities list to DetectedActivitiesIntentService, this gets the highest confidense activity
     // type and broadcasts to setBroadcastReceiver
-    private void startTrackingUserActivity(){
+    private void startTrackingUserActivity() {
         Intent intent = new Intent(getApplicationContext(), BackgroundDetectedActivitiesService.class);
         Log.d(TAG, "startTrackingUserActivity: ");
         getApplicationContext().startService(intent);
@@ -907,14 +901,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         broadcastReceiverCarRTK = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                carLat = intent.getDoubleExtra("carLat",'0');
-                carLon = intent.getDoubleExtra("carLon",'0');
-                carSpeed = intent.getFloatExtra("carSpeed",'0');
-                carHeading = intent.getFloatExtra("carHeading",'0');
-                carLoc = new LatLng(carLat,carLon);
+                carLat = intent.getDoubleExtra("carLat", '0');
+                carLon = intent.getDoubleExtra("carLon", '0');
+                carSpeed = intent.getFloatExtra("carSpeed", '0');
+                carHeading = intent.getFloatExtra("carHeading", '0');
+                carLoc = new LatLng(carLat, carLon);
                 carOverlay.setPosition(carLoc);
-                Double deltaMeter = intent.getDoubleExtra("deltaMeter",1000);
-                if(carHeading<0){
+                Double deltaMeter = intent.getDoubleExtra("deltaMeter", 1000);
+                if (carHeading < 0) {
                     carHeading = 360 + carHeading;
                 }
                 carOverlay.setBearing(carHeading);
@@ -934,178 +928,169 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         LatLng[] pointsSpeed = new LatLng[4];
         pointsSpeed[0] = points[0];
         pointsSpeed[1] = points[3];
-        if(carSpeed!=null){
+        if (carSpeed != null) {
 
-           //Calculates the differences in lat,lon in meters, but scaled at 35 km/h (9.7 m/s), to visualise speed
-           Double DeltaLat = ((-81.5 * Math.cos(carHeading*Math.PI/180))/9.7) * carSpeed;
-           Double Deltalong = ((-81.5 * Math.sin(carHeading*Math.PI/180))/9.7) * carSpeed;
+            //Calculates the differences in lat,lon in meters, but scaled at 35 km/h (9.7 m/s), to visualise speed
+            Double DeltaLat = ((-81.5 * Math.cos(carHeading * Math.PI / 180)) / 9.7) * carSpeed;
+            Double Deltalong = ((-81.5 * Math.sin(carHeading * Math.PI / 180)) / 9.7) * carSpeed;
 
-           //point for array element 2
-           Double lat2_2 = points[3].latitude - (DeltaLat*360/40075000);
-           Double lon2_2 = points[3].longitude - (Deltalong*360/40075000);
-           pointsSpeed[2] = new LatLng(lat2_2,lon2_2);
-
-
-           //point for array element 3
-           Double lat2_3 = points[0].latitude - (DeltaLat*360/40075000);
-           Double lon2_3 = points[0].longitude - (Deltalong*360/40075000);
-           pointsSpeed[3] = new LatLng(lat2_3,lon2_3);
+            //point for array element 2
+            Double lat2_2 = points[3].latitude - (DeltaLat * 360 / 40075000);
+            Double lon2_2 = points[3].longitude - (Deltalong * 360 / 40075000);
+            pointsSpeed[2] = new LatLng(lat2_2, lon2_2);
 
 
-           //fills up the speedpolygon with different colours based on its speed
-           if (carSpeed < 2.8){
+            //point for array element 3
+            Double lat2_3 = points[0].latitude - (DeltaLat * 360 / 40075000);
+            Double lon2_3 = points[0].longitude - (Deltalong * 360 / 40075000);
+            pointsSpeed[3] = new LatLng(lat2_3, lon2_3);
 
-               if(speedPolygon==null){
-                   speedPolygon= mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.WHITE)
-                           .fillColor(Color.WHITE));
-               }
 
-               //* else {
-               if(speedPolygon!=null){
-                   speedPolygon.remove();
-                   speedPolygon = mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.WHITE)
-                           .fillColor(Color.WHITE));
+            //fills up the speedpolygon with different colours based on its speed
+            if (carSpeed < 2.8) {
 
-               }
+                if (speedPolygon == null) {
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.WHITE)
+                            .fillColor(Color.WHITE));
+                }
 
-           }
+                //* else {
+                if (speedPolygon != null) {
+                    speedPolygon.remove();
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.WHITE)
+                            .fillColor(Color.WHITE));
 
-           else if (carSpeed >= 2.8 && carSpeed <= 4.2){
+                }
 
-               if(speedPolygon==null){
-                   speedPolygon= mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.LTGRAY)
-                           .fillColor(Color.LTGRAY));
-               }
+            } else if (carSpeed >= 2.8 && carSpeed <= 4.2) {
 
-               //* else {
-               if(speedPolygon!=null){
-                   speedPolygon.remove();
-                   speedPolygon = mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.LTGRAY)
-                           .fillColor(Color.LTGRAY));
+                if (speedPolygon == null) {
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.LTGRAY)
+                            .fillColor(Color.LTGRAY));
+                }
 
-               }
-           }
+                //* else {
+                if (speedPolygon != null) {
+                    speedPolygon.remove();
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.LTGRAY)
+                            .fillColor(Color.LTGRAY));
 
-           else if (carSpeed > 4.2 && carSpeed <= 5.5){
+                }
+            } else if (carSpeed > 4.2 && carSpeed <= 5.5) {
 
-               if(speedPolygon==null){
-                   speedPolygon= mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.GRAY)
-                           .fillColor(Color.GRAY));
-               }
+                if (speedPolygon == null) {
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.GRAY)
+                            .fillColor(Color.GRAY));
+                }
 
-               //* else {
-               if(speedPolygon!=null){
-                   speedPolygon.remove();
-                   speedPolygon = mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.GRAY)
-                           .fillColor(Color.GRAY));
+                //* else {
+                if (speedPolygon != null) {
+                    speedPolygon.remove();
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.GRAY)
+                            .fillColor(Color.GRAY));
 
-               }
-           }
+                }
+            } else if (carSpeed > 5.5 && carSpeed <= 6.9) {
 
-           else if (carSpeed > 5.5 && carSpeed <= 6.9){
+                if (speedPolygon == null) {
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.DKGRAY)
+                            .fillColor(Color.DKGRAY));
+                }
 
-               if(speedPolygon==null){
-                   speedPolygon= mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.DKGRAY)
-                           .fillColor(Color.DKGRAY));
-               }
+                //* else {
+                if (speedPolygon != null) {
+                    speedPolygon.remove();
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.DKGRAY)
+                            .fillColor(Color.DKGRAY));
 
-               //* else {
-               if(speedPolygon!=null){
-                   speedPolygon.remove();
-                   speedPolygon = mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.DKGRAY)
-                           .fillColor(Color.DKGRAY));
+                }
+            } else if (carSpeed > 6.9 && carSpeed <= 8.3) {
 
-               }
-           }
+                if (speedPolygon == null) {
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.BLACK)
+                            .fillColor(Color.BLACK));
+                }
 
-           else if (carSpeed > 6.9 && carSpeed <= 8.3){
+                //* else {
+                if (speedPolygon != null) {
+                    speedPolygon.remove();
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.BLACK)
+                            .fillColor(Color.BLACK));
 
-               if(speedPolygon==null){
-                   speedPolygon= mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.BLACK)
-                           .fillColor(Color.BLACK));
-               }
+                }
+            } else if (carSpeed > 8.3 && carSpeed <= 9.7) {
 
-               //* else {
-               if(speedPolygon!=null){
-                   speedPolygon.remove();
-                   speedPolygon = mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.BLACK)
-                           .fillColor(Color.BLACK));
+                if (speedPolygon == null) {
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.RED)
+                            .fillColor(Color.RED));
+                }
 
-               }
-           }
+                //* else {
+                if (speedPolygon != null) {
+                    speedPolygon.remove();
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
+                            .zIndex(0)
+                            .strokeColor(Color.RED)
+                            .fillColor(Color.RED));
 
-           else if (carSpeed > 8.3 && carSpeed <= 9.7){
-
-               if(speedPolygon==null){
-                   speedPolygon= mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.RED)
-                           .fillColor(Color.RED));
-               }
-
-               //* else {
-               if(speedPolygon!=null){
-                   speedPolygon.remove();
-                   speedPolygon = mMap.addPolygon(new PolygonOptions()
-                           .add(pointsSpeed)
-                           .zIndex(0)
-                           .strokeColor(Color.RED)
-                           .fillColor(Color.RED));
-
-               }
-           }
+                }
             }
         }
+    }
 
     // Makes a notification whenever user is in the rectangle of the Huawei geofencing rectangle.
     // inZone is boolean whether the user is in the zone or not.
     private void handleCarNotificationHuawei(boolean inZone) {
         Log.d(TAG, "handleCarNotificationHuawei: " + inZone);
-        if(inZone){
-            long[] vibrationPattern = {Long.valueOf(0),Long.valueOf(500)};
-            if(!notificationArray[HUAWEI_NOTIFICATION_ID]){
-            String notificationText = "You are in the rectangle";
-            mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
-                .setContentText(notificationText)
-                .setStyle(new NotificationCompat.BigTextStyle())
-                .setContentTitle("Autonomous car warning")
-                .setAutoCancel(false)
-                .setVibrate(vibrationPattern);
-        mNotificationManager.notify(HUAWEI_NOTIFICATION_ID, mBuilder.build());
-        notificationArray[HUAWEI_NOTIFICATION_ID] = true;}
+        if (inZone) {
+            long[] vibrationPattern = {Long.valueOf(0), Long.valueOf(500)};
+            if (!notificationArray[HUAWEI_NOTIFICATION_ID]) {
+                String notificationText = "You are in the rectangle";
+                mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
+                        .setContentText(notificationText)
+                        .setStyle(new NotificationCompat.BigTextStyle())
+                        .setContentTitle("Autonomous car warning")
+                        .setAutoCancel(false)
+                        .setVibrate(vibrationPattern);
+                mNotificationManager.notify(HUAWEI_NOTIFICATION_ID, mBuilder.build());
+                notificationArray[HUAWEI_NOTIFICATION_ID] = true;
+            }
         }
-        if(!inZone){
+        if (!inZone) {
             cancelNotification(HUAWEI_NOTIFICATION_ID);
             Log.d(TAG, "handleCarNotificationHuawei: Inzone false");
         }
@@ -1129,9 +1114,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onResume();
         addHeatMap();
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
-        if(checkPermissions()){
-        }
-        else if(!checkPermissions()){
+        if (checkPermissions()) {
+        } else if (!checkPermissions()) {
             requestPermission();
         }
     }
@@ -1139,77 +1123,74 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // Calculates the manual speed and bearing if google does not provide any (when inside for
     // example). Uses last location and new location for the calculation of this speed and bearing.
     private String[] calculateSpeedAndBearing
-            (Double latitude, Double longitude, Long timeStamp){
+    (Double latitude, Double longitude, Long timeStamp) {
         String speedGPS;
         String[] speedandBearing = new String[2];
 
-        if(lastLat == 0.00){
-            lastLat=latitude;
-            lastLon=longitude;
+        if (lastLat == 0.00) {
+            lastLat = latitude;
+            lastLon = longitude;
             lastTime = timeStamp;
-        }
-
-        else{
-            Double deltaSeconds = DifferenceUTCtoSeconds(timeStamp,lastTime)/1000;
-            Double deltaMeters = DifferenceInMeters(lastLat,lastLon,latitude,longitude);
-            speedGPS = Double.toString(deltaMeters/deltaSeconds);
-            String bearingGPS = Double.toString(ManualBearing(lastLat,lastLon,latitude,longitude));
+        } else {
+            Double deltaSeconds = DifferenceUTCtoSeconds(timeStamp, lastTime) / 1000;
+            Double deltaMeters = DifferenceInMeters(lastLat, lastLon, latitude, longitude);
+            speedGPS = Double.toString(deltaMeters / deltaSeconds);
+            String bearingGPS = Double.toString(ManualBearing(lastLat, lastLon, latitude, longitude));
             Log.d(TAG, "manualbearing: " + bearingGPS);
             speedandBearing = new String[2];
             speedandBearing[0] = speedGPS;
             speedandBearing[1] = bearingGPS;
-            GeoPoint lastGeo = new GeoPoint(lastLat,lastLon);
-            GeoPoint newGeo = new GeoPoint(latitude,longitude);
+            GeoPoint lastGeo = new GeoPoint(lastLat, lastLon);
+            GeoPoint newGeo = new GeoPoint(latitude, longitude);
             List<GeoPoint> Geopoints = new ArrayList<>();
             Geopoints.add(lastGeo);
             Geopoints.add(newGeo);
             // makePolyline(Geopoints,headingLine);
-            lastLat=latitude;
-            lastLon=longitude;
-            lastTime=timeStamp;
+            lastLat = latitude;
+            lastLon = longitude;
+            lastTime = timeStamp;
         }
         //TODO add a realistic threshold to prevent huge speeds at delta t goes to zero
 
         return speedandBearing;
     } //
 
-    private double DifferenceUTCtoSeconds(Long timeStamp, Long timeStamp2){
-        return timeStamp-timeStamp2;
+    private double DifferenceUTCtoSeconds(Long timeStamp, Long timeStamp2) {
+        return timeStamp - timeStamp2;
     }
 
     // Difference in meters (birds flight) using 'haversine' formula, gives back distance between
     // two points in doubles. the latitude and longitude are in degrees.
-    private double DifferenceInMeters(Double lastLat,Double lastLon,Double lat,Double lon){
-        Double deltaPhiLon = (lon - lastLon)*Math.PI/180;
-        Double deltaPhilat = (lat - lastLat)*Math.PI/180;
-        lastLat = lastLat*Math.PI/180;
-        lat = lat*Math.PI/180;
+    private double DifferenceInMeters(Double lastLat, Double lastLon, Double lat, Double lon) {
+        Double deltaPhiLon = (lon - lastLon) * Math.PI / 180;
+        Double deltaPhilat = (lat - lastLat) * Math.PI / 180;
+        lastLat = lastLat * Math.PI / 180;
+        lat = lat * Math.PI / 180;
 
         Double earth = 6371e3;
 
-        Double a  = Math.sin(deltaPhilat/2)*Math.sin(deltaPhilat/2)+Math.cos(lastLat)*Math.cos(lat)*Math.sin(deltaPhiLon)*Math.sin(deltaPhiLon);
-        Double c  = 2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-        Double d = earth*c;
+        Double a = Math.sin(deltaPhilat / 2) * Math.sin(deltaPhilat / 2) + Math.cos(lastLat) * Math.cos(lat) * Math.sin(deltaPhiLon) * Math.sin(deltaPhiLon);
+        Double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        Double d = earth * c;
         return d;
     }
 
     // Calculates the bearing or direction of the user based upon two location points (the last one
     // and the latest), sends this back to be used in the logging as well as in layout. Only used
     // when Google does not give any heading/bearing, hence the name manual. lat and lon in degrees.
-    private double ManualBearing(Double lastLat,Double lastLon,Double lat,Double lon){
-        Double deltaPhiLon = (lon - lastLon) * Math.PI/180;
-        lastLat = lastLat*Math.PI/180;
-        lat = lat*Math.PI/180;
+    private double ManualBearing(Double lastLat, Double lastLon, Double lat, Double lon) {
+        Double deltaPhiLon = (lon - lastLon) * Math.PI / 180;
+        lastLat = lastLat * Math.PI / 180;
+        lat = lat * Math.PI / 180;
 
-        Double a = Math.sin(deltaPhiLon)*Math.cos(lat);
+        Double a = Math.sin(deltaPhiLon) * Math.cos(lat);
         Double b = Math.cos(lastLat) * Math.sin(lat) - Math.sin(lastLat) * Math.cos(lat) * Math.cos(deltaPhiLon);
-        Double c = Math.atan2(a, b)*180/Math.PI;
+        Double c = Math.atan2(a, b) * 180 / Math.PI;
         Double d;
 
-        if(c < 0){
+        if (c < 0) {
             d = c + 360;
-        }
-        else {
+        } else {
             d = c;
         }
         return d;
@@ -1251,14 +1232,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     // Removes last location of Huawei geofencing rectangle and adds the new location of the
     // rectangle in the map, this function accepts array of LatLng points.
-    private void geoFencingCarPolygon(LatLng[] points){
-        if(geoFencingPolygon==null){
+    private void geoFencingCarPolygon(LatLng[] points) {
+        if (geoFencingPolygon == null) {
             geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
                     .add(points)
                     .zIndex(0)
                     .strokeColor(Color.LTGRAY));
-        }
-        else{
+        } else {
             geoFencingPolygon.remove();
             geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
                     .add(points)
@@ -1270,8 +1250,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("userId",userName);
-        outState.putString("password",password);
+        outState.putString("userId", userName);
+        outState.putString("password", password);
 
     }
 
@@ -1296,27 +1276,28 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 ActivityCompat.shouldShowRequestPermissionRationale(this,
                         Manifest.permission.ACCESS_FINE_LOCATION);
 
-        if (shouldProvideRationale){
+        if (shouldProvideRationale) {
             Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
                     "We need your gps data for essential app functions and research",
                     Snackbar.LENGTH_INDEFINITE).setAction("OK", new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    ActivityCompat.requestPermissions(GpsActivity.this,new String[]{Manifest
+                    ActivityCompat.requestPermissions(GpsActivity.this, new String[]{Manifest
                                     .permission.ACCESS_FINE_LOCATION},
                             REQUEST_PERMISSIONS_REQUEST_CODE);
 
-                }});
-            int snackbarTextId= android.support.design.R.id.snackbar_text;
-            TextView textView =(TextView) snackbar.getView().findViewById(snackbarTextId);
+                }
+            });
+            int snackbarTextId = android.support.design.R.id.snackbar_text;
+            TextView textView = (TextView) snackbar.getView().findViewById(snackbarTextId);
             textView.setTextColor(Color.WHITE);
             snackbar.getView().setBackground(permissionGrantedSnackbarShape);
             snackbar.show();
         }
         Log.d(TAG, "requestPermission: ");
-            ActivityCompat.requestPermissions(GpsActivity.this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    REQUEST_PERMISSIONS_REQUEST_CODE);
+        ActivityCompat.requestPermissions(GpsActivity.this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                REQUEST_PERMISSIONS_REQUEST_CODE);
     }
 
     // Handler for permission results (if cancelled or accepted), this is called whenever a
@@ -1325,8 +1306,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        if(requestCode == REQUEST_PERMISSIONS_REQUEST_CODE){
-            if(grantResults.length <= 0){
+        if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
+            if (grantResults.length <= 0) {
                 //TODO als de request interuppted is, hoeft in principe niks mee te gebeuren
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
@@ -1335,14 +1316,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     @Override
                     public void onClick(View view) {
 
-                    }});
-                int snackbarTextId= android.support.design.R.id.snackbar_text;
-                TextView textView =(TextView) snackbar.getView().findViewById(snackbarTextId);
+                    }
+                });
+                int snackbarTextId = android.support.design.R.id.snackbar_text;
+                TextView textView = (TextView) snackbar.getView().findViewById(snackbarTextId);
                 textView.setTextColor(Color.WHITE);
                 snackbar.getView().setBackground(permissionGrantedSnackbarShape);
                 snackbar.show();
                 startLocationService(); //TODO start service
-            }else{
+            } else {
             }
         }
     }
@@ -1361,16 +1343,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // back to login screen. FirebaseUser user is sent since this variable changes. Void function.
     private void userCheck(FirebaseUser user) {
         if (user == null) {
-            MainActivity Login =  new MainActivity();
-            if(userName!=null){
-            Login.login(userName+"@random.com",password);
-            Log.d(TAG, "userCheck: User is null");}
-            else if(userNameStored!=null){
-                Login.login(userNameStored,passwordStored);
+            MainActivity Login = new MainActivity();
+            if (userName != null) {
+                Login.login(userName + "@random.com", password);
+                Log.d(TAG, "userCheck: User is null");
+            } else if (userNameStored != null) {
+                Login.login(userNameStored, passwordStored);
+            } else {
+                Intent loginIntent = new Intent(GpsActivity.this, MainActivity.class);
+                startActivity(loginIntent);
             }
-            else{
-            Intent loginIntent = new Intent(GpsActivity.this, MainActivity.class);
-            startActivity(loginIntent);}
         }
     }
 
@@ -1405,11 +1387,26 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 //    }
 
     private void addHeatMap() {
+        Timer timer = new Timer();
+        //Set the schedule function
+        timer.scheduleAtFixedRate(new TimerTask() {
+
+                                      @Override
+                                      public void run() {
+                                          initializeHeatMap();
+                                      }
+                                  },
+                0, 1000);
+
+        timer.cancel();
+    }
+
+    private void initializeHeatMap() {
         List<LatLng> list = null;
 
         // Get the data: latitude/longitude positions of police stations.
         try {
-            list = readItems(R.raw.heat_map);
+            list = readItems(R.raw.heat_maps);
         } catch (JSONException e) {
             Toast.makeText(this, "Problem reading list of locations.", Toast.LENGTH_LONG).show();
         }
