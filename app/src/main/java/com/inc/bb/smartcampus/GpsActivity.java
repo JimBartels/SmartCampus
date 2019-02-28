@@ -53,6 +53,7 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -64,7 +65,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
-import com.google.android.gms.maps.model.TileOverlay;
+
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -115,6 +116,7 @@ import com.google.maps.android.heatmaps.HeatmapTileProvider;
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants, okHttpPost.AsyncResponse, OnMapReadyCallback {
+
 
     String TAG = "GpsActivity";
     private Drawable permissionGrantedSnackbarShape;
@@ -362,14 +364,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         // Huawei dummy message poster for faster rectangle updates
         huaweiTimer();
-
-        addHeatMap();
-
         // Checks permissions at end of onCreate as a safety measure (should have been requested
         // already by GPS oneM2M thread).
         if (checkPermissions()) {
             requestPermission();
         }
+
+
+
     }
 
     // Starts location request and updates as well as the oneM2M connection and communication.
@@ -2109,6 +2111,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
+
     private void addHeatMap() {
         List<LatLng> list = null;
 
@@ -2120,16 +2123,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
 
         // Create a heat map tile provider, passing it the latlngs of the police stations.
-        mProvider = new HeatmapTileProvider.Builder()
-                .data(list)
-                .build();
+        HeatmapTileProvider provider = new HeatmapTileProvider.Builder().data(list).build();
         // Add a tile overlay to the map, using the heat map tile provider.
-        TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
     }
 
     private ArrayList<LatLng> readItems(int resource) throws JSONException {
         ArrayList<LatLng> list = new ArrayList<LatLng>();
         InputStream inputStream = getResources().openRawResource(resource);
+
         String json = new Scanner(inputStream).useDelimiter("\\A").next();
         JSONArray array = new JSONArray(json);
         for (int i = 0; i < array.length(); i++) {
@@ -2138,6 +2140,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             double lng = object.getDouble("lng");
             list.add(new LatLng(lat, lng));
         }
+
         return list;
     }
+
 }
+
