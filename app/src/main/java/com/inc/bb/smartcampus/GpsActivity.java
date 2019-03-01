@@ -39,6 +39,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.GroundOverlay;
 import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -70,6 +72,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants, OnMapReadyCallback {
@@ -173,6 +176,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     //Request code for the permissions intent (asking for some permission)
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
+
+    //Cockpit VRU Data variables
+    List<Circle> VRUCircleList = new ArrayList<Circle>();
+    Vector<String> VRUIdVector =  new Vector<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -301,6 +308,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceiverCarDataRTK();
         createBroadcastReceiverCarDataHuawei();
         createBroadcastReceiverTaxiNotifcationNeeded();
+        createBroadcastReceiverVRUData();
+
     }
 
     private void createBroadcastReceiverMotionplanningPath() {
@@ -341,6 +350,70 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 broadcastReceiverTaxiNotificationNeeded, intentFilter);
 
+    }
+
+    private void createBroadcastReceiverVRUData() {
+        BroadcastReceiver broadcastReceiverVRUData = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String userId = intent.getStringExtra("VRUId");
+                Double latitude = intent.getDoubleExtra("latitude",0);
+                Double longitude = intent.getDoubleExtra("longitude",0);
+                //Function that use the points in the rectangle for visualization of position and speed
+                //Add your heatmap function here, as a reference look to buildVRUCircle();
+                buildVRUCircle(userId,latitude,longitude);
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("VRUData");
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                broadcastReceiverVRUData, intentFilter);
+    }
+
+    private void buildVRUCircle(String userId, Double latitude, Double longitude) {
+        Log.d(TAG, "buildVRUCircle: " + userId);
+        Log.d(TAG, "buildVRUCircle: " +VRUIdVector.contains(userId));
+        if(VRUIdVector==null){
+            Log.d(TAG, "buildVRUCircle: null");
+            VRUIdVector.add(userId);
+            Circle circle = mMap.addCircle(new CircleOptions()
+                    .center(new LatLng(latitude, longitude))
+                    .radius(4)
+                    .strokeColor(Color.BLUE)
+                    .fillColor(Color.BLUE));
+            circle.setTag(userId);
+            VRUCircleList.add(circle);
+        }
+        if(VRUIdVector.contains(userId)){
+            Log.d(TAG, "buildVRUCircle: Iterer");
+            for(Circle circle : VRUCircleList){
+                Log.d(TAG, "buildVRUCircle: Iterer1"+ circle.getTag());
+                if(circle.getTag()!=null && circle.getTag().equals(userId)){
+                    Log.d(TAG, "buildVRUCircle: ItererTRUE");
+                    circle.setCenter(new LatLng(latitude,longitude));
+                }
+            }
+        }
+        else {
+            Log.d(TAG, "buildVRUCircle: else");
+            VRUIdVector.add(userId);
+            if(userId.equals("2")||userId.equals("3")){
+                Circle circle = mMap.addCircle(new CircleOptions()
+                        .center(new LatLng(latitude, longitude))
+                        .radius(4)
+                        .strokeColor(Color.GREEN)
+                        .fillColor(Color.GREEN));
+                circle.setTag(userId);
+                VRUCircleList.add(circle);
+            }
+            Circle circle = mMap.addCircle(new CircleOptions()
+                    .center(new LatLng(latitude, longitude))
+                    .radius(4)
+                    .strokeColor(Color.BLUE)
+                    .fillColor(Color.BLUE));
+            circle.setTag(userId);
+            VRUCircleList.add(circle);
+        }
     }
 
     private void createBroadcastReceiverCarDataHuawei() {
