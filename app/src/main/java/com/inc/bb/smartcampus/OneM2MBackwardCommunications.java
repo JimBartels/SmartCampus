@@ -441,6 +441,15 @@ public class OneM2MBackwardCommunications extends IntentService {
         }*/
     }
 
+    private void broadcastUserData(String userId, Double longitude, Double latitude) {
+        Intent intent = new Intent();
+        intent.putExtra("VRUId", userId);
+        intent.putExtra("longitude", longitude);
+        intent.putExtra("latitude", latitude);
+        intent.setAction("VRUData");
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
     private void sendBroadcastUIMotionplanningPath(double[][] latlonMP) {
         double pathLat[] = latlonMP[0];
         double pathLon[] = latlonMP[1];

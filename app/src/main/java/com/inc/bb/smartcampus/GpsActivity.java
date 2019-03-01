@@ -737,8 +737,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         addHeatMap();
 
     }
-
-
+    
     // Removes last location of Huawei geofencing rectangle and adds the new location of the
     // rectangle in the map, this function accepts array of LatLng points.
     private void motionPlanningPath(LatLng[] points) {
