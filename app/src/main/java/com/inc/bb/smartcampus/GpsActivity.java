@@ -1072,19 +1072,26 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             if(comparator.equals("CREATE:prius/Motionplanning")) {
                 Log.d(TAG, "oneM2MMessagesHandler: motionplanning");
-                mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
-                        .setContentText("")
-                        .setStyle(new NotificationCompat.BigTextStyle())
-                        .setContentTitle("Autonomous car coming to your location")
-                        .setOngoing(false)
-                        .setAutoCancel(true);
-                mNotificationManager.notify(TAXI_COMING, mBuilder.build());
-                notificationArray[TAXI_COMING] = true;
-                Log.d(TAG, "Notification Built");
+
                 JSONObject contentMP = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
                 if (contentMP.getString("mobileId").equals(userName)) {
                     Log.d(TAG, "oneM2MMessagesHandler: motionplanning2");
+
+                    //Builds notification when Motionplanning message from car is received
+                    //This indicates the car is coming your way.
+                    //Only activated for the right user by checking UserID
+                    mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
+                            .setContentText("")
+                            .setStyle(new NotificationCompat.BigTextStyle())
+                            .setContentTitle("Autonomous car coming to your location")
+                            .setOngoing(false)
+                            .setAutoCancel(true);
+                    mNotificationManager.notify(TAXI_COMING, mBuilder.build());
+                    notificationArray[TAXI_COMING] = true;
+                    Log.d(TAG, "Notification Built");
+
+
                     cancelRequestTaxi();
                     motiongPlanningResponseReceived = true;
                     JSONArray jsonArray = contentMP.getJSONArray("coords");
