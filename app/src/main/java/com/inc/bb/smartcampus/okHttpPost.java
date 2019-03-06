@@ -50,8 +50,10 @@ public class okHttpPost extends AsyncTask<String, Void, Bundle> {
                 .addHeader("Content-Type", "application/json")
                 .build();
         Response response = client.newCall(request).execute();
+            Log.d(TAG, "doInBackground: request sent");
         if(response.isSuccessful()){
             String responseBody = response.body().string();
+            Log.d(TAG, "doInBackground: " + responseBody);
             if(responseBody!=null){
             try{
                 JSONArray jArray1 = new JSONArray(responseBody);
@@ -93,6 +95,9 @@ public class okHttpPost extends AsyncTask<String, Void, Bundle> {
             returnMessage.putString("returnMessage",responseBody);
             returnMessage.putBoolean("isInRectangle",j);
             return returnMessage; }
+            }
+            if(!response.isSuccessful()){
+                Log.d(TAG, "doInBackground: not succesful");
             }
         }
         catch (IOException e){

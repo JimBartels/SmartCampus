@@ -261,7 +261,7 @@ public class OneM2MBackwardCommunications extends IntentService {
         broadcastIsLoggingEnabled();
         JSONObject messageCar = new JSONObject(new String(message.getPayload()));
         Log.d(TAG, "oneM2MMessagesHandler: Arrived");
-        if (topic.equals(CsmartcampusSubscriptionTopic)) {
+        /*if (topic.equals(CsmartcampusSubscriptionTopic)) {
             JSONObject contentUsers = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                     .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
             String userId = contentUsers.getString("id");
@@ -270,7 +270,7 @@ public class OneM2MBackwardCommunications extends IntentService {
             Log.d(TAG, "oneM2MMessagesHandler: " +userId);
             broadcastUserData(userId,longitude,latitude);
             //TODO Logging?
-        }
+        }*/
 
 
         if (topic.equals(CsmartCampusCarsSubscriptionTopic)) {
