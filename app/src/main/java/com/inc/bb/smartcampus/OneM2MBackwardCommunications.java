@@ -361,7 +361,6 @@ public class OneM2MBackwardCommunications extends IntentService {
                 JSONObject contentMP = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
 
-                if (contentMP.getString("mobileId").equals(userName)) {
                     Log.d(TAG, "oneM2MMessagesHandler: motionplanning2");
                     sendBroadcastCancelRequestTaxi();
                     JSONArray jsonArray = contentMP.getJSONArray("coords");
@@ -392,7 +391,6 @@ public class OneM2MBackwardCommunications extends IntentService {
                         logIntent.putExtra("experimentNumber", experimentNumber);
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
                     }
-                }
             }
 
             /*if(comparator.equals("CREATE:prius/Motionplanning")) {

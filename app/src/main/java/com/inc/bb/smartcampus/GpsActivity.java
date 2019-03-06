@@ -231,7 +231,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceivers();
 
         //Notification builder
-        buildCarNotification(AUTONOMOUS_CAR_NOTIFICATION_TITLE);
+        //buildCarNotification(AUTONOMOUS_CAR_NOTIFICATION_TITLE);
         permissionGrantedSnackbarShape = ContextCompat.getDrawable(getApplicationContext(), R.drawable.snackbarshape);
 
         //Firebase initialization
@@ -366,7 +366,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         broadcastReceiverMotionplanningPath = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                buildTaxiUnderwayNotification();
+                //buildTaxiUnderwayNotification();
                 double[] MPlat = intent.getDoubleArrayExtra("MPlat");
                 double[] MPlon = intent.getDoubleArrayExtra("MPlon");
                 LatLng[] points = new LatLng[MPlat.length];
@@ -405,7 +405,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         broadcastReceiverCarDataHuawei = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                handleCarNotificationHuawei(intent.getBooleanExtra("isInRectangle",false));
+                //handleCarNotificationHuawei(intent.getBooleanExtra("isInRectangle",false));
                 double[] rectangleLat = intent.getDoubleArrayExtra("rectangleLat");
                 double[] rectangleLon = intent.getDoubleArrayExtra("rectangleLon");
                 LatLng[] points = new LatLng[5];
