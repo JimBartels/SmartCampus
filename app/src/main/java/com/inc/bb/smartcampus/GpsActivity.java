@@ -247,7 +247,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         // Checks permissions at end of onCreate as a safety measure (should have been requested
         // already by GPS oneM2M thread).
-        if (checkPermissions()) {
+        while (!checkPermissions()) {
+            requestPermission();
+        }
+        if(checkPermissions()){
             startLocationService();
         }
         if (!checkPermissions()) {
@@ -261,6 +264,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         startPilotLoggingService();
         startHuaweiCommunications();
         addHeatMap();
+        startLocationService();
     }
 
     private void startPilotLoggingService() {
