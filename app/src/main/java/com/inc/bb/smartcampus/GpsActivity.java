@@ -324,7 +324,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             VRUIdVector.add(userId);
             Circle circle = mMap.addCircle(new CircleOptions()
                     .center(new LatLng(latitude, longitude))
-                    .radius(4)
+                    .radius(1)
                     .strokeColor(Color.BLUE)
                     .fillColor(Color.BLUE));
             circle.setTag(userId);
@@ -346,7 +346,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             if(userId.equals("2")||userId.equals("3")){
                 Circle circle = mMap.addCircle(new CircleOptions()
                         .center(new LatLng(latitude, longitude))
-                        .radius(4)
+                        .radius(1)
                         .strokeColor(Color.GREEN)
                         .fillColor(Color.GREEN));
                 circle.setTag(userId);
@@ -354,7 +354,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
             Circle circle = mMap.addCircle(new CircleOptions()
                     .center(new LatLng(latitude, longitude))
-                    .radius(4)
+                    .radius(1)
                     .strokeColor(Color.BLUE)
                     .fillColor(Color.BLUE));
             circle.setTag(userId);
