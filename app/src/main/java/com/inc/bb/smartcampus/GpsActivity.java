@@ -17,6 +17,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -24,6 +25,7 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -33,7 +35,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -50,28 +51,20 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.Vector;
 
 
@@ -154,6 +147,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private final static int AUTONOMOUS_CAR_100M_NOTIFICATION_ID = 1;
     private final static int HUAWEI_NOTIFICATION_ID = 3;
     private final static int TAXI_COMING_NOTIFICATION_ID = 4;
+    private static final String CAR_COMING_NOTIFICATION_CHANNEL_ID = "Car Coming Notification";
     Boolean[] notificationArray = new Boolean[10];
     LatLng carLoc;
 
@@ -849,22 +843,51 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .bearing(315));
     }
 
+    //creates channel for notification
+    // https://developer.android.com/training/notify-user/build-notification#java
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.channel_name);
+            String description = getString(R.string.channel_description);
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel(CAR_COMING_NOTIFICATION_CHANNEL_ID,
+                    name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+            Log.d("CreateNotificationChannel: ", "success");
+        }
+    }
+
     //Creates notification when the taxi starts to go to your location
     private void buildTaxiUnderwayNotification() {
         if (taxiNotificationNeeded) {
-            mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
+            mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH);
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this,
+                    CAR_COMING_NOTIFICATION_CHANNEL_ID)
+                    .setPriority(NotificationManager.IMPORTANCE_HIGH)
                     .setContentText("")
                     .setStyle(new NotificationCompat.BigTextStyle())
                     .setContentTitle("Autonomous car coming to your location")
                     .setOngoing(false)
+                    .setSmallIcon(R.drawable.navigationbarcaricon)
                     .setAutoCancel(true);
             mNotificationManager.notify(TAXI_COMING_NOTIFICATION_ID, mBuilder.build());
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
+            // notificationId is a unique int for each notification that you must define
+            notificationManager.notify(TAXI_COMING_NOTIFICATION_ID, builder.build());
             notificationArray[TAXI_COMING_NOTIFICATION_ID] = true;
             Log.d(TAG, "TaxiUnderway notification Built");
             taxiNotificationNeeded = false;
+
+            //TODO: Add progress bar based on ETA
         }
     }
-
 
     // Builds common notification settings; vibration pattern, title etc which is being sent from
     // the implementation.
@@ -899,6 +922,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             if (carNotificationConstant == 0) {
                 mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
                         .setSound(AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND)
+                        .setSmallIcon(R.drawable.warning_sign)
                         .setContentText(AUTONOMOUS_CAR_40M_NOTIFICATION)
                         .setStyle(new NotificationCompat.BigTextStyle())
                         .setContentTitle("Autonomous car warning")
@@ -909,6 +933,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             } else if (carNotificationConstant == 1) {
                 mBuilder.setPriority(NotificationCompat.PRIORITY_MAX)
                         .setContentText(AUTONOMOUS_CAR_40M_NOTIFICATION)
+                        .setSmallIcon(R.drawable.warning_sign)
                         .setVibrate(null)
                         .setContentTitle("Autonomous car warning")
                         .setStyle(new NotificationCompat.BigTextStyle()
@@ -1173,6 +1198,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     protected void onStart() {
         super.onStart();
         //addHeatMap();
+        createNotificationChannel();
     }
 
     @Override
