@@ -254,7 +254,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         //Starts all background services
         startOneM2MForwardCommunications();
         startOneM2MBackwardCommunications();
-        startTrackingUserActivity();
+        //startTrackingUserActivity();
         startPilotLoggingService();
         startHuaweiCommunications();
         addHeatMap();

@@ -125,7 +125,7 @@ public class OneM2MForwardCommunications extends IntentService {
 
         //Create broadcast receivers for useracitivites and locations.
         createBroadcastReceiverUserActivity();
-        createBroadcastReceiverLocations();
+        //createBroadcastReceiverLocations();
         createBroadcastReceiverLayoutResponse();
         createBroadcastReceiverTaxiReceived();
         createBroadcastReceiverCallTaxi();
