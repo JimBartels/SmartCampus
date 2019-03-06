@@ -252,6 +252,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         startTrackingUserActivity();
         startPilotLoggingService();
         startHuaweiCommunications();
+        startLocationService();
         //addHeatMap();
     }
 
