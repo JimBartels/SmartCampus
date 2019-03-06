@@ -257,7 +257,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         startTrackingUserActivity();
         startPilotLoggingService();
         startHuaweiCommunications();
-        addHeatMap();
+        //addHeatMap();
     }
 
     private void startPilotLoggingService() {
@@ -807,7 +807,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         };
         mMap.setOnGroundOverlayClickListener(listener);
-        addHeatMap();
+        //addHeatMap();
 
     }
     
@@ -1171,7 +1171,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onStart() {
         super.onStart();
-        addHeatMap();
+        //addHeatMap();
     }
 
     @Override
@@ -1184,7 +1184,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onResume() {
         super.onResume();
-        addHeatMap();
+        //addHeatMap();
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
         if (checkPermissions()) {
         } else if (!checkPermissions()) {
@@ -1458,7 +1458,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 //        return list;
 //    }
 
-    private void addHeatMap() {
+    /*private void addHeatMap() {
         Timer timer = new Timer();
         //Set the schedule function
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -1503,6 +1503,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
 
         return list;
-    }
+    }*/
 
 }
