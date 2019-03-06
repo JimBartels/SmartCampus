@@ -7,9 +7,6 @@
     <string name="title_activity_maps">Map</string>
     <string name="campus">Campus</string>
 
-    <string name="channel_name">CarComingNotification</string>
-    <string name="channel_description">Shows notification that car is coming to user</string>
-
     <string name="username_or_email_adress">   Username or email address</string>
     <string name="password">Password</string>
     <!-- TODO: Remove or change this placeholder text -->
