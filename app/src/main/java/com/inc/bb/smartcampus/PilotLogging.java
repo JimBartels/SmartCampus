@@ -67,6 +67,9 @@ public class PilotLogging extends IntentService {
     private final static int LOGGING_HUAWEI_RECEIVED = 5;
     private final static int LOGGING_TAXI_SENT = 6;
     private final static int LOGGING_TAXI_RECEIVED = 7;
+    private final static int LOGGING_GPS_POSEST = 11;
+    private final static int LOGGING_HUAWEI_SENT_POSEST = 44;
+    private final static int LOGGING_VEHICLE_POSEST = 33;
 
     public PilotLogging() {
         super("PilotLogging");
@@ -260,6 +263,45 @@ public class PilotLogging extends IntentService {
                         +userName + "_3.csv",log);
                 break;
 
+            case LOGGING_GPS_POSEST:
+                Log.d(TAG, "pilotLogging: GPS_POSEST");
+                log = ",11," + userName + "," + "SENT,CELLULAR,AutoPilot.SmartphoneGPS,"
+                        + uuid + "," + userName + "," + data ;
+
+                String fileNameGPS_PosEST = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_" + userName
+                        +"_11.csv";
+
+                if(fileNameVector==null){fileNameVector.add(fileNameGPS_PosEST);
+                    addHeaderToLogFile(fileNameGPS_PosEST);}
+                if(!fileNameVector.contains(fileNameGPS_PosEST) && fileNameVector !=null){
+                    fileNameVector.add(fileNameGPS_PosEST);
+                    addHeaderToLogFile(fileNameGPS_PosEST);}
+
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_" + userName
+                        +"_11.csv",log);
+                break;
+
+            case LOGGING_VEHICLE_POSEST:
+                Log.d(TAG, "pilotLogging: Vehicle_Posest");
+                log = ",33," + userName + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
+
+                String fileNameCarPosest = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_"
+                        + userName+"_33.csv";
+
+                if(fileNameVector==null){fileNameVector.add(fileNameCarPosest);
+                    addHeaderToLogFile(fileNameCarPosest);}
+                if(!fileNameVector.contains(fileNameCarPosest) && fileNameVector !=null){
+                    fileNameVector.add(fileNameCarPosest);
+                    addHeaderToLogFile(fileNameCarPosest);}
+
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_"
+                        +userName + "_33.csv",log);
+                break;
+
             case LOGGING_HUAWEI_RECEIVED:
                 Log.d(TAG, "pilotLogging: HuaweiReceived");
 
@@ -300,6 +342,26 @@ public class PilotLogging extends IntentService {
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_"
                         + userName+ "_5.csv",log);
+                break;
+            case LOGGING_HUAWEI_SENT_POSEST:
+                Log.d(TAG, "pilotLogging: HuaweiSent_Posest");
+                log = ",55," + userName + "," + "SENT,CELLULAR,AutoPilot.HuaweiGeofencingGPS," +
+                        uuid + ','
+                        + userName + "," + data;
+
+                String fileNameHS_PosEst = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_"
+                        + userName+"_55.csv";
+
+                if(fileNameVector==null){fileNameVector.add(fileNameHS_PosEst);
+                    addHeaderToLogFile(fileNameHS_PosEst);}
+                if(!fileNameVector.contains(fileNameHS_PosEst) && fileNameVector !=null){
+                    fileNameVector.add(fileNameHS_PosEst);
+                    addHeaderToLogFile(fileNameHS_PosEst);}
+
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_"
+                        + userName+ "_55.csv",log);
                 break;
         }
     }

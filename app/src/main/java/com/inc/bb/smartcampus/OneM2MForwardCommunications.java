@@ -10,11 +10,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gms.location.DetectedActivity;
-import com.google.gson.Gson;
-import com.inc.bb.smartcampus.Sensoris.Envelope;
-import com.inc.bb.smartcampus.Sensoris.PositionEstimate;
-import com.inc.bb.smartcampus.Sensoris.SensorisJson;
-import com.inc.bb.smartcampus.Sensoris.VehicleSpecificMetadata;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -64,6 +59,9 @@ public class OneM2MForwardCommunications extends IntentService {
     private final static int LOGGING_HUAWEI_RECEIVED = 5;
     private final static int LOGGING_TAXI_SENT = 6;
     private final static int LOGGING_TAXI_RECEIVED = 7;
+    private final static int LOGGING_GPS_POSEST = 11;
+    private final static int LOGGING_HUAWEI_SENT_POSEST = 44;
+    private final static int LOGGING_VEHICLE_POSEST = 33;
 
     //MQTT oneM2M login credentials, subscription and request topics and JSONs.
     MqttAndroidClient onem2m;
@@ -511,7 +509,7 @@ public class OneM2MForwardCommunications extends IntentService {
                 .getJSONObject("m2m:cin").getString("con");
         String requester = VRUgps.CreatepositionEstimateContainer(latitude, longitude, 0,
                 userName, true, uuid, speedGPS, Accuracy, manualBearing).toString();
-        publishAndLogMessage(onem2m, requester, 0, oneM2MVRUReqTopic, LOGGING_GPS,
+        publishAndLogMessage(onem2m, requester, 0, oneM2MVRUReqTopic, LOGGING_GPS_POSEST,
                 logmessage, formattedDate, uuid);
 
         publishAndLogMessage(onem2m, contentCreate, 0, oneM2MVRUReqTopic, LOGGING_GPS,

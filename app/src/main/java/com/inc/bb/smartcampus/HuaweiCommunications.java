@@ -46,7 +46,9 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     private final static int LOGGING_HUAWEI_RECEIVED = 5;
     private final static int LOGGING_TAXI_SENT = 6;
     private final static int LOGGING_TAXI_RECEIVED = 7;
-
+    private final static int LOGGING_GPS_POSEST = 11;
+    private final static int LOGGING_HUAWEI_SENT_POSEST = 44;
+    private final static int LOGGING_VEHICLE_POSEST = 33;
     String username;
     String TAG = "HuaweiCommunications";
     BroadcastReceiver locationsBroadcastReceiver;
@@ -132,6 +134,15 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
             Intent logIntent = new Intent();
             logIntent.setAction("OneM2M.ForwardLogging");
             logIntent.putExtra("messageType",LOGGING_HUAWEI_SENT);
+            logIntent.putExtra("logmsg",conHuawei);
+            logIntent.putExtra("uuid",uuid);
+            logIntent.putExtra("generationTimeStamp",formattedDate);
+            logIntent.putExtra("username",username);
+            logIntent.putExtra("runNumber",runNumber);
+            logIntent.putExtra("experimentNumber",experimentNumber);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
+            logIntent.setAction("OneM2M.ForwardLogging");
+            logIntent.putExtra("messageType",LOGGING_HUAWEI_SENT_POSEST);
             logIntent.putExtra("logmsg",conHuawei);
             logIntent.putExtra("uuid",uuid);
             logIntent.putExtra("generationTimeStamp",formattedDate);
