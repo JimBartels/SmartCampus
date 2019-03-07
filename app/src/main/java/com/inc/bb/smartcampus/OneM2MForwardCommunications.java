@@ -507,26 +507,6 @@ public class OneM2MForwardCommunications extends IntentService {
             throws JSONException, MqttException, UnsupportedEncodingException {
         String formattedDateString = "UTC" + Long.toString(formattedDate);
 
-        SensorisJson sensorisJson = new SensorisJson();
-        Envelope envelope = sensorisJson.getMessage().getEnvelope();
-        envelope.setTransientVehicleID(Integer.parseInt(userName));
-        envelope.setSubmitter("TUE");
-        envelope.setGeneratedTimeStampUTCMs(formattedDate);
-        envelope.setVersion("1.2");
-        VehicleSpecificMetadata vehicleSpecificMetadata = envelope.getVehicleMetaData().getVehicleSpecificMetadata();
-        vehicleSpecificMetadata.setUUID(uuid);
-        PositionEstimate positionEstimate = sensorisJson.getMessage().getPath().getPositionEstimate().get(0);
-        positionEstimate.setHeadingDeg(Double.parseDouble(manualBearing));
-        positionEstimate.setPositionType("RAW_GPS");
-        positionEstimate.setLongitudeDeg(longitude);
-        positionEstimate.setLatitudeDeg(latitude);
-        positionEstimate.setSpeedMps(Double.parseDouble(speedGPS));
-        positionEstimate.setTimeStampUTCMs(formattedDate);
-        positionEstimate.setSpeedDetectionType("RAW_GPS");
-        Gson gson = new Gson();
-        String content = gson.toJson(sensorisJson).toString();
-
-
         String topic = "/server/server/" + "aeSmartCampus1" + "/Users/" + userName + "/gps";
         /*String con = "{\"type\":5,\"id\":" + userName + ",\"timestampUtc\":" + formattedDate +
                 ",\"lon\":" + longitude + ",\"lat\":" + latitude + ",\"speed\":" + speedGPS +
@@ -546,7 +526,7 @@ public class OneM2MForwardCommunications extends IntentService {
         String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc")
                 .getJSONObject("m2m:cin").getString("con");
 
-        publishAndLogMessage(onem2m, content, 0, oneM2MVRUReqTopic, LOGGING_GPS,
+        publishAndLogMessage(onem2m, contentCreate, 0, oneM2MVRUReqTopic, LOGGING_GPS,
                 logmessage, formattedDate, uuid);
     }
 
