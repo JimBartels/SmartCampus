@@ -264,16 +264,17 @@ public class OneM2MBackwardCommunications extends IntentService {
         if (topic.equals(CsmartcampusSubscriptionTopic)) {
             JSONObject contentUsers = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                     .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
-            String userId = contentUsers.getString("id");
-            Double longitude = contentUsers.getDouble("lon");
-            Double latitude = contentUsers.getDouble("lat");
+            Log.d(TAG, "oneM2MMessagesHandler: " + contentUsers);
+                String userId = contentUsers.getString("id");
+                Double longitude = contentUsers.getDouble("lon");
+                Double latitude = contentUsers.getDouble("lat");
             /*if(contentUsers.getString("valid").equals("true")){
                 Log.d(TAG, "oneM2MMessagesHandler: ");
                 broadcastTaxiCaller(userId,contentUsers.getDouble("longitude"),contentUsers.getDouble("latitude"));
             }*/
-            Log.d(TAG, "oneM2MMessagesHandler: " +userId);
-            broadcastUserData(userId,longitude,latitude);
-            //TODO Logging?
+                Log.d(TAG, "oneM2MMessagesHandler: " + userId);
+                broadcastUserData(userId, longitude, latitude);
+                //TODO Logging?
         }
 
         if (topic.equals(CsmartCampusCarsSubscriptionTopic)) {
