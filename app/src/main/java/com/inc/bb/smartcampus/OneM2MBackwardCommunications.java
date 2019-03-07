@@ -53,7 +53,9 @@ public class OneM2MBackwardCommunications extends IntentService {
     private final static int LOGGING_HUAWEI_RECEIVED = 5;
     private final static int LOGGING_TAXI_SENT = 6;
     private final static int LOGGING_TAXI_RECEIVED = 7;
-
+    private final static int LOGGING_GPS_POSEST = 11;
+    private final static int LOGGING_HUAWEI_SENT_POSEST = 44;
+    private final static int LOGGING_VEHICLE_POSEST = 33;
     //MQTT oneM2M login credentials, subscription and request topics and JSONs.
     MqttAndroidClient onem2m;
     String userName;
@@ -300,6 +302,23 @@ public class OneM2MBackwardCommunications extends IntentService {
             if (comparator.equals("CREATE:prius/GPS")) {
                 JSONObject contentCar = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
+                if(contentCar.getJSONObject("message")!=null){
+                    Log.d(TAG, "oneM2MMessagesHandler: POSEST"+ contentCar.toString());
+                    Intent logIntent = new Intent();
+                    logIntent.setAction("OneM2M.BackwardLogging");
+                    Log.d(TAG, "oneM2MMessagesHandler: LoggingRTK");
+                    logIntent.putExtra("messageType", LOGGING_VEHICLE_POSEST);
+                    logIntent.putExtra("logmsg", contentCar.toString());
+                    String uuid = contentCar.getJSONObject("message")
+                            .getJSONObject("envelope")
+                            .getJSONObject("vehicleMetaData")
+                            .getJSONObject("vehicleSpecificMetaData").getString("UUID");
+                    logIntent.putExtra("uuid", uuid);
+                    logIntent.putExtra("username", userName);
+                    logIntent.putExtra("runNumber", runNumber);
+                    logIntent.putExtra("experimentNumber", experimentNumber);
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
+                }
                 noRTK = false;
                 Log.d(TAG, "oneM2MMessagesHandler: RTK");
                 Log.d(TAG, "oneM2MMessagesHandler: "+contentCar);

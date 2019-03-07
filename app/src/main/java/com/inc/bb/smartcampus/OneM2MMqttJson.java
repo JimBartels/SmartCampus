@@ -244,6 +244,7 @@ public class OneM2MMqttJson {
         positionEstimateArray.put(positionEstimate);
 
         JSONObject vehicleSpecificMetadata = new JSONObject();
+        vehicleSpecificMetadata.put("UUID",uuid);
         vehicleSpecificMetadata.put("value", "4");
         vehicleSpecificMetadata.put("key", "SAE_LEVEL");
 
