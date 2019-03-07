@@ -170,6 +170,27 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy,
                                 Long formattedDate, String speedGPS, String manualBearing, String uuid) {
 
+        SensorisJson sensorisJson = new SensorisJson();
+        Envelope envelope = sensorisJson.getMessage().getEnvelope();
+        envelope.setTransientVehicleID(Integer.parseInt(username));
+        envelope.setSubmitter("TUE");
+        envelope.setGeneratedTimeStampUTCMs(formattedDate);
+        envelope.setVersion("1.2");
+        VehicleSpecificMetadata vehicleSpecificMetadata = envelope.getVehicleMetaData().getVehicleSpecificMetadata();
+        vehicleSpecificMetadata.setUUID(uuid);
+        PositionEstimate positionEstimate = sensorisJson.getMessage().getPath().getPositionEstimate().get(0);
+        positionEstimate.setHeadingDeg(Double.parseDouble(manualBearing));
+        positionEstimate.setPositionType("RAW_GPS");
+        positionEstimate.setLongitudeDeg(longitude);
+        positionEstimate.setLatitudeDeg(latitude);
+        positionEstimate.setSpeedMps(Double.parseDouble(speedGPS));
+        positionEstimate.setTimeStampUTCMs(formattedDate);
+        positionEstimate.setSpeedDetectionType("RAW_GPS");
+        Gson gson = new Gson();
+        String content = gson.toJson(sensorisJson).toString();
+
+
+
         String formattedDateString = "UTC" + Long.toString(formattedDate);
 
         String conHuawei = "{\"type\":5,\"id\":" + "dummy" + ",\"timestampUtc\":" +
