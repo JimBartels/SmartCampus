@@ -63,7 +63,7 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        username = intent.getStringExtra("userName");
+        username = intent.getStringExtra("username");
         createTimerDummy();
         createBroadcastReceiverLayoutResponse();
         //createBroadcastReceiverLocations();
@@ -184,6 +184,8 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
             UIintent.putExtra("rectangleLat",rectangleLat);
             UIintent.putExtra("rectangleLon",rectangleLon);
             UIintent.putExtra("isInRectangle",output.getBoolean("isInRectangle"));
+            UIintent.setAction("HuaweiCommunications.CAR_DATA");
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(UIintent);
         }
         if(output!=null && output.getString("error")!=null) {
             Log.d(TAG, "processFinish: " + output.getString("error"));
