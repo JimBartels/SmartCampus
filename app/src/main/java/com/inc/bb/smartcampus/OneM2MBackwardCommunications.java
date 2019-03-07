@@ -302,7 +302,8 @@ public class OneM2MBackwardCommunications extends IntentService {
             if (comparator.equals("CREATE:prius/GPS")) {
                 JSONObject contentCar = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
-                if(contentCar.getJSONObject("message")!=null){
+                if(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
+                        .getJSONArray("m2m:cin").getJSONObject(0).getInt("cs")>500){
                     Log.d(TAG, "oneM2MMessagesHandler: POSEST"+ contentCar.toString());
                     Intent logIntent = new Intent();
                     logIntent.setAction("OneM2M.BackwardLogging");
@@ -319,6 +320,9 @@ public class OneM2MBackwardCommunications extends IntentService {
                     logIntent.putExtra("experimentNumber", experimentNumber);
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
                 }
+                /*if(contentCar.getJSONObject("message")!=null){
+
+                }*/
                 noRTK = false;
                 Log.d(TAG, "oneM2MMessagesHandler: RTK");
                 Log.d(TAG, "oneM2MMessagesHandler: "+contentCar);
@@ -343,6 +347,7 @@ public class OneM2MBackwardCommunications extends IntentService {
                     logIntent.putExtra("experimentNumber", experimentNumber);
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
                 }
+
             }
                 /* String[] separated = contentCarString.split(",");
                 JSONObject carString =  new JSONObject();
