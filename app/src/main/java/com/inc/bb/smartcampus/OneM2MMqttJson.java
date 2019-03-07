@@ -278,8 +278,6 @@ public class OneM2MMqttJson {
         instance.put("message", message);
         Log.d("JSONDatamodel", instance.toString());
 
-        //String con = "{\"longitude\":" + lng + ",\"latitude\":" + lat + ",\"requestTime\":" + timeStamp +
-        //        ",\"UUID\":" + "\"" + uuid + "\"" + ",\"valid\":" + valid + ",\"id\":" + UserID +"}";
         contentinstancecontent.remove("rn");
         contentinstancecontent.put("con",instance.toString());
         m2mcntrequester.put("m2m:cin", contentinstancecontent);
