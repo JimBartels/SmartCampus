@@ -160,7 +160,7 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
             logIntent.setAction("OneM2M.ForwardLogging");
             logIntent.putExtra("messageType",LOGGING_HUAWEI_SENT_POSEST);
-            logIntent.putExtra("logmsg",conHuawei);
+            logIntent.putExtra("logmsg",huaweiMessage);
             logIntent.putExtra("uuid",uuid);
             logIntent.putExtra("generationTimeStamp",formattedDate);
             logIntent.putExtra("username",username);
