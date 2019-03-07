@@ -354,10 +354,6 @@ public class OneM2MForwardCommunications extends IntentService {
                                         CreateTaxiSubContainer().toString(),0,
                                 oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
                                 null, null);
-                        publishAndLogMessage(onem2m,VRU.
-                                        CreateUserContainer("PositionEstimate").
-                                        toString(),0, oneM2MVRUReqTopic,LOGGING_NOTNEEDED,
-                                null, null, null);
                     } catch (JSONException e) {
                         e.printStackTrace();}
                     catch (UnsupportedEncodingException e) {
@@ -511,7 +507,7 @@ public class OneM2MForwardCommunications extends IntentService {
         Envelope envelope = sensorisJson.getMessage().getEnvelope();
         envelope.setTransientVehicleID(Integer.parseInt(userName));
         envelope.setSubmitter("TUE");
-        envelope.setGeneratedTimeStampUTCMs(formattedDate);
+        envelope.setGeneratedTimeStampUTCMs(Math.toIntExact(formattedDate));
         envelope.setVersion("1.2");
         VehicleSpecificMetadata vehicleSpecificMetadata = envelope.getVehicleMetaData().getVehicleSpecificMetadata();
         vehicleSpecificMetadata.setUUID(uuid);
