@@ -323,6 +323,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         Log.d(TAG, "buildVRUCircle: " + userId);
         Log.d(TAG, "buildVRUCircle: " +VRUIdVector.contains(userId));
         if(VRUIdVector==null){
+            if(userId.equals("car")||userId.equals("3")||userId.equals("2")){
+                Circle circle2 = mMap.addCircle(new CircleOptions()
+                        .center(new LatLng(latitude, longitude))
+                        .radius(1)
+                        .strokeColor(Color.GREEN)
+                        .fillColor(Color.GREEN));
+                circle2.setTag(userId);
+                VRUCircleList.add(circle2);
+            }
             Log.d(TAG, "buildVRUCircle: null");
             VRUIdVector.add(userId);
             Circle circle = mMap.addCircle(new CircleOptions()
@@ -338,6 +347,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             for(Circle circle : VRUCircleList){
                 Log.d(TAG, "buildVRUCircle: Iterer1"+ circle.getTag());
                 if(circle.getTag()!=null && circle.getTag().equals(userId)){
+                    if(circle.getTag().equals("car")){
+                        circle.setFillColor(Color.GREEN);
+                        circle.setStrokeColor(Color.GREEN);
+                    }
+                    if(circle.getTag().equals("3")||circle.getTag().equals("2")){
+                        circle.setFillColor(Color.RED);
+                        circle.setStrokeColor(Color.RED);
+                    }
                     Log.d(TAG, "buildVRUCircle: ItererTRUE");
                     circle.setCenter(new LatLng(latitude,longitude));
                 }
@@ -346,7 +363,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         else {
             Log.d(TAG, "buildVRUCircle: else");
             VRUIdVector.add(userId);
-            if(userId.equals("2")||userId.equals("3")){
+            if(userId.equals("car")||userId.equals("3")||userId.equals("2")){
                 Circle circle = mMap.addCircle(new CircleOptions()
                         .center(new LatLng(latitude, longitude))
                         .radius(1)
@@ -419,16 +436,17 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 broadcastReceiverTaxiNotificationNeeded, intentFilter);
 
     }
+
     private void createBroadcastReceiverCarDataHuawei() {
         broadcastReceiverCarDataHuawei = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                //handleCarNotificationHuawei(intent.getBooleanExtra("isInRectangle",false));
+                handleCarNotificationHuawei(intent.getBooleanExtra("isInRectangle", false));
                 double[] rectangleLat = intent.getDoubleArrayExtra("rectangleLat");
                 double[] rectangleLon = intent.getDoubleArrayExtra("rectangleLon");
                 LatLng[] points = new LatLng[5];
-                for(int  i=0 ; i<rectangleLat.length;i++){
-                    points[i] = new LatLng(rectangleLat[i],rectangleLon[i]);
+                for (int i = 0; i < rectangleLat.length; i++) {
+                    points[i] = new LatLng(rectangleLat[i], rectangleLon[i]);
                 }
                 //Function that use the points in the rectangle for visualization of position and speed
                 speedPolygon(points);
@@ -581,11 +599,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             Log.e(TAG, "Can't find style. Error: ", e);
         }*/
 
-        if (checkPermissions()) {
-            mMap.setMyLocationEnabled(true);
-        } else while (!checkPermissions()) {
-            requestPermission();
-        }
         //mMap.setMyLocationEnabled(true);
         setupCarOverlay();
 
