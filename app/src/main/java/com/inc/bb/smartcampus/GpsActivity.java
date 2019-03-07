@@ -904,7 +904,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             mNotificationManager.createNotificationChannel(channel);
         }
         mBuilder = new NotificationCompat.Builder(getApplicationContext(), "default")
-                .setSmallIcon(R.mipmap.ic_launcher) // notification icon
+                .setSmallIcon(R.drawable.warning_sign) // notification icon
                 .setContentTitle(title) // title for notification
                 .setVibrate(vibrationPattern)
                 .setOngoing(true);// notification cannot be removed user
