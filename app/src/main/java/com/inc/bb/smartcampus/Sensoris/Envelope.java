@@ -14,7 +14,7 @@ public class Envelope {
     private Integer transientVehicleID;
     @SerializedName("generated_TimeStampUTC_ms")
     @Expose
-    private Integer generatedTimeStampUTCMs;
+    private Long generatedTimeStampUTCMs;
     @SerializedName("vehicleProfileID")
     @Expose
     private Integer vehicleProfileID;
@@ -41,11 +41,11 @@ public class Envelope {
         this.transientVehicleID = transientVehicleID;
     }
 
-    public Integer getGeneratedTimeStampUTCMs() {
+    public Long getGeneratedTimeStampUTCMs() {
         return generatedTimeStampUTCMs;
     }
 
-    public void setGeneratedTimeStampUTCMs(Integer generatedTimeStampUTCMs) {
+    public void setGeneratedTimeStampUTCMs(Long generatedTimeStampUTCMs) {
         this.generatedTimeStampUTCMs = generatedTimeStampUTCMs;
     }
 

@@ -174,7 +174,7 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
         Envelope envelope = sensorisJson.getMessage().getEnvelope();
         envelope.setTransientVehicleID(Integer.parseInt(username));
         envelope.setSubmitter("TUE");
-        envelope.setGeneratedTimeStampUTCMs(Math.toIntExact(formattedDate));
+        envelope.setGeneratedTimeStampUTCMs(formattedDate);
         envelope.setVersion("1.2");
         VehicleSpecificMetadata vehicleSpecificMetadata = envelope.getVehicleMetaData().getVehicleSpecificMetadata();
         vehicleSpecificMetadata.setUUID(uuid);
