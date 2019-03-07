@@ -907,7 +907,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .setSmallIcon(R.drawable.warning_sign) // notification icon
                 .setContentTitle(title) // title for notification
                 .setVibrate(vibrationPattern)
-                .setOngoing(true);// notification cannot be removed user
+                .setOngoing(false)
+                .setAutoCancel(true);// notification cannot be removed user
         Intent intent = new Intent(getApplicationContext(), GpsActivity.class);
         PendingIntent pi = PendingIntent.getActivity(this, 0, intent, intent.FLAG_ACTIVITY_SINGLE_TOP);
         //mBuilder.setContentIntent(intent);
@@ -928,7 +929,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         .setContentText(AUTONOMOUS_CAR_40M_NOTIFICATION)
                         .setStyle(new NotificationCompat.BigTextStyle())
                         .setContentTitle("Autonomous car warning")
-                        .setAutoCancel(false);
+                        .setAutoCancel(true);
                 mNotificationManager.notify(AUTONOMOUS_CAR_40M_NOTIFICATION_ID, mBuilder.build());
                 notificationArray[AUTONOMOUS_CAR_40M_NOTIFICATION_ID] = true;
                 carNotificationConstant = 1;

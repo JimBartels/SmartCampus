@@ -1,9 +1,10 @@
 package com.inc.bb.smartcampus;
 
+import android.util.Log;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.UUID;
 
 /**
  * Created by s163310 on 4/11/2018.
@@ -209,6 +210,84 @@ public class OneM2MMqttJson {
         m2mrequester.put("m2m:rqp",payload);
         return m2mrequester;
     }
+    public JSONObject CreatepositionEstimateContainer(Double lat, Double lng, long timeStamp, String UserID,
+                                                      boolean valid, String uuid, String SpeedGPS,
+                                                      float Accuracy, String manualBearing) throws JSONException{
+        payload.put("fr",oneM2MAeRi);
+        payload.put("key",oneM2MAePass);
+
+        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + UserID + "/PositionEstimate";
+        payload.put("to",topic);
+        payload.put("rqi",userId);
+        payload.put("op", CREATE_OP);
+        payload.put("ty", 4);
+
+         //position  and envelope
+        JSONObject positionEstimate = new JSONObject();
+        positionEstimate.put("headingAccuracy_deg", 0);
+        positionEstimate.put("headingDetectionType", "HEADING_RAW_GPS");
+        positionEstimate.put("positionType", "RAW_GPS");
+        positionEstimate.put("longitude_deg", lng);
+        positionEstimate.put("speed_mps", SpeedGPS);
+        positionEstimate.put("latitude_deg", lat);
+        positionEstimate.put("interpolatePoint", false);
+        positionEstimate.put("heading_deg", manualBearing);
+        positionEstimate.put("altitudeAccuracy", 0);
+        positionEstimate.put("altitude_m", 0);
+        positionEstimate.put("speedAccuracy_mps", 0);
+        positionEstimate.put("timeStampUTC_ms", timeStamp);
+        positionEstimate.put("horizontalAccuracy_m", Accuracy);
+        positionEstimate.put("currentLaneEstimation", 0);
+        positionEstimate.put("speedDetectionType", "SPEED_RAW_GPS");
+
+        JSONArray positionEstimateArray = new JSONArray();
+        positionEstimateArray.put(positionEstimate);
+
+        JSONObject vehicleSpecificMetadata = new JSONObject();
+        vehicleSpecificMetadata.put("value", "4");
+        vehicleSpecificMetadata.put("key", "SAE_LEVEL");
+
+        JSONObject vehicleMetaData = new JSONObject();
+        vehicleMetaData.put("secondaryFuelType", "FUEL_TYPE_GASOLINE");
+        vehicleMetaData.put("primaryFuelTankVolume", 0);
+        vehicleMetaData.put("primaryFuelType", "FUEL_TYPE_GASOLINE_L");
+        vehicleMetaData.put("vehicleTypeGenericEnum", "PASSENGER_CAR");
+        vehicleMetaData.put("vehicleReferencePointDeltaAboveGround", 0);
+        vehicleMetaData.put("vehicleSpecificMetaData", vehicleSpecificMetadata);
+        vehicleMetaData.put("vehicleWidth_m", 1.7);
+        vehicleMetaData.put("vehicleHeight_m", 0);
+        vehicleMetaData.put("secondaryFuelTankVolume", 0);
+        vehicleMetaData.put("vehicleLength", 4.4);
+
+        JSONObject envelope = new JSONObject();
+        envelope.put("submitter", "TUE");
+        envelope.put("transientVehicleID", UserID);
+        envelope.put("generated_TimeStampUTC_ms", timeStamp);
+        envelope.put("vehicleProfileID", 0);
+        envelope.put("vehicleMetaData", vehicleMetaData);
+        envelope.put("version", "1.2");
+
+        JSONObject path = new JSONObject();
+        path.put("positionEstimate",positionEstimateArray);
+
+        JSONObject message = new JSONObject();
+        message.put("path", path);
+        message.put("envelope", envelope);
+
+        JSONObject instance = new JSONObject();
+        instance.put("message", message);
+        Log.d("JSONDatamodel", instance.toString());
+
+        //String con = "{\"longitude\":" + lng + ",\"latitude\":" + lat + ",\"requestTime\":" + timeStamp +
+        //        ",\"UUID\":" + "\"" + uuid + "\"" + ",\"valid\":" + valid + ",\"id\":" + UserID +"}";
+        contentinstancecontent.remove("rn");
+        contentinstancecontent.put("con",instance.toString());
+        m2mcntrequester.put("m2m:cin", contentinstancecontent);
+        payload.put("pc", m2mcntrequester);
+        m2mrequester.put("m2m:rqp",payload);
+        return m2mrequester;
+    }
+
 
     public JSONObject UpdateContentInstanceCallTaxi(Double lat, Double lng, long timeStamp, String UserID, boolean requesting, String uuid) throws JSONException{
         payload.put("fr",oneM2MAeRi);

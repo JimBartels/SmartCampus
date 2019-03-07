@@ -8,22 +8,8 @@ import android.content.IntentFilter;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.TextView;
 
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.DetectedActivity;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResponse;
-import com.google.android.gms.location.SettingsClient;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -37,9 +23,6 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.UUID;
 
@@ -349,6 +332,11 @@ public class OneM2MForwardCommunications extends IntentService {
                                         CreateTaxiSubContainer().toString(),0,
                                 oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
                                 null, null);
+                        publishAndLogMessage(onem2m,VRU.
+                                        CreateUserContainer("PositionEstimate").toString(),0,
+                                oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
+                                null, null);
+
                     } catch (JSONException e) {
                         e.printStackTrace();}
                     catch (UnsupportedEncodingException e) {
@@ -515,12 +503,17 @@ public class OneM2MForwardCommunications extends IntentService {
         String contentCreate = contentCreateGPS.toString();
         String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc")
                 .getJSONObject("m2m:cin").getString("con");
+        String requester = VRUgps.CreatepositionEstimateContainer(latitude, longitude, 0,
+                userName, true, uuid, speedGPS, Accuracy, manualBearing).toString();
+        publishAndLogMessage(onem2m, requester, 0, oneM2MVRUReqTopic, LOGGING_GPS,
+                logmessage, formattedDate, uuid);
 
         publishAndLogMessage(onem2m, contentCreate, 0, oneM2MVRUReqTopic, LOGGING_GPS,
                 logmessage, formattedDate, uuid);
     }
 
-    // Publishes any message to to a topic on oneM2M defined by the input and logs this message.
+
+                // Publishes any message to to a topic on oneM2M defined by the input and logs this message.
     // This is used for publishing status, GPS and call taxi messages. Messagetype defines what kind
     // of messsage this is and if it needs to be logged or not.
     public void publishAndLogMessage(@NonNull MqttAndroidClient client, @NonNull final String msg,
