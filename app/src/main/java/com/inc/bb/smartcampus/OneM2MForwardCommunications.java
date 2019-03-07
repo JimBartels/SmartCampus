@@ -507,10 +507,13 @@ public class OneM2MForwardCommunications extends IntentService {
         String contentCreate = contentCreateGPS.toString();
         String logmessage = contentCreateGPS.getJSONObject("m2m:rqp").getJSONObject("pc")
                 .getJSONObject("m2m:cin").getString("con");
-        String requester = VRUgps.CreatepositionEstimateContainer(latitude, longitude, 0,
-                userName, true, uuid, speedGPS, Accuracy, manualBearing).toString();
-        publishAndLogMessage(onem2m, requester, 0, oneM2MVRUReqTopic, LOGGING_GPS_POSEST,
-                logmessage, formattedDate, uuid);
+        JSONObject requester = VRUgps.CreatepositionEstimateContainer(latitude, longitude, 0,
+                userName, true, uuid, speedGPS, Accuracy, manualBearing);
+
+        String posestlogging = requester.getJSONObject("m2m:rqp").getJSONObject("pc")
+                .getJSONObject("m2m:cin").getString("con");
+        publishAndLogMessage(onem2m, requester.toString(), 0, oneM2MVRUReqTopic, LOGGING_GPS_POSEST,
+                posestlogging, formattedDate, uuid);
 
         publishAndLogMessage(onem2m, contentCreate, 0, oneM2MVRUReqTopic, LOGGING_GPS,
                 logmessage, formattedDate, uuid);
