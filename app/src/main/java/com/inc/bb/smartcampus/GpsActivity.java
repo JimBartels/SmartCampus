@@ -904,13 +904,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             mNotificationManager.createNotificationChannel(channel);
         }
         mBuilder = new NotificationCompat.Builder(getApplicationContext(), "default")
-                .setSmallIcon(R.mipmap.ic_launcher) // notification icon
+                .setSmallIcon(R.drawable.warning_sign) // notification icon
                 .setContentTitle(title) // title for notification
                 .setVibrate(vibrationPattern)
                 .setOngoing(true);// notification cannot be removed user
         Intent intent = new Intent(getApplicationContext(), GpsActivity.class);
         PendingIntent pi = PendingIntent.getActivity(this, 0, intent, intent.FLAG_ACTIVITY_SINGLE_TOP);
         //mBuilder.setContentIntent(intent);
+        Log.d(TAG, "Carwarning notification Built");
 
     }
 
@@ -1006,12 +1007,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 carHeading = intent.getFloatExtra("carHeading", '0');
                 carLoc = new LatLng(carLat, carLon);
                 carOverlay.setPosition(carLoc);
-                Double deltaMeter = intent.getDoubleExtra("deltaMeter", 1000);
+                Double deltaMeters = intent.getDoubleExtra("deltaMeters", 1000);
+                Log.d(TAG,  "deltameters = " + Double.toString(deltaMeters));
                 if (carHeading < 0) {
                     carHeading = 360 + carHeading;
                 }
                 carOverlay.setBearing(carHeading);
-                handleCarNotification(deltaMeter);
+                handleCarNotification(deltaMeters);
             }
         };
         IntentFilter intentFilter = new IntentFilter();
@@ -1273,6 +1275,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         Double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         Double d = earth * c;
         return d;
+
     }
 
     // Calculates the bearing or direction of the user based upon two location points (the last one

@@ -2,8 +2,8 @@ package com.inc.bb.smartcampus;
 
 import android.app.IntentService;
 import android.content.BroadcastReceiver;
-import android.content.Intent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
@@ -23,9 +23,6 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.UnsupportedEncodingException;
-import java.util.UUID;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -423,7 +420,7 @@ public class OneM2MBackwardCommunications extends IntentService {
                 intentCar.putExtra("carHeading", carHeading);
                 intentCar.putExtra("carLat", carLat);
                 intentCar.putExtra("carLon", carLon);
-                intentCar.putExtra("deltaMeters", differenceInMeters(carLat, carLon, lastLon, lastLat));
+                intentCar.putExtra("deltaMeters", differenceInMeters(lastLat, lastLon, carLat, carLon));
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intentCar);
             }
         }
@@ -507,6 +504,7 @@ public class OneM2MBackwardCommunications extends IntentService {
         Double a = Math.sin(deltaPhilat / 2) * Math.sin(deltaPhilat / 2) + Math.cos(lastLat) * Math.cos(lat) * Math.sin(deltaPhiLon) * Math.sin(deltaPhiLon);
         Double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         Double d = earth * c;
+        Log.d(TAG, "lastlat: " + lastLat + ", " + lat + " lastlon: " + lastLon + ", " + lon);
         return d;
     }
 
