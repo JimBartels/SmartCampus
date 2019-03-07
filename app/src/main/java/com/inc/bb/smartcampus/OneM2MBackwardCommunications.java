@@ -267,6 +267,10 @@ public class OneM2MBackwardCommunications extends IntentService {
             String userId = contentUsers.getString("id");
             Double longitude = contentUsers.getDouble("lon");
             Double latitude = contentUsers.getDouble("lat");
+            /*if(contentUsers.getString("valid").equals("true")){
+                Log.d(TAG, "oneM2MMessagesHandler: ");
+                broadcastTaxiCaller(userId,contentUsers.getDouble("longitude"),contentUsers.getDouble("latitude"));
+            }*/
             Log.d(TAG, "oneM2MMessagesHandler: " +userId);
             broadcastUserData(userId,longitude,latitude);
             //TODO Logging?
@@ -449,6 +453,15 @@ public class OneM2MBackwardCommunications extends IntentService {
                 Log.d(TAG, "Latency:" + latencyFromGPSTillReceive);
             }
         }*/
+    }
+
+    private void broadcastTaxiCaller(String userId, Double longitude, Double latitude) {
+        Intent intent = new Intent();
+        intent.putExtra("TaxiCallID", userId);
+        intent.putExtra("longitude", longitude);
+        intent.putExtra("latitude", latitude);
+        intent.setAction("TAXICircle");
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     private void broadcastUserData(String userId, Double longitude, Double latitude) {

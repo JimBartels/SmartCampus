@@ -176,6 +176,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     //Cockpit VRU Data variables
     List<Circle> VRUCircleList = new ArrayList<Circle>();
     Vector<String> VRUIdVector =  new Vector<>();
+    boolean TAXIVruCircle = false;
+    Circle taxiCALLcircle;
 
     //Request code for the permissions intent (asking for some permission)
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -297,6 +299,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceiverCarDataHuawei();
         createBroadcastReceiverTaxiNotifcationNeeded();
         createBroadcastReceiverVRUData();
+        createBroadcastReceiverTaxiCaller();
     }
 
     private void createBroadcastReceiverVRUData() {
@@ -359,6 +362,21 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     .fillColor(Color.BLUE));
             circle.setTag(userId);
             VRUCircleList.add(circle);
+        }
+    }
+
+    private void buildTaxiCallCircle(String userId, Double latitude, Double longitude){
+        if(!TAXIVruCircle){
+            taxiCALLcircle = mMap.addCircle(new CircleOptions()
+                    .center(new LatLng(latitude, longitude))
+                    .radius(1)
+                    .strokeColor(Color.RED)
+                    .fillColor(Color.RED));
+            taxiCALLcircle.setTag(userId+"Taxi");
+            TAXIVruCircle = true;
+        }
+        if(TAXIVruCircle){
+            taxiCALLcircle.setCenter(new LatLng(latitude,longitude));
         }
     }
 
@@ -975,6 +993,22 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         intentFilter.addAction("OneM2MBackwardCommunications.RTK_CAR");
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 broadcastReceiverCarRTK, intentFilter);
+    }
+
+    private void createBroadcastReceiverTaxiCaller() {
+        BroadcastReceiver taxiCaller = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Double latitude = intent.getDoubleExtra("latitude",'0');
+                Double longitude = intent.getDoubleExtra("longitude",'0');
+                String taxiCallID = intent.getStringExtra("TaxiCallID");
+                buildTaxiCallCircle(null,latitude,longitude);
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("TAXICircle");
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                taxiCaller, intentFilter);
     }
 
     // Makes a tansformation of the speed into distance between points of the existing Huawei
