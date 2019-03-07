@@ -850,8 +850,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = getString(R.string.channel_name);
-            String description = getString(R.string.channel_description);
+            CharSequence name = "Car Coming Notification";
+            String description = "Car Coming to User Notification Channel";
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel(CAR_COMING_NOTIFICATION_CHANNEL_ID,
                     name, importance);
@@ -1333,6 +1333,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // Removes last location of Huawei geofencing rectangle and adds the new location of the
     // rectangle in the map, this function accepts array of LatLng points.
     private void geoFencingCarPolygon(LatLng[] points) {
+        Log.d(TAG, "geoFencingCarPolygon: " + points);
         if (geoFencingPolygon == null) {
             geoFencingPolygon = mMap.addPolygon(new PolygonOptions()
                     .add(points)

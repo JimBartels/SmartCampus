@@ -38,6 +38,9 @@ public class okHttpPost extends AsyncTask<String, Void, Bundle> {
     @Override
     protected Bundle doInBackground(String... strings) {
         try{
+            Log.d(TAG, "doInBackground: " + strings[0]);
+            Log.d(TAG, "doInBackground: " + strings[1]);
+            Log.d(TAG, "doInBackground: " + strings[2]);
             String userId = strings[2];
             boolean j=false;
             Bundle returnMessage = new Bundle();

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.provider.Contacts;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -62,7 +63,7 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        username = intent.getStringExtra("userName");
+        username = intent.getStringExtra("username");
         createBroadcastReceiverLayoutResponse();
         createBroadcastReceiverLocations();
     }
@@ -169,6 +170,8 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
             UIintent.putExtra("rectangleLat",rectangleLat);
             UIintent.putExtra("rectangleLon",rectangleLon);
             UIintent.putExtra("isInRectangle",output.getBoolean("isInRectangle"));
+            UIintent.setAction("HuaweiCommunications.CAR_DATA");
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(UIintent);
         }
         if(output!=null && output.getString("error")!=null) {
             Log.d(TAG, "processFinish: " + output.getString("error"));
@@ -178,6 +181,7 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     // Executes an OkHTTPpost asynctask to send a json to a certain URL that is indicated by the url
     // and json. results of this is handled in process finish (used for Huawei communication).
     void okHTTPPost(String url, String json) {
+        Log.d(TAG, "okHTTPPost: " + url + ", " + json);
         okHttpPost okHttpPost = new okHttpPost(this);
         String[] string = new String[3];
         string[0]=url;
