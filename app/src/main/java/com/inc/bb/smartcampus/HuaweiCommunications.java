@@ -11,20 +11,11 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.gson.Gson;
-import com.inc.bb.smartcampus.Sensoris.Envelope;
-import com.inc.bb.smartcampus.Sensoris.PositionEstimate;
-import com.inc.bb.smartcampus.Sensoris.SensorisJson;
-import com.inc.bb.smartcampus.Sensoris.VehicleMetaData;
-import com.inc.bb.smartcampus.Sensoris.VehicleSpecificMetadata;
 
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 
 /**
@@ -65,10 +56,6 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     boolean isLoggingSwitched = false;
     String experimentNumber;
     String runNumber;
-    private Timer huaweiTimer;
-    private TimerTask huaweiTimerTask;
-    private Handler mTimerHandler = new Handler();
-
 
     public HuaweiCommunications() {
         super("HuaweiCommunications");
@@ -77,9 +64,22 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     @Override
     protected void onHandleIntent(Intent intent) {
         username = intent.getStringExtra("username");
-        huaweiTimer();
+        createTimerDummy();
         createBroadcastReceiverLayoutResponse();
         //createBroadcastReceiverLocations();
+    }
+
+    private void createTimerDummy() {
+        final Handler handler = new Handler();
+        final int delay = 1000; //milliseconds
+
+        handler.postDelayed(new Runnable(){
+            public void run(){
+                //do something
+                publishGpsData(0.0000,0.0000,null,null,null,null,UUID.randomUUID().toString());
+                handler.postDelayed(this, delay);
+            }
+        }, delay);
     }
 
     private void createBroadcastReceiverLayoutResponse() {
@@ -109,39 +109,6 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
-    private void huaweiTimer(){
-        startTimer();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-    }
-
-    private void stopTimer(){
-        if(huaweiTimer != null){
-            huaweiTimer.cancel();
-            huaweiTimer.purge();
-        }
-    }
-
-    private void startTimer(){
-        Log.d(TAG, "startTimer: ");
-        huaweiTimer = new Timer();
-        huaweiTimerTask = new TimerTask() {
-            public void run() {
-                mTimerHandler.post(new Runnable() {
-                    public void run(){
-                        Log.d(TAG, "run: ");
-                        publishGpsData(0.00000,0.00000, (float) 0.0000, (long) 0,
-                                "0","0","0");
-                    }
-                });
-            }
-        };
-        huaweiTimer.scheduleAtFixedRate(huaweiTimerTask, 1, 1000);
-    }
-
     private void createBroadcastReceiverLocations() {
         locationsBroadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -169,36 +136,12 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     // speed etc from last found location of the Google mfusedlocationclient.
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy,
                                 Long formattedDate, String speedGPS, String manualBearing, String uuid) {
-
-        SensorisJson sensorisJson = new SensorisJson();
-        Envelope envelope = sensorisJson.getMessage().getEnvelope();
-        envelope.setTransientVehicleID(Integer.parseInt(username));
-        envelope.setSubmitter("TUE");
-        envelope.setGeneratedTimeStampUTCMs(Math.toIntExact(formattedDate));
-        envelope.setVersion("1.2");
-        VehicleSpecificMetadata vehicleSpecificMetadata = envelope.getVehicleMetaData().getVehicleSpecificMetadata();
-        vehicleSpecificMetadata.setUUID(uuid);
-        PositionEstimate positionEstimate = sensorisJson.getMessage().getPath().getPositionEstimate().get(0);
-        positionEstimate.setHeadingDeg(Double.parseDouble(manualBearing));
-        positionEstimate.setPositionType("RAW_GPS");
-        positionEstimate.setLongitudeDeg(longitude);
-        positionEstimate.setLatitudeDeg(latitude);
-        positionEstimate.setSpeedMps(Double.parseDouble(speedGPS));
-        positionEstimate.setTimeStampUTCMs(formattedDate);
-        positionEstimate.setSpeedDetectionType("RAW_GPS");
-        Gson gson = new Gson();
-        String content = gson.toJson(sensorisJson).toString();
-
-
-
         String formattedDateString = "UTC" + Long.toString(formattedDate);
-
-        String conHuawei = "{\"type\":5,\"id\":" + "dummy" + ",\"timestampUtc\":" +
+        String conHuawei = "{\"type\":5,\"id\":" + username + ",\"timestampUtc\":" +
                 formattedDateString + ",\"lon\":" + longitude + ",\"lat\":"+ latitude +
                 ",\"speed\":"+ speedGPS + ",\"heading\":"+manualBearing+ ",\"accuracy\":"+
                 Accuracy+ ",\"UUID\": " + "\"" + uuid + "\"" + "}";
         okHTTPPost(huaweiUrl,conHuawei);
-        createPositionEstimateGps();
         if(isLoggingSwitched){
             Intent logIntent = new Intent();
             logIntent.setAction("OneM2M.ForwardLogging");
@@ -211,11 +154,6 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
             logIntent.putExtra("experimentNumber",experimentNumber);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
         }
-    }
-
-    private void createPositionEstimateGps() {
-
-
     }
 
     // Function called when asynctasks are finished. In this case handles the response received by
@@ -257,8 +195,6 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     // Executes an OkHTTPpost asynctask to send a json to a certain URL that is indicated by the url
     // and json. results of this is handled in process finish (used for Huawei communication).
     void okHTTPPost(String url, String json) {
-        Log.d(TAG, "okHTTPPost: ");
-        Log.d(TAG, "okHTTPPost: " + json);
         okHttpPost okHttpPost = new okHttpPost(this);
         String[] string = new String[3];
         string[0]=url;

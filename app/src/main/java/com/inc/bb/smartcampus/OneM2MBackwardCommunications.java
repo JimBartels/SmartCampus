@@ -303,15 +303,15 @@ public class OneM2MBackwardCommunications extends IntentService {
                 String[] carLatseparated = latitudeCar.split(":");
                 carLat = Double.parseDouble(carLatseparated[1]);
                 newData = true;}*/
-            if(comparator.equals("CREATE:flowradar/flowradar_car/flowradar_3") || comparator.equals("CREATE:flowradar/flowradar_car/flowradar_2") || comparator.equals("CREATE:flowradar/flowradar_car")){
+            if(comparator.equals("CREATE:flowradar/flowradar_car/flowradar_3") || comparator.equals("CREATE:flowradar/flowradar_car/flowradar_2")){
                 JSONObject contentFlowRadar = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
                 Log.d(TAG, "oneM2MMessagesHandler: Flowradar");
                 String flowRadarId = contentFlowRadar.getString("id");
-                Log.d(TAG, "oneM2MMessagesHandler: Flowradar" +flowRadarId);
                 Double longitude = contentFlowRadar.getDouble("lon");
                 Double latitude = contentFlowRadar.getDouble("lat");
                 Double heading = contentFlowRadar.getDouble("heading");
+                Double uuid = contentFlowRadar.getDouble("uuid");
                 //TODO logging??
                 broadcastUserData(flowRadarId,longitude,latitude);
                 Log.d(TAG, "oneM2MMessagesHandler: "+contentFlowRadar);
