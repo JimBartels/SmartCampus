@@ -10,11 +10,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gms.location.DetectedActivity;
-import com.google.gson.Gson;
-import com.inc.bb.smartcampus.Sensoris.Envelope;
-import com.inc.bb.smartcampus.Sensoris.PositionEstimate;
-import com.inc.bb.smartcampus.Sensoris.SensorisJson;
-import com.inc.bb.smartcampus.Sensoris.VehicleSpecificMetadata;
+
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;

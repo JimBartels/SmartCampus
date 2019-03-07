@@ -2,21 +2,15 @@ package com.inc.bb.smartcampus;
 
 import android.app.IntentService;
 import android.content.BroadcastReceiver;
-import android.content.Intent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.provider.Contacts;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.google.android.gms.maps.model.LatLng;
-
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.JSONException;
-
-import java.io.UnsupportedEncodingException;
-import java.util.UUID;
+import org.json.JSONObject;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -56,6 +50,13 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     boolean isLoggingSwitched = false;
     String experimentNumber;
     String runNumber;
+
+    //variable to use new dataformat
+    OneM2MMqttJson VRUgps;
+    String userName;
+    String oneM2MVRUAeRi = "Csmartcampus";
+    String oneM2MVRUAeRn = "aeSmartCampus1";
+    String oneM2MVRUAePass = "smartcampuspassword";
 
     public HuaweiCommunications() {
         super("HuaweiCommunications");
@@ -107,7 +108,11 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
                 Speed = intent.getFloatExtra("speed",'0');
                 Long timeStamp = intent.getLongExtra("timeStamp",0);
                 String uuid = intent.getStringExtra("uuid");
-                publishGpsData(Latitude,Longitude,Accuracy,timeStamp,String.valueOf(Speed),String.valueOf(Heading),uuid);
+                try {
+                    publishGpsData(Latitude,Longitude,Accuracy,timeStamp,String.valueOf(Speed),String.valueOf(Heading),uuid);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 Log.d(TAG, "onReceive: ");
             }
         };
@@ -121,13 +126,25 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     // sending and logging of the GPS information to OneM2M. The inputs concern the found lat,lon
     // speed etc from last found location of the Google mfusedlocationclient.
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy,
-                                Long formattedDate, String speedGPS, String manualBearing, String uuid) {
+                                Long formattedDate, String speedGPS, String manualBearing, String uuid) throws JSONException {
         String formattedDateString = "UTC" + Long.toString(formattedDate);
         String conHuawei = "{\"type\":5,\"id\":" + username + ",\"timestampUtc\":" +
                 formattedDateString + ",\"lon\":" + longitude + ",\"lat\":"+ latitude +
                 ",\"speed\":"+ speedGPS + ",\"heading\":"+manualBearing+ ",\"accuracy\":"+
                 Accuracy+ ",\"UUID\": " + "\"" + uuid + "\"" + "}";
+
+        VRUgps = new OneM2MMqttJson(oneM2MVRUAeRi,oneM2MVRUAePass,oneM2MVRUAeRn,userName);
+        JSONObject requester = VRUgps.CreatepositionEstimateContainer(latitude, longitude, 0,
+                userName, true, uuid, speedGPS, Accuracy, manualBearing);
+
+        String huaweiMessage = requester.getJSONObject("m2m:rqp").getJSONObject("pc")
+                .getJSONObject("m2m:cin").getString("con");
+
+
+        okHTTPPost(huaweiUrl, huaweiMessage);
         okHTTPPost(huaweiUrl,conHuawei);
+
+
         if(isLoggingSwitched){
             Intent logIntent = new Intent();
             logIntent.setAction("OneM2M.ForwardLogging");
