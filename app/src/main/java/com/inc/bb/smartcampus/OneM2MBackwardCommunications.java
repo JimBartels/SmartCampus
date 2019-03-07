@@ -302,6 +302,25 @@ public class OneM2MBackwardCommunications extends IntentService {
             if (comparator.equals("CREATE:prius/GPS")) {
                 JSONObject contentCar = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
+
+                if(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
+                        .getJSONArray("m2m:cin").getJSONObject(0).getInt("cs")>500){
+                    Log.d(TAG, "oneM2MMessagesHandler: POSEST"+ contentCar.toString());
+                    Intent logIntent = new Intent();
+                    logIntent.setAction("OneM2M.BackwardLogging");
+                    Log.d(TAG, "oneM2MMessagesHandler: LoggingRTK");
+                    logIntent.putExtra("messageType", LOGGING_VEHICLE_POSEST);
+                    logIntent.putExtra("logmsg", contentCar.toString());
+                    String uuid = contentCar.getJSONObject("message")
+                            .getJSONObject("envelope")
+                            .getJSONObject("vehicleMetaData")
+                            .getJSONObject("vehicleSpecificMetaData").getString("UUID");
+                    logIntent.putExtra("uuid", uuid);
+                    logIntent.putExtra("username", userName);
+                    logIntent.putExtra("runNumber", runNumber);
+                    logIntent.putExtra("experimentNumber", experimentNumber);
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
+                }
                 noRTK = false;
                 Log.d(TAG, "oneM2MMessagesHandler: RTK");
                 Log.d(TAG, "oneM2MMessagesHandler: "+contentCar);
@@ -326,6 +345,7 @@ public class OneM2MBackwardCommunications extends IntentService {
                     logIntent.putExtra("experimentNumber", experimentNumber);
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
                 }
+
             }
                 /* String[] separated = contentCarString.split(",");
                 JSONObject carString =  new JSONObject();
