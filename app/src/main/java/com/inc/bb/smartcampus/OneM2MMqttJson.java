@@ -249,10 +249,10 @@ public class OneM2MMqttJson {
         vehicleSpecificMetadata.put("key", "SAE_LEVEL");
 
         JSONObject vehicleMetaData = new JSONObject();
-        vehicleMetaData.put("secondaryFuelType", "FUEL_TYPE_GASOLINE");
+        vehicleMetaData.put("secondaryFuelType", 0);
         vehicleMetaData.put("primaryFuelTankVolume", 0);
-        vehicleMetaData.put("primaryFuelType", "FUEL_TYPE_GASOLINE_L");
-        vehicleMetaData.put("vehicleTypeGenericEnum", "PASSENGER_CAR");
+        vehicleMetaData.put("primaryFuelType", 0);
+        vehicleMetaData.put("vehicleTypeGenericEnum", "VRU");
         vehicleMetaData.put("vehicleReferencePointDeltaAboveGround", 0);
         vehicleMetaData.put("vehicleSpecificMetaData", vehicleSpecificMetadata);
         vehicleMetaData.put("vehicleWidth_m", 1.7);
