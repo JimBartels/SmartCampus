@@ -900,7 +900,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             int incr = PROGRESS_CURRENT;
                             int deltameter = 100000;
                             // Do the "lengthy" operation 20 times
-                            for (incr = 0; incr <= 100; incr = 100 - deltameter*10/100) {
+                            for (incr = 0; incr <= 100; incr = 100 - deltameter/10) {
 
                                 String deltametersstring = OneM2MBackwardCommunications.mMyAppsBundle
                                                     .getString("deltameters");
@@ -911,15 +911,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                     // current completion percentage, and "determinate"
                                     // state
                                     builder.setProgress(100, incr, false);
-                                    // Displays the progress bar for the first time.
+                                    // Displays the progress bar for the first time. TODO: check if 0 --> TAXI_COMING_NOTIFICATION_ID is required
                                     notificationManager.notify(0, builder.build());
                                     Double deltameterdouble = Double.parseDouble(deltametersstring);
                                     deltameter = deltameterdouble.intValue();
                                 }
 
 
-                                // Sleeps the thread, simulating an operation
-                                // that takes time
+                                // Sleeps the thread, simulating an operation that takes time TODO: remove when everything works
                                 try {
                                     // Sleep for 5 seconds
                                     Thread.sleep(5*1000);
