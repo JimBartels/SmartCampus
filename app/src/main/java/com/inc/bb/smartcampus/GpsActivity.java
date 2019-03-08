@@ -35,7 +35,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -52,7 +51,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -72,8 +70,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.Vector;
 
 
@@ -263,7 +259,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         //startTrackingUserActivity();
         startPilotLoggingService();
         startHuaweiCommunications();
-        addHeatMap();
+        //addHeatMap();
         startLocationService();
     }
 
@@ -814,7 +810,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         };
         mMap.setOnGroundOverlayClickListener(listener);
-        addHeatMap();
+        //addHeatMap();
 
     }
     
@@ -862,8 +858,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = getString(R.string.channel_name);
-            String description = getString(R.string.channel_description);
+            CharSequence name = "name";
+            String description = "description";
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel(CAR_COMING_NOTIFICATION_CHANNEL_ID,
                     name, importance);
@@ -1209,7 +1205,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onStart() {
         super.onStart();
-        addHeatMap();
+        //addHeatMap();
         createNotificationChannel();
     }
 
@@ -1223,7 +1219,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onResume() {
         super.onResume();
-        addHeatMap();
+        //addHeatMap();
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
         if (checkPermissions()) {
         } else if (!checkPermissions()) {
@@ -1497,7 +1493,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 //        return list;
 //    }
 
-    private void addHeatMap() {
+  /*  private void addHeatMap() {
         Timer timer = new Timer();
         //Set the schedule function
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -1526,7 +1522,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         HeatmapTileProvider provider = new HeatmapTileProvider.Builder().data(list).build();
         // Add a tile overlay to the map, using the heat map tile provider.
         mMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
-    }
+    }*/
 
     private ArrayList<LatLng> readItems(int resource) throws JSONException {
         ArrayList<LatLng> list = new ArrayList<LatLng>();
