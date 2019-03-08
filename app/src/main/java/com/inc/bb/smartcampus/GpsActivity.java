@@ -313,7 +313,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         broadcastReceiverMotionplanningPath = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                buildTaxiUnderwayNotification();
+                Double deltaMeters = intent.getDoubleExtra("deltaMeters", 10000);
+                Log.d(TAG, "onReceive: deltameters for taxinot = " + deltaMeters);
+                buildTaxiUnderwayNotification(deltaMeters);
                 double[] MPlat = intent.getDoubleArrayExtra("MPlat");
                 double[] MPlon = intent.getDoubleArrayExtra("MPlon");
                 LatLng[] points = new LatLng[MPlat.length];
@@ -871,10 +873,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
     //Creates notification when the taxi starts to go to your location
-    private void buildTaxiUnderwayNotification() {
+    private void buildTaxiUnderwayNotification(Double deltaMeters) {
         if (taxiNotificationNeeded) {
-            mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH);
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this,
+            final NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+            final NotificationCompat.Builder builder = new NotificationCompat.Builder(this,
                     CAR_COMING_NOTIFICATION_CHANNEL_ID)
                     .setPriority(NotificationManager.IMPORTANCE_HIGH)
                     .setContentText("")
@@ -883,11 +885,47 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     .setOngoing(false)
                     .setSmallIcon(R.drawable.navigationbarcaricon)
                     .setAutoCancel(true);
-            mNotificationManager.notify(TAXI_COMING_NOTIFICATION_ID, mBuilder.build());
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
+            // Issue the initial notification with zero progress
+            int PROGRESS_MAX = 100;
+            final int PROGRESS_CURRENT = 0;
+            builder.setProgress(PROGRESS_MAX, PROGRESS_CURRENT, false);
+
+            // Start a lengthy operation in a background thread
+            new Thread(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            int incr = PROGRESS_CURRENT;
+                            // Do the "lengthy" operation 20 times
+                            for (incr = 0; incr <= 100; incr +=5) {
+                                // Sets the progress indicator to a max value, the
+                                // current completion percentage, and "determinate"
+                                // state
+                                builder.setProgress(100, incr, false);
+                                // Displays the progress bar for the first time.
+                                notificationManager.notify(0, builder.build());
+                                // Sleeps the thread, simulating an operation
+                                // that takes time
+                                try {
+                                    // Sleep for 5 seconds
+                                    Thread.sleep(5*1000);
+                                } catch (InterruptedException e) {
+                                    Log.d(TAG, "sleep failure");
+                                }
+                            }
+                            // When the loop is finished, updates the notification
+                            builder.setContentTitle("Vehicle Arrived")
+                                    // Removes the progress bar
+                                    .setProgress(0,0,false)
+                                    .setContentText("Please go the vehicle");
+                            notificationManager.notify(TAXI_COMING_NOTIFICATION_ID, builder.build());
+                        }
+                    }
+            // Starts the thread by calling the run() method in its Runnable
+            ).start();
 
             // notificationId is a unique int for each notification that you must define
-            notificationManager.notify(TAXI_COMING_NOTIFICATION_ID, builder.build());
             notificationArray[TAXI_COMING_NOTIFICATION_ID] = true;
             Log.d(TAG, "TaxiUnderway notification Built");
             taxiNotificationNeeded = false;
