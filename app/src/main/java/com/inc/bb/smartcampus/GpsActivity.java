@@ -36,6 +36,7 @@ import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -582,6 +583,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
         mMap.setMyLocationEnabled(true);
         setupCarOverlay();
+
+        //open maps on Eindhoven TU/e and zoom in
+        LatLng Eindhoven = new LatLng(51.447741, 5.489754);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(Eindhoven));
+        mMap.animateCamera( CameraUpdateFactory.zoomTo( 15.0f ) );
 
         //Add buildings to map
         LatLngBounds flux = new LatLngBounds(
