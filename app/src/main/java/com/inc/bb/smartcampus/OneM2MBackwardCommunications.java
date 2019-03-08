@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -43,6 +44,9 @@ public class OneM2MBackwardCommunications extends IntentService {
     Float carSpeed = null;
     Long lastRTK = null;
     boolean noRTK = true;
+
+    //method to store deltameters
+    public static Bundle mMyAppsBundle = new Bundle();
 
     //Message types for logging (what kind of log is needed)
     private final static int LOGGING_NOTNEEDED = 0;
@@ -527,6 +531,7 @@ public class OneM2MBackwardCommunications extends IntentService {
         Double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         Double d = earth * c;
         Log.d(TAG, "lastlat: " + lastLat + ", " + lat + " lastlon: " + lastLon + ", " + lon);
+        OneM2MBackwardCommunications.mMyAppsBundle.putString("deltameters", d.toString());
         return d;
     }
 

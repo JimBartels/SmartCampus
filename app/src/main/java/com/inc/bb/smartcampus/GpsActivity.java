@@ -117,6 +117,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     BroadcastReceiver broadcastReceiverLayoutChecker;
     BroadcastReceiver broadcastReceiverCarDataHuawei;
     BroadcastReceiver broadcastReceiverMotionplanningPath;
+    BroadcastReceiver taxiNotification;
 
     //Notification global variables
     NotificationManager mNotificationManager;
@@ -873,7 +874,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
     //Creates notification when the taxi starts to go to your location
-    private void buildTaxiUnderwayNotification(Double deltaMeters) {
+    private void buildTaxiUnderwayNotification(final Double deltaMeters) {
         if (taxiNotificationNeeded) {
             final NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
             final NotificationCompat.Builder builder = new NotificationCompat.Builder(this,
@@ -897,14 +898,26 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         @Override
                         public void run() {
                             int incr = PROGRESS_CURRENT;
+                            int deltameter = 100000;
                             // Do the "lengthy" operation 20 times
-                            for (incr = 0; incr <= 100; incr +=5) {
-                                // Sets the progress indicator to a max value, the
-                                // current completion percentage, and "determinate"
-                                // state
-                                builder.setProgress(100, incr, false);
-                                // Displays the progress bar for the first time.
-                                notificationManager.notify(0, builder.build());
+                            for (incr = 0; incr <= 100; incr = 100 - deltameter*10/100) {
+
+                                String deltametersstring = OneM2MBackwardCommunications.mMyAppsBundle
+                                                    .getString("deltameters");
+                                Log.d(TAG, "run: " + deltametersstring);
+
+                                if(deltametersstring != null) {
+                                    // Sets the progress indicator to a max value, the
+                                    // current completion percentage, and "determinate"
+                                    // state
+                                    builder.setProgress(100, incr, false);
+                                    // Displays the progress bar for the first time.
+                                    notificationManager.notify(0, builder.build());
+                                    Double deltameterdouble = Double.parseDouble(deltametersstring);
+                                    deltameter = deltameterdouble.intValue();
+                                }
+
+
                                 // Sleeps the thread, simulating an operation
                                 // that takes time
                                 try {
@@ -1064,8 +1077,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("OneM2MBackwardCommunications.RTK_CAR");
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                broadcastReceiverCarRTK, intentFilter);
-    }
+            broadcastReceiverCarRTK, intentFilter);
+}
 
     // Makes a tansformation of the speed into distance between points of the existing Huawei
     // rectangle, then fills this up depending on speed with a certain color. Takes the points of
