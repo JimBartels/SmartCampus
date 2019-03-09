@@ -173,14 +173,14 @@ public class OneM2MForwardCommunications extends IntentService {
         try {
             callTaxi = VRUgps.CreateContentInstanceCallTaxi(0.000000, 0.000000, System.currentTimeMillis(),
                     userName,false,uuid);
+            String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
+                    getJSONObject("m2m:cin").getString("con");
+            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
+                    LOGGING_TAXI_SENT,data, System.currentTimeMillis(),uuid);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        try {
-            publishAndLogMessage(onem2m,callTaxi.toString(),0,oneM2MVRUReqTopic,
-                    LOGGING_TAXI_SENT,callTaxi.toString(), System.currentTimeMillis(),uuid);
-
-        } catch (MqttException e) {
+        catch (MqttException e) {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
