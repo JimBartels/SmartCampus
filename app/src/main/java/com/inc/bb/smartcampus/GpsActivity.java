@@ -899,21 +899,30 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         public void run() {
                             int incr = PROGRESS_CURRENT;
                             int deltameter = 100000;
+                            String deltametersinitialstring = OneM2MBackwardCommunications.mMyAppsBundle
+                                    .getString("deltametersinitial");
+                            //calculate initial distance from car
+                            Double deltameterinitialdoubble = Double.parseDouble(deltametersinitialstring);
+                            int deltameterinitial = deltameterinitialdoubble.intValue();
                             // Do the "lengthy" operation 20 times
-                            for (incr = 0; incr <= 100; incr = 120 - deltameter/10) {
-
+                            for (incr = 0; incr <= 85; incr = (100 - (deltameter*100/deltameterinitial))) {
                                 String deltametersstring = OneM2MBackwardCommunications.mMyAppsBundle
                                                     .getString("deltameters");
-                                Log.d(TAG, "run: " + deltametersstring);
 
-                                if(deltametersstring != null) {
+                                if(deltametersstring != null && deltametersinitialstring != null) {
+                                    Log.d(TAG, "run: deltameterinitial " + deltameterinitial);
+                                    Log.d(TAG, "run: deltameter " + deltameter);
+                                    Log.d(TAG, "run: current progress " + incr);
+                                    Log.d(TAG, "run: divide" + deltameter*100/deltameterinitial);
+
                                     // Sets the progress indicator to a max value, the
                                     // current completion percentage, and "determinate"
                                     // state
                                     builder.setProgress(100, incr, false)
                                             .setContentText("Distance to car: " + deltametersstring);
-                                    // Displays the progress bar for the first time. 
+                                    // Displays the progress bar for the first time.
                                     notificationManager.notify(TAXI_COMING_NOTIFICATION_ID, builder.build());
+                                    //obtain actual distance with car
                                     Double deltameterdouble = Double.parseDouble(deltametersstring);
                                     deltameter = deltameterdouble.intValue();
                                 }

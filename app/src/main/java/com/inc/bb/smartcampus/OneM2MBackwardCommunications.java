@@ -372,6 +372,11 @@ public class OneM2MBackwardCommunications extends IntentService {
                 JSONObject contentMP = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
 
+                //obtain initial deltameters to display progressbar properly
+                //TODO: make sure this is not overwritten when another user requests taxi
+                Double deltametersinitital = differenceInMeters(lastLat, lastLon, carLat, carLon);
+                String deltametersinitialstring = deltametersinitital.toString();
+                OneM2MBackwardCommunications.mMyAppsBundle.putString("deltametersinitial", deltametersinitialstring);
                 if (contentMP.getString("mobileId").equals(userName)) {
                     Log.d(TAG, "oneM2MMessagesHandler: motionplanning2");
                     sendBroadcastCancelRequestTaxi();
