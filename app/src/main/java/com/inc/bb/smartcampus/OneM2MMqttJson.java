@@ -255,10 +255,10 @@ public class OneM2MMqttJson {
         vehicleMetaData.put("vehicleTypeGenericEnum", "VRU");
         vehicleMetaData.put("vehicleReferencePointDeltaAboveGround", 0);
         vehicleMetaData.put("vehicleSpecificMetaData", vehicleSpecificMetadata);
-        vehicleMetaData.put("vehicleWidth_m", 1.7);
+        vehicleMetaData.put("vehicleWidth_m", 0);
         vehicleMetaData.put("vehicleHeight_m", 0);
         vehicleMetaData.put("secondaryFuelTankVolume", 0);
-        vehicleMetaData.put("vehicleLength", 4.4);
+        vehicleMetaData.put("vehicleLength", 0);
 
         JSONObject envelope = new JSONObject();
         envelope.put("submitter", "TUE");
