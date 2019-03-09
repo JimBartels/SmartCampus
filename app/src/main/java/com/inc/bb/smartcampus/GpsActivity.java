@@ -901,10 +901,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             int deltameter = 100000;
                             String deltametersinitialstring = OneM2MBackwardCommunications.mMyAppsBundle
                                     .getString("deltametersinitial");
+
                             //calculate initial distance from car
                             Double deltameterinitialdoubble = Double.parseDouble(deltametersinitialstring);
                             int deltameterinitial = deltameterinitialdoubble.intValue();
-                            // Do the "lengthy" operation 20 times
+
+                            // Do the "lengthy" operation
                             for (incr = 0; incr <= 85; incr = (100 - (deltameter*100/deltameterinitial))) {
                                 String deltametersstring = OneM2MBackwardCommunications.mMyAppsBundle
                                                     .getString("deltameters");
@@ -913,7 +915,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                     Log.d(TAG, "run: deltameterinitial " + deltameterinitial);
                                     Log.d(TAG, "run: deltameter " + deltameter);
                                     Log.d(TAG, "run: current progress " + incr);
-                                    Log.d(TAG, "run: divide" + deltameter*100/deltameterinitial);
 
                                     // Sets the progress indicator to a max value, the
                                     // current completion percentage, and "determinate"
@@ -929,6 +930,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
 
                                 // Sleeps the thread, simulating an operation that takes time TODO: remove when everything works
+                                // Prevents the app from crashing atm
                                 try {
                                     // Sleep for 5 seconds
                                     Thread.sleep(5*1000);
@@ -952,7 +954,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             Log.d(TAG, "TaxiUnderway notification Built");
             taxiNotificationNeeded = false;
 
-            //TODO: Add progress bar based on ETA
         }
     }
 
