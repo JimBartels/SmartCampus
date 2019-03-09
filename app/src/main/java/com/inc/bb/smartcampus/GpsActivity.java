@@ -57,19 +57,14 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Vector;
 
 
@@ -259,7 +254,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         //startTrackingUserActivity();
         startPilotLoggingService();
         startHuaweiCommunications();
-        //addHeatMap();
+      //  addHeatMap();
         startLocationService();
     }
 
@@ -810,7 +805,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         };
         mMap.setOnGroundOverlayClickListener(listener);
-        //addHeatMap();
+       // addHeatMap();
 
     }
     
@@ -1205,7 +1200,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     @Override
     protected void onStart() {
         super.onStart();
-        //addHeatMap();
+       // addHeatMap();
         createNotificationChannel();
     }
 
@@ -1493,7 +1488,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 //        return list;
 //    }
 
-  /*  private void addHeatMap() {
+       /*  private void addHeatMap() {
         Timer timer = new Timer();
         //Set the schedule function
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -1522,7 +1517,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         HeatmapTileProvider provider = new HeatmapTileProvider.Builder().data(list).build();
         // Add a tile overlay to the map, using the heat map tile provider.
         mMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
-    }*/
+    }
 
     private ArrayList<LatLng> readItems(int resource) throws JSONException {
         ArrayList<LatLng> list = new ArrayList<LatLng>();
@@ -1538,6 +1533,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
 
         return list;
-    }
+    }*/
 
 }
