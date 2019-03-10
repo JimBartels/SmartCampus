@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.os.CountDownTimer;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -341,7 +342,7 @@ public class OneM2MBackwardCommunications extends IntentService {
 
                 if (contentMP.getString("mobileId").equals(userName)) {
                     Log.d(TAG, "oneM2MMessagesHandler: motionplanning2");
-                    sendBroadcastCancelRequestTaxi();
+                    cancelRequestTimer();
                     JSONArray jsonArray = contentMP.getJSONArray("coords");
                     double[] pathLat = new double[jsonArray.length()];
                     double[] pathLon = new double[jsonArray.length()];
@@ -457,6 +458,20 @@ public class OneM2MBackwardCommunications extends IntentService {
             Log.d(TAG, "sending a cancel request");
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
+
+    private void cancelRequestTimer() {
+        new CountDownTimer(5000, 1000) {
+
+            @Override
+            public void onTick(long l) {
+                sendBroadcastCancelRequestTaxi();
+            }
+
+            public void onFinish() {
+            }
+        }.start();
+    }
+
 
     private double[][] postProcessPoints(JSONArray jsonArray) throws JSONException {
         try {
