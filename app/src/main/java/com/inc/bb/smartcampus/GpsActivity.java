@@ -1249,13 +1249,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             long[] vibrationPattern = {Long.valueOf(0), Long.valueOf(500)};
             if (!notificationArray[HUAWEI_NOTIFICATION_ID]) {
                 String notificationText = "You are in the rectangle";
-                mBuilder.setPriority(NotificationManager.IMPORTANCE_HIGH)
+                NotificationCompat.Builder huaweiBuilder = new NotificationCompat.
+                        Builder(getApplicationContext(), "default")
                         .setContentText(notificationText)
                         .setStyle(new NotificationCompat.BigTextStyle())
                         .setContentTitle("Autonomous car warning")
                         .setAutoCancel(false)
                         .setVibrate(vibrationPattern);
-                mNotificationManager.notify(HUAWEI_NOTIFICATION_ID, mBuilder.build());
+                mNotificationManager.notify(HUAWEI_NOTIFICATION_ID, huaweiBuilder.build());
                 notificationArray[HUAWEI_NOTIFICATION_ID] = true;
             }
         }
