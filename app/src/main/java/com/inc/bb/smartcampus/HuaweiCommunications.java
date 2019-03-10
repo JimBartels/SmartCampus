@@ -6,17 +6,13 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.google.android.gms.maps.model.LatLng;
 
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.json.JSONException;
-
-import java.io.UnsupportedEncodingException;
-import java.util.UUID;
-
+import java.util.Timer;
+import java.util.TimerTask;
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
@@ -55,6 +51,10 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     boolean isLoggingSwitched = false;
     String experimentNumber;
     String runNumber;
+    private Timer huaweiTimer;
+    private TimerTask huaweiTimerTask;
+    private Handler mTimerHandler = new Handler();
+
 
     public HuaweiCommunications() {
         super("HuaweiCommunications");
@@ -63,8 +63,9 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     @Override
     protected void onHandleIntent(Intent intent) {
         username = intent.getStringExtra("username");
+        huaweiTimer();
         createBroadcastReceiverLayoutResponse();
-        createBroadcastReceiverLocations();
+        //createBroadcastReceiverLocations();
     }
 
     private void createBroadcastReceiverLayoutResponse() {
@@ -94,6 +95,39 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
+    private void huaweiTimer(){
+        startTimer();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+    private void stopTimer(){
+        if(huaweiTimer != null){
+            huaweiTimer.cancel();
+            huaweiTimer.purge();
+        }
+    }
+
+    private void startTimer(){
+        Log.d(TAG, "startTimer: ");
+        huaweiTimer = new Timer();
+        huaweiTimerTask = new TimerTask() {
+            public void run() {
+                mTimerHandler.post(new Runnable() {
+                    public void run(){
+                        Log.d(TAG, "run: ");
+                        publishGpsData(0.00000,0.00000, (float) 0.0000, (long) 0,
+                                "0","0","0");
+                    }
+                });
+            }
+        };
+        huaweiTimer.scheduleAtFixedRate(huaweiTimerTask, 1, 1000);
+    }
+
     private void createBroadcastReceiverLocations() {
         locationsBroadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -121,12 +155,15 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     // speed etc from last found location of the Google mfusedlocationclient.
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy,
                                 Long formattedDate, String speedGPS, String manualBearing, String uuid) {
+
         String formattedDateString = "UTC" + Long.toString(formattedDate);
-        String conHuawei = "{\"type\":5,\"id\":" + username + ",\"timestampUtc\":" +
+
+        String conHuawei = "{\"type\":5,\"id\":" + "dummy" + ",\"timestampUtc\":" +
                 formattedDateString + ",\"lon\":" + longitude + ",\"lat\":"+ latitude +
                 ",\"speed\":"+ speedGPS + ",\"heading\":"+manualBearing+ ",\"accuracy\":"+
                 Accuracy+ ",\"UUID\": " + "\"" + uuid + "\"" + "}";
         okHTTPPost(huaweiUrl,conHuawei);
+        createPositionEstimateGps();
         if(isLoggingSwitched){
             Intent logIntent = new Intent();
             logIntent.setAction("OneM2M.ForwardLogging");
@@ -139,6 +176,11 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
             logIntent.putExtra("experimentNumber",experimentNumber);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
         }
+    }
+
+    private void createPositionEstimateGps() {
+
+
     }
 
     // Function called when asynctasks are finished. In this case handles the response received by
@@ -180,6 +222,8 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     // Executes an OkHTTPpost asynctask to send a json to a certain URL that is indicated by the url
     // and json. results of this is handled in process finish (used for Huawei communication).
     void okHTTPPost(String url, String json) {
+        Log.d(TAG, "okHTTPPost: ");
+        Log.d(TAG, "okHTTPPost: " + json);
         okHttpPost okHttpPost = new okHttpPost(this);
         String[] string = new String[3];
         string[0]=url;
