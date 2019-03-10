@@ -112,7 +112,7 @@ public class PilotLogging extends IntentService {
                 String uuid = intent.getStringExtra("uuid");
                 experimentNumberText = intent.getStringExtra("experimentNumber");
                 runNumberText = intent.getStringExtra("runNumber");
-                userName = intent.getStringExtra("userName");
+                userName = intent.getStringExtra("username");
                 pilotLogging(messageType,0,logmsg,uuid);
             }
         };
