@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -21,6 +22,7 @@ import android.net.Uri;
 
 import android.os.Bundle;
 
+import android.os.CountDownTimer;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -188,7 +190,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onCreate(savedInstanceState);
 
         //Sets orientation so the screen is locked to portrait mode
-       // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         //Assigning of notification sound from downloaded google translate sound and filling of
         //notification array (fills up if notifications are active).
@@ -382,18 +384,25 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
-    private void buildTaxiCallCircle(String userId, Double latitude, Double longitude){
-        if(!TAXIVruCircle){
-            taxiCALLcircle = mMap.addCircle(new CircleOptions()
-                    .center(new LatLng(latitude, longitude))
-                    .radius(1)
-                    .strokeColor(Color.RED)
-                    .fillColor(Color.RED));
-            taxiCALLcircle.setTag(userId+"Taxi");
-            TAXIVruCircle = true;
+    private void buildTaxiCallCircle(String userId, Double latitude, Double longitude, String valid){
+        if(valid.equals("false")){
+            if(taxiCALLcircle!=null){
+                taxiCALLcircle.remove();
+            }
         }
-        if(TAXIVruCircle){
-            taxiCALLcircle.setCenter(new LatLng(latitude,longitude));
+        else {
+            if (!TAXIVruCircle) {
+                taxiCALLcircle = mMap.addCircle(new CircleOptions()
+                        .center(new LatLng(latitude, longitude))
+                        .radius(1)
+                        .strokeColor(Color.RED)
+                        .fillColor(Color.RED));
+                taxiCALLcircle.setTag(userId + "Taxi");
+                TAXIVruCircle = true;
+            } else if (TAXIVruCircle) {
+                taxiCALLcircle.remove();
+                TAXIVruCircle = false;
+            }
         }
     }
 
@@ -1015,7 +1024,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 Double latitude = intent.getDoubleExtra("latitude",'0');
                 Double longitude = intent.getDoubleExtra("longitude",'0');
                 String taxiCallID = intent.getStringExtra("TaxiCallID");
-                buildTaxiCallCircle(null,latitude,longitude);
+                String valid = intent.getStringExtra("valid");
+                buildTaxiCallCircle(null,latitude,longitude,valid);
+                Log.d(TAG, "onReceive: taxi call received" + latitude + ", "+ longitude + "," + valid);
             }
         };
         IntentFilter intentFilter = new IntentFilter();
@@ -1319,8 +1330,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
         //huaweiTimerTask.cancel();
-
-        mNotificationManager.cancelAll();
+        if(mNotificationManager!=null){
+        mNotificationManager.cancelAll();}
         super.onDestroy();
     }
 
