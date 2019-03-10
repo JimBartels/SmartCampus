@@ -11,6 +11,8 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 
+import org.json.JSONException;
+
 import java.util.Timer;
 import java.util.TimerTask;
 /**
@@ -63,9 +65,9 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     @Override
     protected void onHandleIntent(Intent intent) {
         username = intent.getStringExtra("username");
-        huaweiTimer();
+        //huaweiTimer();
         createBroadcastReceiverLayoutResponse();
-        //createBroadcastReceiverLocations();
+        createBroadcastReceiverLocations();
     }
 
     private void createBroadcastReceiverLayoutResponse() {
@@ -86,6 +88,21 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
         intentFilter.addAction("GpsActivity.LAYOUT_RESPONSE");
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 layoutResponseBroadcastReceiver, intentFilter);
+    }
+
+    private void createBroadcastReceiverLocations() {
+        locationsBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                    publishGpsData(0.00000,0.00000, (float) 0.0000, (long) 0,
+                            "0","0","0");
+                Log.d(TAG, "onReceive: ");
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("GoogleFusedLocations.SEND_NEW_LOCATION");
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                locationsBroadcastReceiver, intentFilter);
     }
 
     private void broadcastIsLoggingEnabled(){
@@ -126,28 +143,6 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
             }
         };
         huaweiTimer.scheduleAtFixedRate(huaweiTimerTask, 1, 1000);
-    }
-
-    private void createBroadcastReceiverLocations() {
-        locationsBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                broadcastIsLoggingEnabled();
-                Longitude = intent.getDoubleExtra("longitude",'0');
-                Latitude = intent.getDoubleExtra("latitude",'0');
-                Accuracy = intent.getFloatExtra("accuracy",'0');
-                Heading = intent.getFloatExtra("heading",'0');
-                Speed = intent.getFloatExtra("speed",'0');
-                Long timeStamp = intent.getLongExtra("timeStamp",0);
-                String uuid = intent.getStringExtra("uuid");
-                publishGpsData(Latitude,Longitude,Accuracy,timeStamp,String.valueOf(Speed),String.valueOf(Heading),uuid);
-                Log.d(TAG, "onReceive: ");
-            }
-        };
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("GoogleFusedLocations.SEND_NEW_LOCATION");
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                locationsBroadcastReceiver, intentFilter);
     }
 
     // Function for creating the final json to be sent to the publishandlogmessage function for
