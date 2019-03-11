@@ -319,7 +319,6 @@ public class OneM2MBackwardCommunications extends IntentService {
                            .getJSONObject("vehicleMetaData")
                            .getJSONObject("vehicleSpecificMetaData").getString("UUID");*/
                    logIntent.putExtra("username", userName);
-                   logIntent.putExtra("username", userName);
                    logIntent.putExtra("runNumber", runNumber);
                    logIntent.putExtra("experimentNumber", experimentNumber);
                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);

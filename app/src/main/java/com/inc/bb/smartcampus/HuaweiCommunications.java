@@ -144,29 +144,30 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
 
 
         okHTTPPost(huaweiUrl, huaweiMessage);
+        Intent logIntent = new Intent();
+        logIntent.setAction("OneM2M.ForwardLogging");
+        logIntent.putExtra("messageType",LOGGING_HUAWEI_SENT_POSEST);
+        logIntent.putExtra("logmsg",huaweiMessage);
+        logIntent.putExtra("uuid",uuid);
+        logIntent.putExtra("generationTimeStamp",formattedDate);
+        logIntent.putExtra("username",username);
+        logIntent.putExtra("runNumber",runNumber);
+        logIntent.putExtra("experimentNumber",experimentNumber);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
         okHTTPPost(huaweiUrl,conHuawei);
 
 
         if(isLoggingSwitched){
-            Intent logIntent = new Intent();
-            logIntent.setAction("OneM2M.ForwardLogging");
-            logIntent.putExtra("messageType",LOGGING_HUAWEI_SENT);
-            logIntent.putExtra("logmsg",conHuawei);
-            logIntent.putExtra("uuid",uuid);
-            logIntent.putExtra("generationTimeStamp",formattedDate);
-            logIntent.putExtra("username",username);
-            logIntent.putExtra("runNumber",runNumber);
-            logIntent.putExtra("experimentNumber",experimentNumber);
-            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
-            logIntent.setAction("OneM2M.ForwardLogging");
-            logIntent.putExtra("messageType",LOGGING_HUAWEI_SENT_POSEST);
-            logIntent.putExtra("logmsg",huaweiMessage);
-            logIntent.putExtra("uuid",uuid);
-            logIntent.putExtra("generationTimeStamp",formattedDate);
-            logIntent.putExtra("username",username);
-            logIntent.putExtra("runNumber",runNumber);
-            logIntent.putExtra("experimentNumber",experimentNumber);
-            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
+            Intent logIntent2 = new Intent();
+            logIntent2.setAction("OneM2M.ForwardLogging");
+            logIntent2.putExtra("messageType",LOGGING_HUAWEI_SENT);
+            logIntent2.putExtra("logmsg",conHuawei);
+            logIntent2.putExtra("uuid",uuid);
+            logIntent2.putExtra("generationTimeStamp",formattedDate);
+            logIntent2.putExtra("username",username);
+            logIntent2.putExtra("runNumber",runNumber);
+            logIntent2.putExtra("experimentNumber",experimentNumber);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent2);
         }
     }
 
