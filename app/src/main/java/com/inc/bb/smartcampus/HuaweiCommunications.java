@@ -131,11 +131,11 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
                                 Long formattedDate, String speedGPS, String manualBearing, String uuid) throws JSONException {
         String formattedDateString = "UTC" + Long.toString(formattedDate);
         String conHuawei = "{\"type\":5,\"id\":" + username + ",\"timestampUtc\":" +
-                formattedDateString + ",\"lon\":" + longitude + ",\"lat\":"+ latitude +
-                ",\"speed\":"+ speedGPS + ",\"heading\":"+manualBearing+ ",\"accuracy\":"+
-                Accuracy+ ",\"UUID\": " + "\"" + uuid + "\"" + "}";
+                formattedDateString + ",\"lon\":" + longitude + ",\"lat\":" + latitude +
+                ",\"speed\":" + speedGPS + ",\"heading\":" + manualBearing + ",\"accuracy\":" +
+                Accuracy + ",\"UUID\": " + "\"" + uuid + "\"" + "}";
 
-        VRUgps = new OneM2MMqttJson(oneM2MVRUAeRi,oneM2MVRUAePass,oneM2MVRUAeRn,userName);
+        VRUgps = new OneM2MMqttJson(oneM2MVRUAeRi, oneM2MVRUAePass, oneM2MVRUAeRn, userName);
         JSONObject requester = VRUgps.CreatepositionEstimateContainer(latitude, longitude, 0,
                 userName, true, uuid, speedGPS, Accuracy, manualBearing);
 
@@ -143,19 +143,20 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
                 .getJSONObject("m2m:cin").getString("con");
 
 
-        okHTTPPost(huaweiUrl, huaweiMessage);
-        Intent logIntent = new Intent();
+        //okHTTPPost(huaweiUrl, huaweiMessage);
+        if (isLoggingSwitched){
+            Intent logIntent = new Intent();
         logIntent.setAction("OneM2M.ForwardLogging");
-        logIntent.putExtra("messageType",LOGGING_HUAWEI_SENT_POSEST);
-        logIntent.putExtra("logmsg",huaweiMessage);
-        logIntent.putExtra("uuid",uuid);
-        logIntent.putExtra("generationTimeStamp",formattedDate);
-        logIntent.putExtra("username",username);
-        logIntent.putExtra("runNumber",runNumber);
-        logIntent.putExtra("experimentNumber",experimentNumber);
+        logIntent.putExtra("messageType", LOGGING_HUAWEI_SENT_POSEST);
+        logIntent.putExtra("logmsg", huaweiMessage);
+        logIntent.putExtra("uuid", uuid);
+        logIntent.putExtra("generationTimeStamp", formattedDate);
+        logIntent.putExtra("username", username);
+        logIntent.putExtra("runNumber", runNumber);
+        logIntent.putExtra("experimentNumber", experimentNumber);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
-        okHTTPPost(huaweiUrl,conHuawei);
-
+    }
+    okHTTPPost(huaweiUrl, conHuawei);
 
         if(isLoggingSwitched){
             Intent logIntent2 = new Intent();
