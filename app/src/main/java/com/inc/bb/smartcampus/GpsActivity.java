@@ -71,6 +71,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
 
 ;
@@ -307,15 +309,25 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
     private void createBroadcastReceiverVRUData() {
+        final List<LatLng> list = new ArrayList<>();
+        final Timer timer = new Timer();
         broadcastReceiverVRUData = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String userId = intent.getStringExtra("VRUId");
-                LatLng gps = new LatLng(
+                final LatLng gps = new LatLng(
                         intent.getDoubleExtra("latitude", 0),
                         intent.getDoubleExtra("longitude", 0));
-                map.put(userId, gps);
-                System.out.println("THIS IS GPS" + gps);
+                timer.scheduleAtFixedRate(new TimerTask() {
+                                              @Override
+                                              public void run() {
+                                                  list.add(gps);
+                                                  initializeHeatMap(list);
+                                                  System.out.println("THIS IS GPS" + gps);
+                                              }
+                                          },
+                        0, 1000);
+                timer.cancel();
             }
         };
         IntentFilter intentFilter = new IntentFilter();
@@ -596,17 +608,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
-
         mMap.setMyLocationEnabled(true);
-//        addHeatMap();
-
+        // coordinates of gemini building, ~ centre of tu/e
         CameraUpdate point = CameraUpdateFactory.newLatLngZoom(new LatLng(51.447433, 5.4908978), 15.0f);
-
-// moves camera to coordinates
+        // moves camera to coordinates
         mMap.moveCamera(point);
-// animates camera to coordinates
+        // animates camera to coordinates
         mMap.animateCamera(point);
 
+//        addHeatMap();
 
         /*try {
             // Customise the styling of the base map using a JSON object defined
@@ -1482,19 +1492,32 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
-    private void addHeatMap() {
-        List<LatLng> list = new ArrayList<>();
+//    private void addHeatMap() {
+//        Timer timer = new Timer();
+//        final List<LatLng> list = new ArrayList<>();
+//        //Set the schedule function
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//                                      @Override
+//                                      public void run() {
+//                                          list = broadcastReceiverVRUData.getResultData(t);
+//                                          initializeHeatMap(list);
+//                                      }
+//                                  },
+//                0, 1000);
+//        timer.cancel();
+//    }
 
-        try {
-            for (Map.Entry<String, LatLng> entry : map.entrySet()) {
-                list.add(entry.getValue());
-                System.out.println(entry.getValue());
-            }
-
-        } catch (Exception e) {
-            Toast.makeText(this, "Problem reading list of locations.", Toast.LENGTH_LONG).show();
-        }
-        // Create a heat map tile provider, passing it the latlngs of the conentrated buildings/areas
+    private void initializeHeatMap(List<LatLng> list) {
+//        try {
+//            for (Map.Entry<String, LatLng> entry : map.entrySet()) {
+//                list.add(entry.getValue());
+//                System.out.println(entry.getValue());
+//            }
+//
+//        } catch (Exception e) {
+//            Toast.makeText(this, "Problem reading list of locations.", Toast.LENGTH_LONG).show();
+//        }
+        // Create a heat map tile provider, passing it the latlngs of the concentrated buildings/areas
         HeatmapTileProvider provider = new HeatmapTileProvider.Builder().data(list).build();
         // Add a tile overlay to the map, using the heat map tile provider.
         TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
