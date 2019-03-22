@@ -310,7 +310,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     private void createBroadcastReceiverVRUData() {
         final List<LatLng> list = new ArrayList<>();
-        final Timer timer = new Timer();
         broadcastReceiverVRUData = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -318,16 +317,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 final LatLng gps = new LatLng(
                         intent.getDoubleExtra("latitude", 0),
                         intent.getDoubleExtra("longitude", 0));
-                timer.scheduleAtFixedRate(new TimerTask() {
-                                              @Override
-                                              public void run() {
-                                                  list.add(gps);
-                                                  initializeHeatMap(list);
-                                                  System.out.println("THIS IS GPS" + gps);
-                                              }
-                                          },
-                        0, 1000);
-                timer.cancel();
+                    list.add(gps);
+                    initializeHeatMap(list,userId);
+                    System.out.println("THIS IS GPS" + gps);
             }
         };
         IntentFilter intentFilter = new IntentFilter();
@@ -1507,7 +1499,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 //        timer.cancel();
 //    }
 
-    private void initializeHeatMap(List<LatLng> list) {
+    private void initializeHeatMap(List<LatLng> list,String userId) {
 //        try {
 //            for (Map.Entry<String, LatLng> entry : map.entrySet()) {
 //                list.add(entry.getValue());
@@ -1518,9 +1510,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 //            Toast.makeText(this, "Problem reading list of locations.", Toast.LENGTH_LONG).show();
 //        }
         // Create a heat map tile provider, passing it the latlngs of the concentrated buildings/areas
-        HeatmapTileProvider provider = new HeatmapTileProvider.Builder().data(list).build();
-        // Add a tile overlay to the map, using the heat map tile provider.
+        if(VRUIdVector.contains(userId)){
+            // Check which m overlay is for which user id
+            //mOverlay.remove();
+            // Check which provider has which userid and then change the gps coordinates
+        }
+        else {HeatmapTileProvider provider = new HeatmapTileProvider.Builder().data(list).build();// Add a tile overlay to the map, using the heat map tile provider.
+        //VRUIdVector.set()
         TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+
+        }
     }
 
 }
