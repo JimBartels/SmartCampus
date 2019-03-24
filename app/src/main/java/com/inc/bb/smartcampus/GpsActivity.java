@@ -16,7 +16,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -34,7 +33,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -53,7 +51,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -71,8 +68,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.Vector;
 
 ;
@@ -84,7 +79,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     //Maps
     private GoogleMap mMap;
-    private final Map<String, LatLng> map = new HashMap<>();
+
     //Motionplanning and calltaxi
     Polyline polylineMP = null;
     boolean motiongPlanningResponseReceived;
@@ -235,7 +230,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         setupBottomNavigationBar();
 
         //created the broadcast receivers for all services
-        createBroadcastReceivers();
+
 
         //Notification builder
         //buildCarNotification(AUTONOMOUS_CAR_NOTIFICATION_TITLE);
@@ -308,8 +303,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceiverTaxiCaller();
     }
 
+    final List<LatLng> list = new ArrayList<>();
+    ;
+
     private void createBroadcastReceiverVRUData() {
-        final List<LatLng> list = new ArrayList<>();
+        list.add(new LatLng(51.447893883296565, 5.48882099800934));
+        list.add(new LatLng(51.447893883296565, 5.48882099800938));
+        list.add(new LatLng(51.4476933362316231, 5.4886143623624634));
+        list.add(new LatLng(51.447780623423362, 5.488190624624625));
+        initializeHeatMap(list);
         broadcastReceiverVRUData = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -317,9 +319,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 final LatLng gps = new LatLng(
                         intent.getDoubleExtra("latitude", 0),
                         intent.getDoubleExtra("longitude", 0));
-                    list.add(gps);
-                    initializeHeatMap(list,userId);
-                    System.out.println("THIS IS GPS" + gps);
+                list.add(gps);
+                initializeHeatMap(list);
+                System.out.println("THIS IS GPS" + gps);
             }
         };
         IntentFilter intentFilter = new IntentFilter();
@@ -847,6 +849,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
         };
         mMap.setOnGroundOverlayClickListener(listener);
+        createBroadcastReceivers();
     }
 
 
@@ -1484,42 +1487,26 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
-//    private void addHeatMap() {
-//        Timer timer = new Timer();
-//        final List<LatLng> list = new ArrayList<>();
-//        //Set the schedule function
-//        timer.scheduleAtFixedRate(new TimerTask() {
-//                                      @Override
-//                                      public void run() {
-//                                          list = broadcastReceiverVRUData.getResultData(t);
-//                                          initializeHeatMap(list);
-//                                      }
-//                                  },
-//                0, 1000);
-//        timer.cancel();
-//    }
+    private void initializeHeatMap(final List<LatLng> list) {
 
-    private void initializeHeatMap(List<LatLng> list,String userId) {
-//        try {
-//            for (Map.Entry<String, LatLng> entry : map.entrySet()) {
-//                list.add(entry.getValue());
-//                System.out.println(entry.getValue());
-//            }
-//
-//        } catch (Exception e) {
-//            Toast.makeText(this, "Problem reading list of locations.", Toast.LENGTH_LONG).show();
-//        }
         // Create a heat map tile provider, passing it the latlngs of the concentrated buildings/areas
-        if(VRUIdVector.contains(userId)){
-            // Check which m overlay is for which user id
-            //mOverlay.remove();
-            // Check which provider has which userid and then change the gps coordinates
-        }
-        else {HeatmapTileProvider provider = new HeatmapTileProvider.Builder().data(list).build();// Add a tile overlay to the map, using the heat map tile provider.
-        //VRUIdVector.set()
-        TileOverlay mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+//        if (VRUIdVector.contains(userId)) {
+//            // Check which m overlay is for which user id
+//            //            // mOverlay.remove();
+//            //            // Check which provider has which userid and then change the gps coordinates
+//        } else {
 
-        }
+
+        HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).build();
+        //            VRUIdVector.set(userID);
+
+        if (mMap != null) {
+            mMap.addTileOverlay((new TileOverlayOptions()).tileProvider(mProvider));
+
+
+    } else {
+        Log.d("NIGGA", "not working");
     }
 
+}
 }
