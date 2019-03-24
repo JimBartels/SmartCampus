@@ -308,9 +308,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     private void createBroadcastReceiverVRUData() {
         list.add(new LatLng(51.447893883296565, 5.48882099800934));
-        list.add(new LatLng(51.447893883296565, 5.48882099800938));
+        list.add(new LatLng(51.447893883296565, 5.48882099807));
         list.add(new LatLng(51.4476933362316231, 5.4886143623624634));
-        list.add(new LatLng(51.447780623423362, 5.488190624624625));
+        list.add(new LatLng(51.447780625, 5.489011));
         initializeHeatMap(list);
         broadcastReceiverVRUData = new BroadcastReceiver() {
             @Override
@@ -321,7 +321,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                         intent.getDoubleExtra("longitude", 0));
                 list.add(gps);
                 initializeHeatMap(list);
-                System.out.println("THIS IS GPS" + gps);
+                Log.d("THIS IS GPS", gps.toString());
             }
         };
         IntentFilter intentFilter = new IntentFilter();
