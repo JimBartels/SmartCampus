@@ -303,24 +303,31 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceiverTaxiCaller();
     }
 
-    final List<LatLng> list = new ArrayList<>();
-    ;
+    final Map<String, LatLng> map = new HashMap<>();
+    List<LatLng> list;
 
     private void createBroadcastReceiverVRUData() {
-        list.add(new LatLng(51.447893883296565, 5.48882099800934));
-        list.add(new LatLng(51.447893883296565, 5.48882099807));
-        list.add(new LatLng(51.4476933362316231, 5.4886143623624634));
-        list.add(new LatLng(51.447780625, 5.489011));
-        initializeHeatMap(list);
+        map.put("!2321", new LatLng(51.447893883296565, 5.48882099800934));
+        map.put("!2321", new LatLng(51.44789382565, 5.4888204));
+        map.put("!2231", new LatLng(51.447780625, 5.489011));
+        initializeHeatMap(map);
+
         broadcastReceiverVRUData = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String userId = intent.getStringExtra("VRUId");
-                final LatLng gps = new LatLng(
+                LatLng gps = new LatLng(
                         intent.getDoubleExtra("latitude", 0),
                         intent.getDoubleExtra("longitude", 0));
-                list.add(gps);
-                initializeHeatMap(list);
+
+                if (map.containsKey(userId)) {
+                    map.remove(userId);
+                    map.put(userId, gps);
+                } else {
+                    map.put(userId, gps);
+                }
+
+                initializeHeatMap(map);
                 Log.d("THIS IS GPS", gps.toString());
             }
         };
@@ -1487,7 +1494,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
-    private void initializeHeatMap(final List<LatLng> list) {
+    private void initializeHeatMap(Map<String, LatLng> map) {
 
         // Create a heat map tile provider, passing it the latlngs of the concentrated buildings/areas
 //        if (VRUIdVector.contains(userId)) {
@@ -1495,18 +1502,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 //            //            // mOverlay.remove();
 //            //            // Check which provider has which userid and then change the gps coordinates
 //        } else {
-
+        list = new ArrayList<LatLng>(map.values());
+        Log.d("GPS coordinates", map.values().toString());
 
         HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).build();
         //            VRUIdVector.set(userID);
 
-        if (mMap != null) {
-            mMap.addTileOverlay((new TileOverlayOptions()).tileProvider(mProvider));
+        mMap.addTileOverlay((new TileOverlayOptions()).tileProvider(mProvider));
 
-
-    } else {
-        Log.d("NIGGA", "not working");
     }
-
-}
 }
