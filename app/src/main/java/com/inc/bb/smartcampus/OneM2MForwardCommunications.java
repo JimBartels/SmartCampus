@@ -232,7 +232,7 @@ public class OneM2MForwardCommunications extends IntentService {
 
             @Override
             public void connectionLost(Throwable cause) {
-                Log.d(TAG,"The Connection was lost." + cause.toString());
+                Log.d(TAG,"The Connection was lost." + cause.getMessage());
             }
 
             @Override

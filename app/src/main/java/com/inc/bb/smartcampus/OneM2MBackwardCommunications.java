@@ -163,7 +163,7 @@ public class OneM2MBackwardCommunications extends IntentService {
 
             @Override
             public void connectionLost(Throwable cause) {
-                Log.d(TAG, "The Connection was lost." + cause.toString());
+                Log.d(TAG, "The Connection was lost." + cause.getMessage());
             }
 
             @Override
@@ -304,28 +304,29 @@ public class OneM2MBackwardCommunications extends IntentService {
                 String[] carLatseparated = latitudeCar.split(":");
                 carLat = Double.parseDouble(carLatseparated[1]);
                 newData = true;}*/
-            if (comparator.equals("CREATE:prius/GPS")) {
+           if(comparator.equals("CREATE:prius/PositionEstimate")){
+               JSONObject contentCar = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
+                       .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
+                   Log.d(TAG, "oneM2MMessagesHandler: POSEST"+ contentCar.toString());
+                   if(isLoggingSwitched){
+                   Intent logIntent = new Intent();
+                   logIntent.setAction("OneM2M.BackwardLogging");
+                   Log.d(TAG, "oneM2MMessagesHandler: LoggingRTK");
+                   logIntent.putExtra("messageType", LOGGING_VEHICLE_POSEST);
+                   logIntent.putExtra("logmsg", contentCar.toString());
+                   /*String uuid = contentCar.getJSONObject("message")
+                           .getJSONObject("envelope")
+                           .getJSONObject("vehicleMetaData")
+                           .getJSONObject("vehicleSpecificMetaData").getString("UUID");*/
+                   logIntent.putExtra("username", userName);
+                   logIntent.putExtra("runNumber", runNumber);
+                   logIntent.putExtra("experimentNumber", experimentNumber);
+                   LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
+                   }
+               }
+               if (comparator.equals("CREATE:prius/GPS")) {
                 JSONObject contentCar = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
-
-                if(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
-                        .getJSONArray("m2m:cin").getJSONObject(0).getInt("cs")>500){
-                    Log.d(TAG, "oneM2MMessagesHandler: POSEST"+ contentCar.toString());
-                    Intent logIntent = new Intent();
-                    logIntent.setAction("OneM2M.BackwardLogging");
-                    Log.d(TAG, "oneM2MMessagesHandler: LoggingRTK");
-                    logIntent.putExtra("messageType", LOGGING_VEHICLE_POSEST);
-                    logIntent.putExtra("logmsg", contentCar.toString());
-                    String uuid = contentCar.getJSONObject("message")
-                            .getJSONObject("envelope")
-                            .getJSONObject("vehicleMetaData")
-                            .getJSONObject("vehicleSpecificMetaData").getString("UUID");
-                    logIntent.putExtra("uuid", uuid);
-                    logIntent.putExtra("username", userName);
-                    logIntent.putExtra("runNumber", runNumber);
-                    logIntent.putExtra("experimentNumber", experimentNumber);
-                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
-                }
                 noRTK = false;
                 Log.d(TAG, "oneM2MMessagesHandler: RTK");
                 Log.d(TAG, "oneM2MMessagesHandler: "+contentCar);
