@@ -112,7 +112,7 @@ public class PilotLogging extends IntentService {
                 String uuid = intent.getStringExtra("uuid");
                 experimentNumberText = intent.getStringExtra("experimentNumber");
                 runNumberText = intent.getStringExtra("runNumber");
-                userName = intent.getStringExtra("username");
+                userName = intent.getStringExtra("userName");
                 pilotLogging(messageType,0,logmsg,uuid);
             }
         };
@@ -246,11 +246,11 @@ public class PilotLogging extends IntentService {
 
             case LOGGING_VEHICLE:
                 Log.d(TAG, "pilotLogging: Vehicle");
-                log = ",3," + "3129" + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
+                log = ",3," + userName + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
 
                 String fileNameCar = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_"
-                        + "3129" + "_3.csv";
+                        + userName+"_3.csv";
 
                 if(fileNameVector==null){fileNameVector.add(fileNameCar);
                     addHeaderToLogFile(fileNameCar);}
@@ -260,26 +260,7 @@ public class PilotLogging extends IntentService {
 
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_"
-                        +"3129" + "_3.csv",log);
-                break;
-
-            case LOGGING_VEHICLE_POSEST:
-                Log.d(TAG, "pilotLogging: Vehicle_Posest");
-                log = ",33," + "3129" + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
-
-                String fileNameCarPosest = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
-                        + experimentNumberString + "_Run" + runNumberString + "_"
-                        + "3129"+"_33.csv";
-
-                if(fileNameVector==null){fileNameVector.add(fileNameCarPosest);
-                    addHeaderToLogFile(fileNameCarPosest);}
-                if(!fileNameVector.contains(fileNameCarPosest) && fileNameVector !=null){
-                    fileNameVector.add(fileNameCarPosest);
-                    addHeaderToLogFile(fileNameCarPosest);}
-
-                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
-                        + experimentNumberString + "_Run" + runNumberString + "_"
-                        +"3129" + "_33.csv",log);
+                        +userName + "_3.csv",log);
                 break;
 
             case LOGGING_GPS_POSEST:
@@ -302,7 +283,24 @@ public class PilotLogging extends IntentService {
                         +"_11.csv",log);
                 break;
 
+            case LOGGING_VEHICLE_POSEST:
+                Log.d(TAG, "pilotLogging: Vehicle_Posest");
+                log = ",33," + userName + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
 
+                String fileNameCarPosest = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_"
+                        + userName+"_33.csv";
+
+                if(fileNameVector==null){fileNameVector.add(fileNameCarPosest);
+                    addHeaderToLogFile(fileNameCarPosest);}
+                if(!fileNameVector.contains(fileNameCarPosest) && fileNameVector !=null){
+                    fileNameVector.add(fileNameCarPosest);
+                    addHeaderToLogFile(fileNameCarPosest);}
+
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_"
+                        +userName + "_33.csv",log);
+                break;
 
             case LOGGING_HUAWEI_RECEIVED:
                 Log.d(TAG, "pilotLogging: HuaweiReceived");
