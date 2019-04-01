@@ -121,7 +121,26 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     BroadcastReceiver broadcastReceiverLayoutChecker;
     BroadcastReceiver broadcastReceiverCarDataHuawei;
     BroadcastReceiver broadcastReceiverMotionplanningPath;
-    BroadcastReceiver broadcastReceiverVRUData;
+    BroadcastReceiver broadcastReceiverVRUData = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String userId = intent.getStringExtra("VRUId");
+            LatLng gps = new LatLng(
+                    intent.getDoubleExtra("latitude", 0),
+                    intent.getDoubleExtra("longitude", 0));
+
+            if (map.containsKey(userId)) {
+                map.remove(userId);
+                map.put(userId, gps);
+            } else {
+                map.put(userId, gps);
+            }
+            Log.d("THIS IS GPS", gps.toString());
+            mMap.clear();
+            initializeHeatMap(map);
+
+        }
+    };
 
     //Notification global variables
     NotificationManager mNotificationManager;
@@ -310,31 +329,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         map.put("!2321", new LatLng(51.447893883296565, 5.48882099800934));
         map.put("!2321", new LatLng(51.44789382565, 5.4888204));
         map.put("!2231", new LatLng(51.447780625, 5.489011));
-        initializeHeatMap(map);
+//        initializeHeatMap(map);
 
-        broadcastReceiverVRUData = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String userId = intent.getStringExtra("VRUId");
-                LatLng gps = new LatLng(
-                        intent.getDoubleExtra("latitude", 0),
-                        intent.getDoubleExtra("longitude", 0));
 
-                if (map.containsKey(userId)) {
-                    map.remove(userId);
-                    map.put(userId, gps);
-                } else {
-                    map.put(userId, gps);
-                }
-
-                initializeHeatMap(map);
-                Log.d("THIS IS GPS", gps.toString());
-            }
-        };
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("VRU GPS");
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                broadcastReceiverVRUData, intentFilter);
+//        IntentFilter intentFilter = new IntentFilter();
+//        intentFilter.addAction("VRU GPS");
+//        LocalBroadcastManager.getInstance(this).registerReceiver(
+//                broadcastReceiverVRUData, intentFilter);
     }
 
     private void buildVRUCircle(String userId, Double latitude, Double longitude) {
@@ -857,6 +858,29 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         };
         mMap.setOnGroundOverlayClickListener(listener);
         createBroadcastReceivers();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("VRUData");
+        LocalBroadcastManager.getInstance(this).registerReceiver( broadcastReceiverVRUData, intentFilter);
+//        broadcastReceiverVRUData = new BroadcastReceiver() {
+//            @Override
+//            public void onReceive(Context context, Intent intent) {
+//                String userId = intent.getStringExtra("VRUId");
+//                LatLng gps = new LatLng(
+//                        intent.getDoubleExtra("latitude", 0),
+//                        intent.getDoubleExtra("longitude", 0));
+//
+//                if (map.containsKey(userId)) {
+//                    map.remove(userId);
+//                    map.put(userId, gps);
+//                } else {
+//                    map.put(userId, gps);
+//                }
+//                Log.d("THIS IS GPS", gps.toString());
+//                mMap.clear();
+//                initializeHeatMap(map);
+//
+//            }
+//        };
     }
 
 
@@ -1503,7 +1527,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 //            //            // Check which provider has which userid and then change the gps coordinates
 //        } else {
         list = new ArrayList<LatLng>(map.values());
-        Log.d("GPS coordinates", map.values().toString());
+        Log.d("GPS coordinates", "gps coordinates");
 
         HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).build();
         //            VRUIdVector.set(userID);
