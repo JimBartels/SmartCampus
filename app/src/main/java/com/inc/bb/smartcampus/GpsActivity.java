@@ -188,7 +188,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onCreate(savedInstanceState);
 
         //Sets orientation so the screen is locked to portrait mode
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         //Assigning of notification sound from downloaded google translate sound and filling of
         //notification array (fills up if notifications are active).
@@ -307,32 +307,26 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     List<LatLng> list;
 
     private void createBroadcastReceiverVRUData() {
-        map.put("!2321", new LatLng(51.447893883296565, 5.48882099800934));
+        /*map.put("!2321", new LatLng(51.447893883296565, 5.48882099800934));
         map.put("!2321", new LatLng(51.44789382565, 5.4888204));
         map.put("!2231", new LatLng(51.447780625, 5.489011));
-        initializeHeatMap(map);
+        initializeHeatMap(map);*/
 
         broadcastReceiverVRUData = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String userId = intent.getStringExtra("VRUId");
+                buildVRUCircle(userId,intent.getDoubleExtra("latitude", 0),
+                        intent.getDoubleExtra("longitude", 0));
                 LatLng gps = new LatLng(
                         intent.getDoubleExtra("latitude", 0),
                         intent.getDoubleExtra("longitude", 0));
 
-                if (map.containsKey(userId)) {
-                    map.remove(userId);
-                    map.put(userId, gps);
-                } else {
-                    map.put(userId, gps);
-                }
-
-                initializeHeatMap(map);
                 Log.d("THIS IS GPS", gps.toString());
             }
         };
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("VRU GPS");
+        intentFilter.addAction("VRUData");
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 broadcastReceiverVRUData, intentFilter);
     }
