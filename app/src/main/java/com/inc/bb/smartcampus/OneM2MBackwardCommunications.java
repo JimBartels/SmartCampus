@@ -10,6 +10,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.gson.JsonObject;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -369,11 +370,12 @@ public class OneM2MBackwardCommunications extends IntentService {
                 Log.d(TAG, "oneM2MMessagesHandler: motionplanning");
                 JSONObject contentMP = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
+                Log.d(TAG, "con:" + contentMP);
 
                     Log.d(TAG, "oneM2MMessagesHandler: motionplanning2");
                     sendBroadcastCancelRequestTaxi();
                     JSONArray jsonArray = contentMP.getJSONArray("coords");
-                Log.d(TAG, "oneM2MMessagesHandler: " + jsonArray);
+                Log.d(TAG, "jsonArray" + jsonArray.getJSONArray(1));
                     double[] pathLat = new double[jsonArray.length()];
                     double[] pathLon = new double[jsonArray.length()];
                     for (int i = 0; i < jsonArray.length(); i++) {
