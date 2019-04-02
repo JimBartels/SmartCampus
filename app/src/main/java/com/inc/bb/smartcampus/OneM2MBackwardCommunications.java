@@ -373,6 +373,7 @@ public class OneM2MBackwardCommunications extends IntentService {
                     Log.d(TAG, "oneM2MMessagesHandler: motionplanning2");
                     sendBroadcastCancelRequestTaxi();
                     JSONArray jsonArray = contentMP.getJSONArray("coords");
+                Log.d(TAG, "oneM2MMessagesHandler: " + jsonArray);
                     double[] pathLat = new double[jsonArray.length()];
                     double[] pathLon = new double[jsonArray.length()];
                     for (int i = 0; i < jsonArray.length(); i++) {
