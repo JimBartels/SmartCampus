@@ -32,6 +32,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -167,6 +168,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public String latitude;
     public String bearing;
     public String speed;
+    Button uploadbutton;
 
     //Request code for the permissions intent (asking for some permission)
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -209,6 +211,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         //Assigning of logging layout elements
         runNumberText = (EditText) findViewById(R.id.runNumber);
+        uploadbutton = (Button) findViewById(R.id.uploadbutton);
+        uploadbutton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                broadcastUploadLogs();
+            }
+        });
+        
+
         experimentNumberText = (EditText) findViewById(R.id.experimentNumber);
         experimentNumberText.clearFocus();
         runNumberText.clearFocus();
@@ -552,7 +563,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onPause() {
-        broadcastUploadLogs();
+        //broadcastUploadLogs();
         super.onPause();
     }
 
@@ -1207,7 +1218,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onStop() {
-        broadcastUploadLogs();
+        //broadcastUploadLogs();
         Log.e(TAG, "onStop:");
         super.onStop();
     }
