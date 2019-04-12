@@ -339,41 +339,40 @@ public class OneM2MBackwardCommunications extends IntentService {
                 Log.d(TAG, "oneM2MMessagesHandler: motionplanning");
                 JSONObject contentMP = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
+                Log.d(TAG, "con:" + contentMP);
 
-                if (contentMP.getString("mobileId").equals(userName)) {
-                    Log.d(TAG, "oneM2MMessagesHandler: motionplanning2");
-                    cancelRequestTimer();
-                    JSONArray jsonArray = contentMP.getJSONArray("coords");
-                    double[] pathLat = new double[jsonArray.length()];
-                    double[] pathLon = new double[jsonArray.length()];
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        // Array points1[][] =  new Array[jsonArray.length()][2];
-                        //points[i][1] = jsonArr
-                        JSONArray jArrayIter = jsonArray.getJSONArray(i);
-                        Log.d(TAG, "doInBackground: " + jArrayIter);
-                        pathLat[i] = jArrayIter.getDouble(1);
-                        pathLon[i] = jArrayIter.getDouble(0);
-                    }
+                Log.d(TAG, "oneM2MMessagesHandler: motionplanning2");
+                sendBroadcastCancelRequestTaxi();
+                JSONArray jsonArray = contentMP.getJSONArray("coords");
+                Log.d(TAG, "jsonArray" + jsonArray.getJSONArray(1));
+                double[] pathLat = new double[jsonArray.length()];
+                double[] pathLon = new double[jsonArray.length()];
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    // Array points1[][] =  new Array[jsonArray.length()][2];
+                    //points[i][1] = jsonArr
+                    JSONArray jArrayIter = jsonArray.getJSONArray(i);
+                    Log.d(TAG, "doInBackground: " + jArrayIter);
+                    pathLat[i] = jArrayIter.getDouble(1);
+                    pathLon[i] = jArrayIter.getDouble(0);
+                }
 
-                    sendBroadcastUIMotionplanningPath(new double[][] {pathLat,pathLon});
+                sendBroadcastUIMotionplanningPath(new double[][] {pathLat,pathLon});
 
-                    Log.d(TAG, "oneM2MMessagesHandler: motionplanning3");
-                    String carMPUuid = contentMP.getString("responseUUID");
-                    if (isLoggingSwitched) {
-                        Intent logIntent = new Intent();
-                        logIntent.setAction("OneM2M.BackwardLogging");
-                        Log.d(TAG, "oneM2MMessagesHandler: LoggingRTK");
-                        logIntent.putExtra("messageType", LOGGING_TAXI_RECEIVED);
-                        logIntent.putExtra("logmsg", contentMP.toString());
-                        logIntent.putExtra("uuid", carMPUuid);
-                        logIntent.putExtra("username", userName);
-                        logIntent.putExtra("runNumber", runNumber);
-                        logIntent.putExtra("experimentNumber", experimentNumber);
-                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
-                    }
+                Log.d(TAG, "oneM2MMessagesHandler: motionplanning3");
+                String carMPUuid = contentMP.getString("responseUUID");
+                if (isLoggingSwitched) {
+                    Intent logIntent = new Intent();
+                    logIntent.setAction("OneM2M.BackwardLogging");
+                    Log.d(TAG, "oneM2MMessagesHandler: LoggingRTK");
+                    logIntent.putExtra("messageType", LOGGING_TAXI_RECEIVED);
+                    logIntent.putExtra("logmsg", contentMP.toString());
+                    logIntent.putExtra("uuid", carMPUuid);
+                    logIntent.putExtra("username", userName);
+                    logIntent.putExtra("runNumber", runNumber);
+                    logIntent.putExtra("experimentNumber", experimentNumber);
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
                 }
             }
-
             /*if(comparator.equals("CREATE:prius/Motionplanning")) {
                 Log.d(TAG, "oneM2MMessagesHandler: motionplanning");
                 JSONObject contentMP = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")

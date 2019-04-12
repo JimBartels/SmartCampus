@@ -822,14 +822,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             polylineMP = mMap.addPolyline((new PolylineOptions()
                     .add(points)
                     .zIndex(0)
-                    .color(Color.BLUE)));
+                    .color(Color.GREEN)));
             Log.d(TAG, "motionPlanningPath: ");
         } else {
             polylineMP.remove();
             polylineMP = mMap.addPolyline(new PolylineOptions()
                     .add(points)
                     .zIndex(0)
-                    .color(Color.BLUE));
+                    .color(Color.GREEN));
             Log.d(TAG, "motionPlanningPath: ");
         }
     }
