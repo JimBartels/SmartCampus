@@ -79,6 +79,7 @@ public class PilotLogging extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG, "onHandleIntent: ");
         createBroadcastReceiverLoggingM2MFoward();
+        userName = intent.getStringExtra("userName");
         createBroadcastReceiverLoggingM2MBackward();
         createBroadcastReceiverUploadLogFiles();
     }
@@ -87,7 +88,6 @@ public class PilotLogging extends IntentService {
     broadcastReceiverLoggingM2M = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                userName = intent.getStringExtra("username");
                 int messageType = intent.getIntExtra("messageType",0);
                 String logmsg = intent.getStringExtra("logmsg");
                 String uuid = intent.getStringExtra("uuid");
@@ -112,7 +112,6 @@ public class PilotLogging extends IntentService {
                 String uuid = intent.getStringExtra("uuid");
                 experimentNumberText = intent.getStringExtra("experimentNumber");
                 runNumberText = intent.getStringExtra("runNumber");
-                userName = intent.getStringExtra("userName");
                 pilotLogging(messageType,0,logmsg,uuid);
             }
         };

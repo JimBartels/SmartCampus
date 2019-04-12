@@ -261,6 +261,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void startPilotLoggingService() {
         Intent intent = new Intent(getApplicationContext(), PilotLogging.class);
         Log.d(TAG, "startPilotLogging: ");
+        intent.putExtra(userName,"userName");
         getApplicationContext().startService(intent);
 
     }
@@ -554,7 +555,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onPause() {
-        broadcastUploadLogs();
+        //broadcastUploadLogs();
         super.onPause();
     }
 
@@ -1276,7 +1277,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     @Override
     protected void onStop() {
-        broadcastUploadLogs();
+        //broadcastUploadLogs();
         Log.e(TAG, "onStop:");
         super.onStop();
     }
