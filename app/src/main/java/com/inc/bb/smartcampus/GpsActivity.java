@@ -218,7 +218,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 broadcastUploadLogs();
             }
         });
-        
+
 
         experimentNumberText = (EditText) findViewById(R.id.experimentNumber);
         experimentNumberText.clearFocus();
@@ -271,6 +271,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     private void startPilotLoggingService() {
         Intent intent = new Intent(getApplicationContext(), PilotLogging.class);
+        intent.putExtra(userName,"userName");
         Log.d(TAG, "startPilotLogging: ");
         getApplicationContext().startService(intent);
 

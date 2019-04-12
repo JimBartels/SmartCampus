@@ -75,6 +75,7 @@ public class PilotLogging extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG, "onHandleIntent: ");
+        userName = intent.getStringExtra("userName");
         createBroadcastReceiverLoggingM2MFoward();
         createBroadcastReceiverLoggingM2MBackward();
         createBroadcastReceiverUploadLogFiles();
@@ -109,7 +110,6 @@ public class PilotLogging extends IntentService {
                 String uuid = intent.getStringExtra("uuid");
                 experimentNumberText = intent.getStringExtra("experimentNumber");
                 runNumberText = intent.getStringExtra("runNumber");
-                userName = intent.getStringExtra("userName");
                 pilotLogging(messageType,0,logmsg,uuid);
             }
         };
@@ -257,7 +257,7 @@ public class PilotLogging extends IntentService {
 
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_"
-                        +userName + "_3.csv",log);
+                        + userName + "_3.csv",log);
                 break;
 
             case LOGGING_HUAWEI_RECEIVED:
