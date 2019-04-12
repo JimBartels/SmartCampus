@@ -430,7 +430,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         broadcastReceiverCarDataHuawei = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                handleCarNotificationHuawei(intent.getBooleanExtra("isInRectangle", false));
+               // handleCarNotificationHuawei(intent.getBooleanExtra("isInRectangle", false));
                 double[] rectangleLat = intent.getDoubleArrayExtra("rectangleLat");
                 double[] rectangleLon = intent.getDoubleArrayExtra("rectangleLon");
                 LatLng[] points = new LatLng[5];

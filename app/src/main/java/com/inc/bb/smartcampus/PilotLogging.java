@@ -9,26 +9,17 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.EditText;
-import android.widget.Switch;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.json.JSONException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Enumeration;
@@ -245,7 +236,7 @@ public class PilotLogging extends IntentService {
 
             case LOGGING_VEHICLE:
                 Log.d(TAG, "pilotLogging: Vehicle");
-                log = ",3," + userName + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
+                log = ",3," + "3129" + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
 
                 String fileNameCar = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_"
@@ -259,7 +250,26 @@ public class PilotLogging extends IntentService {
 
                 writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
                         + experimentNumberString + "_Run" + runNumberString + "_"
-                        +userName + "_3.csv",log);
+                        + "3129" + "_3.csv",log);
+                break;
+
+            case LOGGING_VEHICLE_POSEST:
+                Log.d(TAG, "pilotLogging: Vehicle_Posest");
+                log = ",33," + "3129" + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
+
+                String fileNameCarPosest = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_"
+                        + "3129"+"_33.csv";
+
+                if(fileNameVector==null){fileNameVector.add(fileNameCarPosest);
+                    addHeaderToLogFile(fileNameCarPosest);}
+                if(!fileNameVector.contains(fileNameCarPosest) && fileNameVector !=null){
+                    fileNameVector.add(fileNameCarPosest);
+                    addHeaderToLogFile(fileNameCarPosest);}
+
+                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
+                        + experimentNumberString + "_Run" + runNumberString + "_"
+                        +"3129" + "_33.csv",log);
                 break;
 
             case LOGGING_GPS_POSEST:
@@ -282,24 +292,6 @@ public class PilotLogging extends IntentService {
                         +"_11.csv",log);
                 break;
 
-            case LOGGING_VEHICLE_POSEST:
-                Log.d(TAG, "pilotLogging: Vehicle_Posest");
-                log = ",33," + userName + "," + "RECEIVED,CELLULAR,AutoPilot.PriusStatus," + uuid + ",112233," + data;
-
-                String fileNameCarPosest = "Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
-                        + experimentNumberString + "_Run" + runNumberString + "_"
-                        + userName+"_33.csv";
-
-                if(fileNameVector==null){fileNameVector.add(fileNameCarPosest);
-                    addHeaderToLogFile(fileNameCarPosest);}
-                if(!fileNameVector.contains(fileNameCarPosest) && fileNameVector !=null){
-                    fileNameVector.add(fileNameCarPosest);
-                    addHeaderToLogFile(fileNameCarPosest);}
-
-                writeToLogFile("Reb_" + mdformat.format(calendar.getTime()) + "_Exp"
-                        + experimentNumberString + "_Run" + runNumberString + "_"
-                        +userName + "_33.csv",log);
-                break;
 
             case LOGGING_HUAWEI_RECEIVED:
                 Log.d(TAG, "pilotLogging: HuaweiReceived");
