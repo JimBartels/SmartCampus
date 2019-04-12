@@ -6,6 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -171,6 +172,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public String bearing;
     public String speed;
     Button uploadButton;
+    Uri carnotification;
 
     //Request code for the permissions intent (asking for some permission)
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -257,6 +259,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             requestPermission();
         }
 
+        carnotification = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.translate_tts);
         //Starts all background services
         startOneM2MForwardCommunications();
         startOneM2MBackwardCommunications();
@@ -984,6 +987,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 .setSmallIcon(R.drawable.warning_sign) // notification icon
                 .setContentTitle(title) // title for notification
                 .setVibrate(vibrationPattern)
+                .setSound(carnotification)
                 .setOngoing(false)
                 .setAutoCancel(true);// notification cannot be removed user
         Intent intent = new Intent(getApplicationContext(), GpsActivity.class);
@@ -1091,7 +1095,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     carHeading = 360 + carHeading;
                 }
                 carOverlay.setBearing(carHeading);
-                handleCarNotification(deltaMeters);
+                //handleCarNotification(deltaMeters);
             }
         };
         IntentFilter intentFilter = new IntentFilter();
@@ -1262,6 +1266,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 mBuilder  = new NotificationCompat.
                         Builder(getApplicationContext(), "default")
                         .setContentText(notificationText)
+                        .setSound(carnotification)
                         .setStyle(new NotificationCompat.BigTextStyle())
                         .setContentTitle("Autonomous car warning")
                         .setAutoCancel(false)
