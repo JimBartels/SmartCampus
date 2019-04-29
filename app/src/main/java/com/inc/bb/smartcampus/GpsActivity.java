@@ -54,10 +54,16 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.util.constants.MapViewConstants;
@@ -69,8 +75,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
-
-;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants, OnMapReadyCallback {
@@ -121,26 +127,26 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     BroadcastReceiver broadcastReceiverLayoutChecker;
     BroadcastReceiver broadcastReceiverCarDataHuawei;
     BroadcastReceiver broadcastReceiverMotionplanningPath;
-    BroadcastReceiver broadcastReceiverVRUData = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String userId = intent.getStringExtra("VRUId");
-            LatLng gps = new LatLng(
-                    intent.getDoubleExtra("latitude", 0),
-                    intent.getDoubleExtra("longitude", 0));
-
-            if (map.containsKey(userId)) {
-                map.remove(userId);
-                map.put(userId, gps);
-            } else {
-                map.put(userId, gps);
-            }
-            Log.d("THIS IS GPS", gps.toString());
-            mMap.clear();
-            initializeHeatMap(map);
-
-        }
-    };
+//    BroadcastReceiver broadcastReceiverVRUData = new BroadcastReceiver() {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            String userId = intent.getStringExtra("GoogleFusedLocations.SEND_NEW_LOCATION");
+//            LatLng gps = new LatLng(
+//                    intent.getDoubleExtra("latitude", 0),
+//                    intent.getDoubleExtra("longitude", 0));
+//
+//            if (map.containsKey(userId)) {
+//                map.remove(userId);
+//                map.put(userId, gps);
+//            } else {
+//                map.put(userId, gps);
+//            }
+//            Log.d("THIS IS GPS", gps.toString());
+//            mMap.clear();
+//            initializeHeatMap(map);
+//
+//        }
+//    };
 
     //Notification global variables
     NotificationManager mNotificationManager;
@@ -151,6 +157,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     double carLat = 51.475792;
     Float carHeading = null;
     Float carSpeed = null;
+
+    ValueEventListener postListener;
 
     //Logging files
     File file;
@@ -325,17 +333,69 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     final Map<String, LatLng> map = new HashMap<>();
     List<LatLng> list;
 
+    // method name is a little misleading, but this is used to construct heatmaps
+    // so this method is correct, it extracts latlng information from firebase
+    // and constructs a heatmap from them
     private void createBroadcastReceiverVRUData() {
-        map.put("!2321", new LatLng(51.447893883296565, 5.48882099800934));
-        map.put("!2321", new LatLng(51.44789382565, 5.4888204));
-        map.put("!2231", new LatLng(51.447780625, 5.489011));
-//        initializeHeatMap(map);
+        postListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // Get Post object and use the values to update the UI
 
+                String data = (String) dataSnapshot.getValue().toString().toString();
+//                Log.d("GPS test", data);
 
-//        IntentFilter intentFilter = new IntentFilter();
-//        intentFilter.addAction("VRU GPS");
-//        LocalBroadcastManager.getInstance(this).registerReceiver(
-//                broadcastReceiverVRUData, intentFilter);
+                float x = 0;
+                float y = 0;
+                List<LatLng> points = new ArrayList<>();
+
+                // this works but if there is a more efficient way to do this,
+                // by avoiding a fuck ton of for loops, that would be nice
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    if (child.getKey().toString().equals("users")) {
+                        for (DataSnapshot child_1 : child.getChildren()) {
+                            for (DataSnapshot child_2 : child_1.getChildren()) {
+                                if (child_2.getKey().equals("latitude")) {
+//                                    Log.d("LatLng found", child_2.getValue().toString());
+                                    x = Float.parseFloat(child_2.getValue().toString());
+                                }
+                                if (child_2.getKey().equals("longitude")) {
+//                                    Log.d("Longitude found", child_2.getValue().toString());
+                                    y = Float.parseFloat(child_2.getValue().toString());
+                                }
+//                                if (x != 0 && y != 0) {
+                                    points.add(new LatLng(x, y));
+//                                }
+                            }
+                        }
+
+                    }
+                }
+
+                initializeHeatMap(points);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // do nothing
+            }
+
+        };
+        mDatabase.addValueEventListener(postListener);
+    }
+
+    public List<String> getValuesForGivenKey(String jsonArrayStr, String key) throws JSONException {
+        JSONArray jsonArray = new JSONArray(jsonArrayStr);
+        return IntStream.range(0, jsonArrayStr.length())
+                .mapToObj(index -> {
+                    try {
+                        return ((JSONObject) jsonArray.get(index)).optString(key);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     private void buildVRUCircle(String userId, Double latitude, Double longitude) {
@@ -860,7 +920,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceivers();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("VRUData");
-        LocalBroadcastManager.getInstance(this).registerReceiver( broadcastReceiverVRUData, intentFilter);
+//        LocalBroadcastManager.getInstance(this).registerReceiver( broadcastReceiverVRUData, intentFilter);
 //        broadcastReceiverVRUData = new BroadcastReceiver() {
 //            @Override
 //            public void onReceive(Context context, Intent intent) {
@@ -1518,7 +1578,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
-    private void initializeHeatMap(Map<String, LatLng> map) {
+    private void initializeHeatMap(List<LatLng> list) {
 
         // Create a heat map tile provider, passing it the latlngs of the concentrated buildings/areas
 //        if (VRUIdVector.contains(userId)) {
@@ -1526,7 +1586,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 //            //            // mOverlay.remove();
 //            //            // Check which provider has which userid and then change the gps coordinates
 //        } else {
-        list = new ArrayList<LatLng>(map.values());
+//        list = new ArrayList<LatLng>(map.values());
         Log.d("GPS coordinates", "gps coordinates");
 
         HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).build();

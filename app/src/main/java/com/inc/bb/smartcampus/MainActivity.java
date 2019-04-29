@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity  {
     String userId = "";
     private String name;
     private String password;
+    static String student_number;
     User user;
 
     @Override
@@ -182,6 +183,7 @@ public class MainActivity extends AppCompatActivity  {
                                     "Log in successful", Toast.LENGTH_SHORT);
                             toast.show();
                             FirebaseUser user = mAuth.getCurrentUser();
+                            Log.d("check user id", user.getDisplayName());
                             checkUserLoggedInAndGPSActivityIntent(user);
                         }
 
@@ -224,11 +226,14 @@ public class MainActivity extends AppCompatActivity  {
         }
     }
 
+
+
     // Writes a User class (nothing to do with firebase), this is used for staying logged in to
     // firebase this will prevent logging in again after short connection loss.
     private void writeNewUser(String userId, String studentNumber, String passWord, String Longitude
             , String Latitude){
-        userId=userId.replace("@random.com","");
+        GoogleFusedLocations.userid = userId;
+        student_number = studentNumber;
         user = new User(studentNumber,passWord, latitude, longitude);
         mDatabase.child("users").child(userId).setValue(user);
         return;

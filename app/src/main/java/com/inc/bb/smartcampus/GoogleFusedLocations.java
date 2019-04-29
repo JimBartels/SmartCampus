@@ -18,6 +18,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
+
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -34,6 +35,8 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.UUID;
 
@@ -50,6 +53,8 @@ public class GoogleFusedLocations extends IntentService {
     public static volatile boolean shouldContinue = true;
     public volatile static ResolvableApiException rae;
     boolean UserActivityNotYetRunning = true;
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference mDatabase = database.getReference();
 
     @Override
     public void onCreate() {
@@ -64,7 +69,7 @@ public class GoogleFusedLocations extends IntentService {
     private final static long UPDATE_INVTERVAL_IN_MILLISECONDS = 500;
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private final static long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = 1;
-
+    static String userid;
     //Googleapi and location clients
     private FusedLocationProviderClient mFusedLocationClient;
     GoogleApiClient mGoogleApiClient;
@@ -139,6 +144,11 @@ public class GoogleFusedLocations extends IntentService {
     }
 
     private void broadcastLocation(Long timestamp, LocationResult locationResult) {
+        mDatabase.child("users").child(userid).child("latitude").setValue(locationResult.getLastLocation().getLatitude());
+        mDatabase.child("users").child(userid).child("latitude").setValue(locationResult.getLastLocation().getLongitude());
+
+        Log.d("bla bla bla", String.valueOf(locationResult.getLastLocation().getLatitude()));
+
         Intent intent = new Intent();
         intent.setAction("GoogleFusedLocations.SEND_NEW_LOCATION");
         Log.d(TAG, "broadcastingLocation");
