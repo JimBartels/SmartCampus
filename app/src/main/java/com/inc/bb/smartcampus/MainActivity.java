@@ -71,6 +71,11 @@ public class MainActivity extends AppCompatActivity  {
         mFirebaseBtn.setBackground(buttondrawable2);
         mFirebaseBtn.setText("Login");
 
+        Log.d("checking id", userId);
+
+
+//        Log.d("checking id 2", name);
+
         //Layout listeners for above widgets, these listeners get called whenver login/register
         // is initiated
         editTextsListeners();
@@ -108,6 +113,7 @@ public class MainActivity extends AppCompatActivity  {
     // Gpsactivity, if not exception by firebase is handled by either logging in or showing error to
     // user by toast.
     public void register(final String studentNumber, final String pass) {
+
         mAuth.createUserWithEmailAndPassword(studentNumber,pass)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -172,6 +178,7 @@ public class MainActivity extends AppCompatActivity  {
 
     //Tries to login to firebase auth client, if successful -> GPSactivity, if not error is shown.
     public void login(String name, String pass) {
+
         mAuth.signInWithEmailAndPassword(name,pass).addOnCompleteListener
                 (this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -205,7 +212,11 @@ public class MainActivity extends AppCompatActivity  {
         super.onStart();
         Log.d(TAG, " On start");
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        checkUserLoggedInAndGPSActivityIntent(currentUser);}
+        checkUserLoggedInAndGPSActivityIntent(currentUser);
+
+        Log.d("checking id", currentUser.toString());
+        Log.d("checking id", userId);
+    }
 
     //Checks whether user is logged in and if so goes to GPS activity.
     private void checkUserLoggedInAndGPSActivityIntent(FirebaseUser currentUser) {
@@ -224,6 +235,8 @@ public class MainActivity extends AppCompatActivity  {
             if(user!=null){
                 login(user.studentnumber,user.password);}
         }
+
+
     }
 
 
@@ -232,7 +245,7 @@ public class MainActivity extends AppCompatActivity  {
     // firebase this will prevent logging in again after short connection loss.
     private void writeNewUser(String userId, String studentNumber, String passWord, String Longitude
             , String Latitude){
-        GoogleFusedLocations.userid = userId;
+
         student_number = studentNumber;
         user = new User(studentNumber,passWord, latitude, longitude);
         mDatabase.child("users").child(userId).setValue(user);

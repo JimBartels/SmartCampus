@@ -143,9 +143,11 @@ public class GoogleFusedLocations extends IntentService {
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
+
     private void broadcastLocation(Long timestamp, LocationResult locationResult) {
+        mDatabase.child("users").setValue(userid);
         mDatabase.child("users").child(userid).child("latitude").setValue(locationResult.getLastLocation().getLatitude());
-        mDatabase.child("users").child(userid).child("latitude").setValue(locationResult.getLastLocation().getLongitude());
+        mDatabase.child("users").child(userid).child("longitude").setValue(locationResult.getLastLocation().getLongitude());
 
         Log.d("bla bla bla", String.valueOf(locationResult.getLastLocation().getLatitude()));
 
