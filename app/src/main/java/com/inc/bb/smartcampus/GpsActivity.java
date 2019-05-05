@@ -97,9 +97,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     boolean taxiNotificationNeeded = true;
     android.app.Fragment campusCar;
 
-//    //heatmaps
-//    HeatmapTileProvider mProvider;
-
     //buildings
     private GroundOverlay fluxOverlay;
     private static final LatLng FLUX = new LatLng(51.447425, 5.491944);
@@ -132,26 +129,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     BroadcastReceiver broadcastReceiverLayoutChecker;
     BroadcastReceiver broadcastReceiverCarDataHuawei;
     BroadcastReceiver broadcastReceiverMotionplanningPath;
-//    BroadcastReceiver broadcastReceiverVRUData = new BroadcastReceiver() {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            String userId = intent.getStringExtra("GoogleFusedLocations.SEND_NEW_LOCATION");
-//            LatLng gps = new LatLng(
-//                    intent.getDoubleExtra("latitude", 0),
-//                    intent.getDoubleExtra("longitude", 0));
-//
-//            if (map.containsKey(userId)) {
-//                map.remove(userId);
-//                map.put(userId, gps);
-//            } else {
-//                map.put(userId, gps);
-//            }
-//            Log.d("THIS IS GPS", gps.toString());
-//            mMap.clear();
-//            initializeHeatMap(map);
-//
-//        }
-//    };
+
 
     //Notification global variables
     NotificationManager mNotificationManager;
@@ -163,6 +141,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     Float carHeading = null;
     Float carSpeed = null;
 
+    // listener for change in firebase, required for heatmaps
     ValueEventListener postListener;
 
     //Logging files
@@ -262,9 +241,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         //Bottom navigation bar
         setupBottomNavigationBar();
 
-        //created the broadcast receivers for all services
-
-
         //Notification builder
         //buildCarNotification(AUTONOMOUS_CAR_NOTIFICATION_TITLE);
         permissionGrantedSnackbarShape = ContextCompat.getDrawable(getApplicationContext(), R.drawable.snackbarshape);
@@ -349,9 +325,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // Get Post object and use the values to update the UI
 
-                String data = (String) dataSnapshot.child("users").getValue(true).toString();
-                Log.d("GPS test", data);
-                Log.d("GPS test1", userName);
                 float x = 0;
                 float y = 0;
                 List<LatLng> points = new ArrayList<>();
@@ -371,8 +344,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                     y = Float.parseFloat(child_2.getValue().toString());
                                 }
                                 if (x != 0 && y != 0) {
+                                    // add the latlng value to list used by heatmaps
                                     points.add(new LatLng(x, y));
                                 }
+
 //                            }
                         }
 
@@ -664,7 +639,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
-        mMap.setMyLocationEnabled(true);
+//        mMap.setMyLocationEnabled(true);
         // coordinates of gemini building, ~ centre of tu/e
         CameraUpdate point = CameraUpdateFactory.newLatLngZoom(new LatLng(51.447433, 5.4908978), 15.0f);
         // moves camera to coordinates

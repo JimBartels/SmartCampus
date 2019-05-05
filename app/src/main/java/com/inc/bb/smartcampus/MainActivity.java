@@ -214,8 +214,6 @@ public class MainActivity extends AppCompatActivity  {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         checkUserLoggedInAndGPSActivityIntent(currentUser);
 
-        Log.d("checking id", currentUser.toString());
-        Log.d("checking id", userId);
     }
 
     //Checks whether user is logged in and if so goes to GPS activity.
