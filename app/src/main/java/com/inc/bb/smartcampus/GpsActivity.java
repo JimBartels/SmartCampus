@@ -221,7 +221,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onCreate(savedInstanceState);
 
         //Sets orientation so the screen is locked to portrait mode
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         //Assigning of notification sound from downloaded google translate sound and filling of
         //notification array (fills up if notifications are active).
@@ -1016,14 +1016,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             polylineMP = mMap.addPolyline((new PolylineOptions()
                     .add(points)
                     .zIndex(0)
-                    .color(Color.GREEN)));
+                    .color(Color.BLUE)));
             Log.d(TAG, "motionPlanningPath: ");
         } else {
             polylineMP.remove();
             polylineMP = mMap.addPolyline(new PolylineOptions()
                     .add(points)
                     .zIndex(0)
-                    .color(Color.GREEN));
+                    .color(Color.BLUE));
             Log.d(TAG, "motionPlanningPath: ");
         }
     }
