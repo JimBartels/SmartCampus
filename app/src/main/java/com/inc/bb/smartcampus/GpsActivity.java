@@ -212,35 +212,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     boolean TAXIVruCircle = false;
     Circle taxiCALLcircle;
 
-    LocationListener loc = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location location) {
-//            Log.d("check", "fuck me");
-//            Log.d("userid check", location.toString());
-//            DatabaseReference data = mDatabase.child("users");
-//            Log.d("userid check", "fuck me");
-//            Log.d("userid check", data.toString());
-            mDatabase.child("users").child(userName).child("latitude").setValue(location.getLatitude());
-            mDatabase.child("users").child(userName).child("longitude").setValue(location.getLongitude());
-            Log.d("push check", Double.toString(location.getLatitude()));
-        }
-
-        @Override
-        public void onStatusChanged(String s, int i, Bundle bundle) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String s) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String s) {
-
-        }
-    };
-
     //Request code for the permissions intent (asking for some permission)
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
@@ -376,10 +347,11 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         postListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                // Get Post object and use the values to update the UI
 
-//                String data = (String) dataSnapshot.child("users").getValue(true).toString();
-//                Log.d("GPS test", data);
-//                Log.d("GPS test1", userName);
+                String data = (String) dataSnapshot.child("users").getValue(true).toString();
+                Log.d("GPS test", data);
+                Log.d("GPS test1", userName);
                 float x = 0;
                 float y = 0;
                 List<LatLng> points = new ArrayList<>();
@@ -946,10 +918,65 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceivers();
 
         LocationManager mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, loc);
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,
+                0, new LocationListener() {
+                    @Override
+                    public void onLocationChanged(Location location) {
+                        Log.d("check", "fuck me");
+                        Log.d("userid check", location.toString());
+                        DatabaseReference data = mDatabase.child("users");
+                        Log.d("userid check", "fuck me");
+                        Log.d("userid check", data.toString());
+                        mDatabase.child("users").child(userName).child("latitude").setValue(location.getLatitude());
+                        mDatabase.child("users").child(userName).child("latitude").setValue(location.getLongitude());
+                    }
 
-        mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, loc);
+                    @Override
+                    public void onStatusChanged(String s, int i, Bundle bundle) {
 
+                    }
+
+                    @Override
+                    public void onProviderEnabled(String s) {
+
+                    }
+
+                    @Override
+                    public void onProviderDisabled(String s) {
+
+                    }
+                }
+
+);
+
+        mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                Log.d("check", "fuck me");
+                Log.d("userid check", location.toString());
+                DatabaseReference data = mDatabase.child("users");
+                Log.d("userid check", "fuck me");
+                Log.d("userid check", data.toString());
+                mDatabase.child("users").child(userName).child("latitude").setValue(location.getLatitude());
+                mDatabase.child("users").child(userName).child("longitude").setValue(location.getLongitude());
+            }
+
+            @Override
+            public void onStatusChanged(String s, int i, Bundle bundle) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String s) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String s) {
+
+            }
+        });
+        Log.d("fuck me", "fuck me");
 
 
 //        LocalBroadcastManager.getInstance(this).registerReceiver( broadcastReceiverVRUData, intentFilter);
@@ -1611,7 +1638,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     }
 
     private void initializeHeatMap(List<LatLng> list) {
-//        Log.d("GPS coordinates", list.toString());
+
+        // Create a heat map tile provider, passing it the latlngs of the concentrated buildings/areas
+//        if (VRUIdVector.contains(userId)) {
+//            // Check which m overlay is for which user id
+//            //            // mOverlay.remove();
+//            //            // Check which provider has which userid and then change the gps coordinates
+//        } else {
+//        list = new ArrayList<LatLng>(map.values());
+        Log.d("GPS coordinates", list.toString());
 
         HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).build();
         //            VRUIdVector.set(userID);
