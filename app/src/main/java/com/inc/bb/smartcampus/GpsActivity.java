@@ -56,6 +56,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -320,41 +321,44 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 //        just for test, this works correctly, thereby confirming that writing to firebase is correct
 //        mDatabase.child("users").child(userName).child("longitude").setValue("51.4555");
 
+        // listens for change in firebase data, and constructs heatmaps upon change
         postListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                // Get Post object and use the values to update the UI
+                // counter is used to keep track if there is a previous overlay
+                int counter = 0;
 
+                // temporary variables for LatLng
                 float x = 0;
                 float y = 0;
-                List<LatLng> points = new ArrayList<>();
+
+                // list that will be passed
+                final List<LatLng> points = new ArrayList<>();
 
                 // this works but if there is a more efficient way to do this,
                 // by avoiding a fuck ton of for loops, that would be nice
                 for (DataSnapshot child : dataSnapshot.child("users").getChildren()) {
-//                    if (child.getKey().equals("users")) {
-//                        for (DataSnapshot child_1 : child.getChildren()) {
                             for (DataSnapshot child_2 : child.getChildren()) {
                                 if (child_2.getKey().equals("latitude")) {
-//                                    Log.d("LatLng found", child_2.getValue().toString());
                                     x = Float.parseFloat(child_2.getValue().toString());
                                 }
                                 if (child_2.getKey().equals("longitude")) {
-//                                    Log.d("Longitude found", child_2.getValue().toString());
                                     y = Float.parseFloat(child_2.getValue().toString());
                                 }
                                 if (x != 0 && y != 0) {
                                     // add the latlng value to list used by heatmaps
                                     points.add(new LatLng(x, y));
                                 }
-
-//                            }
                         }
-
-//                    }
                 }
 
-                initializeHeatMap(points);
+                if (counter > 0) {
+                    initializeHeatMap(points, true);
+                }
+                else {
+                    initializeHeatMap(points, false);
+                }
+                counter++;
             }
 
             @Override
@@ -632,6 +636,30 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onPause();
     }
 
+    LocationListener loc = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            // write values to firebase
+            mDatabase.child("users").child(userName).child("latitude").setValue(location.getLatitude());
+            mDatabase.child("users").child(userName).child("longitude").setValue(location.getLongitude());
+        }
+
+        @Override
+        public void onStatusChanged(String s, int i, Bundle bundle) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String s) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String s) {
+
+        }
+    };
+
     //Override function called when google maps is first initialized/ready in the app. All campus
     // buildings are initialized (their actions/listeners) as well as the car overlay and user
     // location that is observable in the app.
@@ -639,7 +667,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
-//        mMap.setMyLocationEnabled(true);
+        mMap.setMyLocationEnabled(true);
         // coordinates of gemini building, ~ centre of tu/e
         CameraUpdate point = CameraUpdateFactory.newLatLngZoom(new LatLng(51.447433, 5.4908978), 15.0f);
         // moves camera to coordinates
@@ -647,7 +675,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         // animates camera to coordinates
         mMap.animateCamera(point);
 
-//        addHeatMap();
 
         /*try {
             // Customise the styling of the base map using a JSON object defined
@@ -893,88 +920,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceivers();
 
         LocationManager mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,
-                0, new LocationListener() {
-                    @Override
-                    public void onLocationChanged(Location location) {
-                        Log.d("check", "fuck me");
-                        Log.d("userid check", location.toString());
-                        DatabaseReference data = mDatabase.child("users");
-                        Log.d("userid check", "fuck me");
-                        Log.d("userid check", data.toString());
-                        mDatabase.child("users").child(userName).child("latitude").setValue(location.getLatitude());
-                        mDatabase.child("users").child(userName).child("latitude").setValue(location.getLongitude());
-                    }
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 2, loc);
 
-                    @Override
-                    public void onStatusChanged(String s, int i, Bundle bundle) {
-
-                    }
-
-                    @Override
-                    public void onProviderEnabled(String s) {
-
-                    }
-
-                    @Override
-                    public void onProviderDisabled(String s) {
-
-                    }
-                }
-
-);
-
-        mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                Log.d("check", "fuck me");
-                Log.d("userid check", location.toString());
-                DatabaseReference data = mDatabase.child("users");
-                Log.d("userid check", "fuck me");
-                Log.d("userid check", data.toString());
-                mDatabase.child("users").child(userName).child("latitude").setValue(location.getLatitude());
-                mDatabase.child("users").child(userName).child("longitude").setValue(location.getLongitude());
-            }
-
-            @Override
-            public void onStatusChanged(String s, int i, Bundle bundle) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String s) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String s) {
-
-            }
-        });
-        Log.d("fuck me", "fuck me");
-
-
-//        LocalBroadcastManager.getInstance(this).registerReceiver( broadcastReceiverVRUData, intentFilter);
-//        broadcastReceiverVRUData = new BroadcastReceiver() {
-//            @Override
-//            public void onReceive(Context context, Intent intent) {
-//                String userId = intent.getStringExtra("VRUId");
-//                LatLng gps = new LatLng(
-//                        intent.getDoubleExtra("latitude", 0),
-//                        intent.getDoubleExtra("longitude", 0));
-//
-//                if (map.containsKey(userId)) {
-//                    map.remove(userId);
-//                    map.put(userId, gps);
-//                } else {
-//                    map.put(userId, gps);
-//                }
-//                Log.d("THIS IS GPS", gps.toString());
-//                mMap.clear();
-//                initializeHeatMap(map);
-//
-//            }
-//        };
+        mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10, 2, loc);
     }
 
 
@@ -1612,21 +1560,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
     }
 
-    private void initializeHeatMap(List<LatLng> list) {
-
-        // Create a heat map tile provider, passing it the latlngs of the concentrated buildings/areas
-//        if (VRUIdVector.contains(userId)) {
-//            // Check which m overlay is for which user id
-//            //            // mOverlay.remove();
-//            //            // Check which provider has which userid and then change the gps coordinates
-//        } else {
-//        list = new ArrayList<LatLng>(map.values());
-        Log.d("GPS coordinates", list.toString());
-
+    // needed for removing the previous overlays
+    TileOverlay temp;
+    private void initializeHeatMap(List<LatLng> list, boolean remove) {
+        // remove previous heatmap overlays
+        if (remove == true) {
+            temp.remove();
+        }
         HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).build();
-        //            VRUIdVector.set(userID);
-
-        mMap.addTileOverlay((new TileOverlayOptions()).tileProvider(mProvider));
-
+//        mProvider.setData(list);
+        temp =  mMap.addTileOverlay((new TileOverlayOptions()).tileProvider(mProvider));
     }
 }
