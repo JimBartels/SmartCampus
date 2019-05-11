@@ -1577,22 +1577,22 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // needed for removing the previous overlays
     TileOverlay temp;
 
-//    // just some colour gradients
-//    // heatmaps start with yellow and slowly progress
-//    // towards red, so there are 4 possible concentrations
-//    int[] colors = {
-//            Color.rgb(255,255,0),   // yellow
-//            Color.rgb(102, 225, 0), // green
-//            Color.rgb(255,165,0), // orange
-//            Color.rgb(255, 0, 0)    // red
-//    };
-//
-//    // indicates when to start a new colour based on intensity
-//    float[] startPoints = {
-//            0.1f, 0.3f, 0.6f, 1f
-//    };
-//
-//    Gradient gradient = new Gradient(colors, startPoints);
+    // just some colour gradients
+    // heatmaps start with yellow and slowly progress
+    // towards red, so there are 4 possible concentrations
+    int[] colors = {
+            Color.rgb(255,255,0),   // yellow
+            Color.rgb(102, 225, 0), // green
+            Color.rgb(255,165,0), // orange
+            Color.rgb(255, 0, 0)    // red
+    };
+
+    // indicates when to start a new colour based on intensity
+    float[] startPoints = {
+            0.1f, 0.3f, 0.6f, 1f
+    };
+
+    Gradient gradient = new Gradient(colors, startPoints);
 
     private void initializeHeatMap(List<LatLng> list, boolean remove) {
         // remove previous heatmap overlays
@@ -1603,7 +1603,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         }
 
         // build the heatmaps
-        HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).build();
+        HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).gradient(gradient).build();
 
         // add the tile overlays to the map and
         // assign this to a temporary variable, so it can be removed later if need be
