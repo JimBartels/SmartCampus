@@ -65,6 +65,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.maps.android.heatmaps.Gradient;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 
 import org.json.JSONArray;
@@ -309,7 +310,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceiverCarDataRTK();
         createBroadcastReceiverCarDataHuawei();
         createBroadcastReceiverTaxiNotifcationNeeded();
-        createBroadcastReceiverVRUData();
+        createBroadcastReceiverVRUData(); // the one used for heatmaps
         createBroadcastReceiverTaxiCaller();
     }
 
@@ -326,6 +327,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // counter is used to keep track if there is a previous overlay
+                // if counter > 0, then previous overlay needs to be removed
                 int counter = 0;
 
                 // temporary variables for LatLng
@@ -337,21 +339,30 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
                 // this works but if there is a more efficient way to do this,
                 // by avoiding a fuck ton of for loops, that would be nice
+                // NVM
+                // this is much better, i improved efficiency by removing a few for loops
                 for (DataSnapshot child : dataSnapshot.child("users").getChildren()) {
                             for (DataSnapshot child_2 : child.getChildren()) {
+                                // get latitude
                                 if (child_2.getKey().equals("latitude")) {
                                     x = Float.parseFloat(child_2.getValue().toString());
                                 }
+                                // get longitude
                                 if (child_2.getKey().equals("longitude")) {
                                     y = Float.parseFloat(child_2.getValue().toString());
                                 }
+                                // (0, 0) is in the middle of the ocean and is also what users are
+                                // defaulted to at initialization, so no point in displaying it,
+                                // as it will only slow down performance
                                 if (x != 0 && y != 0) {
-                                    // add the latlng value to list used by heatmaps
+                                    // build a new LatLng and
+                                    // add it to the list that is to be passed
                                     points.add(new LatLng(x, y));
                                 }
                         }
                 }
 
+                // only remove previous overlay if counter > 0
                 if (counter > 0) {
                     initializeHeatMap(points, true);
                 }
@@ -367,6 +378,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             }
 
         };
+        // add the value change listener to database
         mDatabase.addValueEventListener(postListener);
     }
 
@@ -914,14 +926,16 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         };
         mMap.setOnGroundOverlayClickListener(listener);
 
-//        IntentFilter intentFilter = new IntentFilter();
-//        intentFilter.addAction("VRUData");
 
         createBroadcastReceivers();
 
+        // heatmap stuff
         LocationManager mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        // use both GPS and NETWORK provider as sometimes one of them is unreliable,
+        // but both give good results
+        // minimum distance = 2 meters
+        // minimum time = 10, can be changed
         mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 2, loc);
-
         mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10, 2, loc);
     }
 
@@ -1562,13 +1576,37 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     // needed for removing the previous overlays
     TileOverlay temp;
+
+//    // just some colour gradients
+//    // heatmaps start with yellow and slowly progress
+//    // towards red, so there are 4 possible concentrations
+//    int[] colors = {
+//            Color.rgb(255,255,0),   // yellow
+//            Color.rgb(102, 225, 0), // green
+//            Color.rgb(255,165,0), // orange
+//            Color.rgb(255, 0, 0)    // red
+//    };
+//
+//    // indicates when to start a new colour based on intensity
+//    float[] startPoints = {
+//            0.1f, 0.3f, 0.6f, 1f
+//    };
+//
+//    Gradient gradient = new Gradient(colors, startPoints);
+
     private void initializeHeatMap(List<LatLng> list, boolean remove) {
         // remove previous heatmap overlays
+        // if this not the first time heatmaps are built
+        // logic supplied above, in postListener
         if (remove == true) {
             temp.remove();
         }
+
+        // build the heatmaps
         HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).build();
-//        mProvider.setData(list);
+
+        // add the tile overlays to the map and
+        // assign this to a temporary variable, so it can be removed later if need be
         temp =  mMap.addTileOverlay((new TileOverlayOptions()).tileProvider(mProvider));
     }
 }
