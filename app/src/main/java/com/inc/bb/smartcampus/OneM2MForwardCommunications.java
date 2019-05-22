@@ -466,16 +466,6 @@ public class OneM2MForwardCommunications extends IntentService {
                 Long timeStamp = intent.getLongExtra("timeStamp",0);
                 String uuid = intent.getStringExtra("uuid");
                 Log.d(TAG, "onReceive: location received");
-                try {
-                    publishGpsData(Latitude,Longitude, Accuracy, timeStamp,String.valueOf(Speed),
-                            String.valueOf(Heading),uuid);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                } catch (MqttException e) {
-                    e.printStackTrace();
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
                 if (isHoldGPS) {
                     if(!alreadyHolding){
                         latitude_mem = Latitude;
@@ -491,6 +481,17 @@ public class OneM2MForwardCommunications extends IntentService {
                 }
                 if(!isHoldGPS){
                     alreadyHolding = false;
+                }
+
+                try {
+                    publishGpsData(Latitude,Longitude, Accuracy, timeStamp,String.valueOf(Speed),
+                            String.valueOf(Heading),uuid);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                } catch (MqttException e) {
+                    e.printStackTrace();
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
                 }
             }
         };
