@@ -202,7 +202,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         super.onCreate(savedInstanceState);
 
         //Sets orientation so the screen is locked to portrait mode
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         //Assigning of notification sound from downloaded google translate sound and filling of
         //notification array (fills up if notifications are active).
@@ -1607,6 +1607,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         // add the tile overlays to the map and
         // assign this to a temporary variable, so it can be removed later if need be
-        temp =  mMap.addTileOverlay((new TileOverlayOptions()).tileProvider(mProvider));
+        //temp =  mMap.addTileOverlay((new TileOverlayOptions()).tileProvider(mProvider));
     }
 }
