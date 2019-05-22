@@ -459,6 +459,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     int REQUEST_CHECK_SETTINGS = 0x1;
                     GoogleFusedLocations.rae.startResolutionForResult(GpsActivity.this, REQUEST_CHECK_SETTINGS);
                     startTrackingUserActivity();
+                    startOneM2MForwardCommunications();
                 } catch (IntentSender.SendIntentException e) {
                     e.printStackTrace();
                 }
@@ -476,7 +477,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             public void onReceive(Context context, Intent intent) {
                 boolean isLoggingSwitched = loggingSwitch.isChecked();
                 boolean isExperimentEmpty = experimentNumberText.getText().toString().isEmpty();
-                boolean isHoldGPS = holdGpsSwitch.isChecked():
+                boolean isHoldGPS = holdGpsSwitch.isChecked();
                 boolean isRunEmpty = runNumberText.getText().toString().isEmpty();
                 if (isLoggingSwitched && !isExperimentEmpty && !isRunEmpty) {
                     broadcastUIInfo(true, runNumberText.getText().toString(), experimentNumberText.getText().toString(),isHoldGPS);
@@ -1514,8 +1515,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 textView.setTextColor(Color.WHITE);
                 snackbar.getView().setBackground(permissionGrantedSnackbarShape);
                 snackbar.show();
-                startLocationService(); //TODO start service
-            } else {
+                startLocationService();
+                startOneM2MForwardCommunications();
             }
         }
     }

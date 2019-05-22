@@ -178,6 +178,7 @@ public class GoogleFusedLocations extends IntentService {
                             intent.setAction("GoogleFusedLocations.RESOLUTION_REQUIRED");
                             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
                             Log.e(TAG, "onFailure: " + e.toString());
+                            startLocationUpdates();
                 break;
                 }
             }

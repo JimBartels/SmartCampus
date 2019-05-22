@@ -78,6 +78,7 @@ public class OneM2MForwardCommunications extends IntentService {
     private final static int RETRIEVE = 2;
     private final static int UPDATE = 3;
     private final static int DELETE = 4;
+    Double latitude_mem=0.0000,longitude_mem = 0.0000;
 
     //Broadcast variables
     BroadcastReceiver locationsBroadcastReceiver,cancelTaxiRequestBroadcastReceiver,
@@ -453,13 +454,13 @@ public class OneM2MForwardCommunications extends IntentService {
         locationsBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Double latitude_mem = 0.0000, longitude_mem = 0.0000;
+
                 broadcastIsLoggingEnabled();
                 boolean shouldContinue = intent.getBooleanExtra("shouldContinue",
                         true);
                 if(!shouldContinue){stopSelf();}
-                Longitude = intent.getDoubleExtra("longitude",'0');
-                Latitude = intent.getDoubleExtra("latitude",'0');
+                Double longitude = intent.getDoubleExtra("longitude",'0');
+                Double latitude = intent.getDoubleExtra("latitude",'0');
                 Accuracy = intent.getFloatExtra("accuracy",'0');
                 Heading = intent.getFloatExtra("heading",'0');
                 Speed = intent.getFloatExtra("speed",'0');
@@ -468,19 +469,22 @@ public class OneM2MForwardCommunications extends IntentService {
                 Log.d(TAG, "onReceive: location received");
                 if (isHoldGPS) {
                     if(!alreadyHolding){
-                        latitude_mem = Latitude;
-                        longitude_mem = Longitude;
+                        latitude_mem = latitude;
+                        longitude_mem = longitude;
+                        Latitude = latitude;
+                        Longitude = longitude;
                         alreadyHolding = true;
                     }
                     if(alreadyHolding){
                         Latitude = latitude_mem;
                         Longitude = longitude_mem;
-
                     }
 
                 }
                 if(!isHoldGPS){
                     alreadyHolding = false;
+                    Latitude = latitude;
+                    Longitude = longitude;
                 }
 
                 try {
