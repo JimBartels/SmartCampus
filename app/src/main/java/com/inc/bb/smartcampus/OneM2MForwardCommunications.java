@@ -83,6 +83,8 @@ public class OneM2MForwardCommunications extends IntentService {
     //Logging layout check variables
     BroadcastReceiver layoutResponseBroadcastReceiver;
     boolean isLoggingSwitched = false;
+    boolean isHoldGPS = false;
+    boolean alreadyHolding = false;
     String experimentNumber;
     String runNumber;
 
@@ -148,6 +150,7 @@ public class OneM2MForwardCommunications extends IntentService {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG, "onReceive: layout");
+                isHoldGPS = intent.getBooleanExtra("holdGPS",false);
                 isLoggingSwitched = intent.getBooleanExtra("loggingEnabled",
                         false);
                 Log.d(TAG, "onReceive: " + isLoggingSwitched);
@@ -392,6 +395,7 @@ public class OneM2MForwardCommunications extends IntentService {
     private void publishUserStatus(String activity, Long timeStamp, int confidence)
             throws JSONException, MqttException, UnsupportedEncodingException {
         UUID uuid = UUID.randomUUID();
+        //broadcastIsLoggingEnabled();
         JSONObject contentinstancecontentdata = new JSONObject();
         contentinstancecontentdata.put("activity", activity);
         contentinstancecontentdata.put("activityConfidence", confidence);
@@ -442,6 +446,8 @@ public class OneM2MForwardCommunications extends IntentService {
         locationsBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                Double latitude_mem = 0.000000, longitude_mem = 0.000000;
+
                 broadcastIsLoggingEnabled();
                 boolean shouldContinue = intent.getBooleanExtra("shouldContinue",
                         true);
@@ -454,6 +460,22 @@ public class OneM2MForwardCommunications extends IntentService {
                 Long timeStamp = intent.getLongExtra("timeStamp",0);
                 String uuid = intent.getStringExtra("uuid");
                 Log.d(TAG, "onReceive: location received");
+                if (isHoldGPS) {
+                    if(!alreadyHolding){
+                        latitude_mem = Latitude;
+                        longitude_mem = Longitude;
+                        alreadyHolding = true;
+                    }
+                    if(alreadyHolding){
+                        Latitude = latitude_mem;
+                        Longitude = longitude_mem;
+
+                    }
+
+                }
+                if(!isHoldGPS){
+                    alreadyHolding = false;
+                }
             }
         };
         IntentFilter intentFilter = new IntentFilter();
