@@ -932,7 +932,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             int deltameterinitial = deltameterinitialdoubble.intValue();
 
                             // Do the "lengthy" operation
-                            for (incr = 0; incr <= 95; incr = (100 - (deltameter*100/deltameterinitial))) {
+                            for (incr = 0; incr <= 80; incr = (100 - (deltameter*100/deltameterinitial))) {
                                 String deltametersstring = OneM2MBackwardCommunications.mMyAppsBundle
                                                     .getString("deltameters");
 
