@@ -949,7 +949,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                 // Prevents the app from crashing atm
                                 try {
                                     // Sleep for 5 seconds
-                                    Thread.sleep(5*1000);
+                                    Thread.sleep(1*1000);
                                 } catch (InterruptedException e) {
                                     Log.d(TAG, "sleep failure");
                                 }
