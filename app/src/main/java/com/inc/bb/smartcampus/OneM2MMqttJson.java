@@ -146,6 +146,26 @@ public class OneM2MMqttJson {
         m2mrequester.put("m2m:rqp",payload);
         return m2mrequester;
     }
+    public JSONObject CreateContentInstanceTaxiArrived() throws JSONException{
+        payload.put("fr",oneM2MAeRi);
+        payload.put("key",oneM2MAePass);
+
+        String topic = "/server/server/" + oneM2MAeRn + "/Users/" + userId + "/Status";
+        payload.put("to",topic);
+
+        payload.put("rqi","TaxiArrived");
+        payload.put("op", CREATE_OP);
+        payload.put("ty", 4);
+
+
+        contentinstancecontent.put("con", "arrived");
+        m2mcntrequester.put("m2m:cin", contentinstancecontent);
+        payload.put("pc", m2mcntrequester);
+        m2mrequester.put("m2m:rqp",payload);
+        return m2mrequester;
+    }
+
+
     public JSONObject CreateContentInstanceGps(String RnContentInstance, Double lat, Double lng, Float Accuracy) throws JSONException{
         payload.put("fr",oneM2MAeRi);
         payload.put("key",oneM2MAePass);

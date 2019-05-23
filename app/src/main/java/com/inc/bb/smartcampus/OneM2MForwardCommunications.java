@@ -290,7 +290,7 @@ public class OneM2MForwardCommunications extends IntentService {
                         oneM2MVRUAeRn,userName);
                 try {
                     publishAndLogMessage(onem2m,VRU.
-                                    CreateContainer(userName).toString(),0,
+                                    CreateContentInstanceTaxiArrived().toString(),0,
                             oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
                             null, null);
                 } catch (MqttException e) {
