@@ -380,7 +380,6 @@ public class OneM2MBackwardCommunications extends IntentService {
                 OneM2MBackwardCommunications.mMyAppsBundle.putString("deltametersinitial", deltametersinitialstring);
                 if (contentMP.getString("mobileId").equals(userName)) {
                     Log.d(TAG, "oneM2MMessagesHandler: motionplanning2");
-                    cancelRequestTimer();
                     JSONArray jsonArray = contentMP.getJSONArray("coords");
                     double[] pathLat = new double[jsonArray.length()];
                     double[] pathLon = new double[jsonArray.length()];
@@ -498,6 +497,7 @@ public class OneM2MBackwardCommunications extends IntentService {
     }
 
     private void cancelRequestTimer() {
+        Log.d(TAG, "oneM2MMessagesHandler: motionplanning2.6");
         new CountDownTimer(5000, 1000) {
 
             @Override
