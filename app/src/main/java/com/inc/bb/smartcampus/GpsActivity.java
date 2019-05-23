@@ -137,7 +137,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     //Logging layout widgets
     EditText runNumberText, experimentNumberText;
-    Switch loggingSwitch;
+    Switch loggingSwitch, holdGpsSwitch;
 
     //Car notifications
     Uri AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND;
@@ -225,6 +225,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         experimentNumberText.clearFocus();
         runNumberText.clearFocus();
         loggingSwitch = (Switch) findViewById(R.id.logSwitch);
+        holdGpsSwitch = (Switch) findViewById(R.id.holdgpsswitch);
 
         //Google maps support fragment assignment and intialization
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -458,6 +459,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     int REQUEST_CHECK_SETTINGS = 0x1;
                     GoogleFusedLocations.rae.startResolutionForResult(GpsActivity.this, REQUEST_CHECK_SETTINGS);
                     startTrackingUserActivity();
+                    startOneM2MForwardCommunications();
                 } catch (IntentSender.SendIntentException e) {
                     e.printStackTrace();
                 }
@@ -475,11 +477,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             public void onReceive(Context context, Intent intent) {
                 boolean isLoggingSwitched = loggingSwitch.isChecked();
                 boolean isExperimentEmpty = experimentNumberText.getText().toString().isEmpty();
+                boolean isHoldGPS = holdGpsSwitch.isChecked();
                 boolean isRunEmpty = runNumberText.getText().toString().isEmpty();
                 if (isLoggingSwitched && !isExperimentEmpty && !isRunEmpty) {
-                    broadcastUIInfo(true, runNumberText.getText().toString(), experimentNumberText.getText().toString());
+                    broadcastUIInfo(true, runNumberText.getText().toString(), experimentNumberText.getText().toString(),isHoldGPS);
                 } else {
-                    broadcastUIInfo(false, null, null);
+                    broadcastUIInfo(false, null, null,isHoldGPS);
                 }
             }
         };
@@ -489,7 +492,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 broadcastReceiverLayoutChecker, intentFilter);
     }
 
-    private void broadcastUIInfo(boolean isLoggingEnabled, String runNumber, String experimentNumber) {
+    private void broadcastUIInfo(boolean isLoggingEnabled, String runNumber, String experimentNumber, boolean isHoldGpsenabled) {
         Intent intent = new Intent();
         intent.setAction("GpsActivity.LAYOUT_RESPONSE");
         Log.d(TAG, "responding to layout check");
@@ -498,6 +501,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             intent.putExtra("runNumber", runNumber);
             intent.putExtra("experimentNumber", experimentNumber);
         }
+        intent.putExtra("holdGPS", isHoldGpsenabled);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
@@ -1511,8 +1515,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 textView.setTextColor(Color.WHITE);
                 snackbar.getView().setBackground(permissionGrantedSnackbarShape);
                 snackbar.show();
-                startLocationService(); //TODO start service
-            } else {
+                startLocationService();
+                startOneM2MForwardCommunications();
             }
         }
     }

@@ -78,6 +78,7 @@ public class OneM2MForwardCommunications extends IntentService {
     private final static int RETRIEVE = 2;
     private final static int UPDATE = 3;
     private final static int DELETE = 4;
+    Double latitude_mem=0.0000,longitude_mem = 0.0000;
 
     //Broadcast variables
     BroadcastReceiver locationsBroadcastReceiver,cancelTaxiRequestBroadcastReceiver,
@@ -88,6 +89,8 @@ public class OneM2MForwardCommunications extends IntentService {
     boolean isLoggingSwitched = false;
     String experimentNumber;
     String runNumber;
+    boolean isHoldGPS = false;
+    boolean alreadyHolding = false;
 
     String TAG = "OneM2MForwardCommunications";
 
@@ -151,6 +154,7 @@ public class OneM2MForwardCommunications extends IntentService {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG, "onReceive: layout");
+                isHoldGPS = intent.getBooleanExtra("holdGPS",false);
                 isLoggingSwitched = intent.getBooleanExtra("loggingEnabled",
                         false);
                 Log.d(TAG, "onReceive: " + isLoggingSwitched);
@@ -450,18 +454,39 @@ public class OneM2MForwardCommunications extends IntentService {
         locationsBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+
                 broadcastIsLoggingEnabled();
                 boolean shouldContinue = intent.getBooleanExtra("shouldContinue",
                         true);
                 if(!shouldContinue){stopSelf();}
-                Longitude = intent.getDoubleExtra("longitude",'0');
-                Latitude = intent.getDoubleExtra("latitude",'0');
+                Double longitude = intent.getDoubleExtra("longitude",'0');
+                Double latitude = intent.getDoubleExtra("latitude",'0');
                 Accuracy = intent.getFloatExtra("accuracy",'0');
                 Heading = intent.getFloatExtra("heading",'0');
                 Speed = intent.getFloatExtra("speed",'0');
                 Long timeStamp = intent.getLongExtra("timeStamp",0);
                 String uuid = intent.getStringExtra("uuid");
                 Log.d(TAG, "onReceive: location received");
+                if (isHoldGPS) {
+                    if(!alreadyHolding){
+                        latitude_mem = latitude;
+                        longitude_mem = longitude;
+                        Latitude = latitude;
+                        Longitude = longitude;
+                        alreadyHolding = true;
+                    }
+                    if(alreadyHolding){
+                        Latitude = latitude_mem;
+                        Longitude = longitude_mem;
+                    }
+
+                }
+                if(!isHoldGPS){
+                    alreadyHolding = false;
+                    Latitude = latitude;
+                    Longitude = longitude;
+                }
+
                 try {
                     publishGpsData(Latitude,Longitude, Accuracy, timeStamp,String.valueOf(Speed),
                             String.valueOf(Heading),uuid);
@@ -472,7 +497,6 @@ public class OneM2MForwardCommunications extends IntentService {
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
-
             }
         };
         IntentFilter intentFilter = new IntentFilter();
