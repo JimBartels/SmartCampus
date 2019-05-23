@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity  {
     String userId = "";
     private String name;
     private String password;
+    static String student_number;
     User user;
 
     @Override
@@ -69,6 +70,11 @@ public class MainActivity extends AppCompatActivity  {
         mPassField = (EditText) findViewById(R.id.pass_field);
         mFirebaseBtn.setBackground(buttondrawable2);
         mFirebaseBtn.setText("Login");
+
+        Log.d("checking id", userId);
+
+
+//        Log.d("checking id 2", name);
 
         //Layout listeners for above widgets, these listeners get called whenver login/register
         // is initiated
@@ -107,6 +113,7 @@ public class MainActivity extends AppCompatActivity  {
     // Gpsactivity, if not exception by firebase is handled by either logging in or showing error to
     // user by toast.
     public void register(final String studentNumber, final String pass) {
+
         mAuth.createUserWithEmailAndPassword(studentNumber,pass)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -171,6 +178,7 @@ public class MainActivity extends AppCompatActivity  {
 
     //Tries to login to firebase auth client, if successful -> GPSactivity, if not error is shown.
     public void login(String name, String pass) {
+
         mAuth.signInWithEmailAndPassword(name,pass).addOnCompleteListener
                 (this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -182,6 +190,7 @@ public class MainActivity extends AppCompatActivity  {
                                     "Log in successful", Toast.LENGTH_SHORT);
                             toast.show();
                             FirebaseUser user = mAuth.getCurrentUser();
+                            Log.d("check user id", user.getDisplayName());
                             checkUserLoggedInAndGPSActivityIntent(user);
                         }
 
@@ -203,7 +212,9 @@ public class MainActivity extends AppCompatActivity  {
         super.onStart();
         Log.d(TAG, " On start");
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        checkUserLoggedInAndGPSActivityIntent(currentUser);}
+        checkUserLoggedInAndGPSActivityIntent(currentUser);
+
+    }
 
     //Checks whether user is logged in and if so goes to GPS activity.
     private void checkUserLoggedInAndGPSActivityIntent(FirebaseUser currentUser) {
@@ -222,13 +233,18 @@ public class MainActivity extends AppCompatActivity  {
             if(user!=null){
                 login(user.studentnumber,user.password);}
         }
+
+
     }
+
+
 
     // Writes a User class (nothing to do with firebase), this is used for staying logged in to
     // firebase this will prevent logging in again after short connection loss.
     private void writeNewUser(String userId, String studentNumber, String passWord, String Longitude
             , String Latitude){
-        userId=userId.replace("@random.com","");
+
+        student_number = studentNumber;
         user = new User(studentNumber,passWord, latitude, longitude);
         mDatabase.child("users").child(userId).setValue(user);
         return;

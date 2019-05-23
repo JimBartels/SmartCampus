@@ -264,17 +264,20 @@ public class OneM2MBackwardCommunications extends IntentService {
         if (topic.equals(CsmartcampusSubscriptionTopic)) {
             JSONObject contentUsers = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                     .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
+            if(contentUsers.has("valid")){
+                Log.d(TAG, "oneM2MMessagesHandler: valid is in there");
+                String userId = contentUsers.getString("id");
+                broadcastTaxiCaller(userId,contentUsers.getDouble("longitude"),contentUsers.getDouble("latitude"),contentUsers.getString("valid"));
+            }
+            else{
             Log.d(TAG, "oneM2MMessagesHandler: " + contentUsers);
                 String userId = contentUsers.getString("id");
                 Double longitude = contentUsers.getDouble("lon");
                 Double latitude = contentUsers.getDouble("lat");
-            /*if(contentUsers.getString("valid").equals("true")){
-                Log.d(TAG, "oneM2MMessagesHandler: ");
-                broadcastTaxiCaller(userId,contentUsers.getDouble("longitude"),contentUsers.getDouble("latitude"));
-            }*/
                 Log.d(TAG, "oneM2MMessagesHandler: " + userId);
                 broadcastUserData(userId, longitude, latitude);
                 //TODO Logging?
+                }
         }
 
         if (topic.equals(CsmartCampusCarsSubscriptionTopic)) {
@@ -287,7 +290,6 @@ public class OneM2MBackwardCommunications extends IntentService {
 
             String comparator = messageCar.getJSONObject("m2m:rsp").getString("rqi");
             String carUuid = null;
-            Log.d(TAG, "oneM2MMessagesHandler: " + comparator);
 
            /* if(comparator.equals("/server/server/aeTechnolution/flowradar/flowradar_car/subFlowradar_car")){
                 Log.d(TAG,"oneM2MMessages + " + contentCarString);
@@ -456,11 +458,13 @@ public class OneM2MBackwardCommunications extends IntentService {
         }*/
     }
 
-    private void broadcastTaxiCaller(String userId, Double longitude, Double latitude) {
+    private void broadcastTaxiCaller(String userId, Double longitude, Double latitude, String valid) {
         Intent intent = new Intent();
+        Log.d(TAG, "broadcastTaxiCaller: Broadcasting taxi caller");
         intent.putExtra("TaxiCallID", userId);
         intent.putExtra("longitude", longitude);
         intent.putExtra("latitude", latitude);
+        intent.putExtra("valid", valid);
         intent.setAction("TAXICircle");
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }

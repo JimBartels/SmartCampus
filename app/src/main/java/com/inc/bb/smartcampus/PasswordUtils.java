@@ -27,7 +27,7 @@ import javax.crypto.spec.PBEKeySpec;
 public class PasswordUtils {
 
     private static final Random RANDOM = new SecureRandom();
-    private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*_+-=";
+    private static final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*_+-=";
     private static final int ITERATIONS = 10000;
     private static final int KEY_LENGTH = 256;
 
@@ -66,17 +66,17 @@ public class PasswordUtils {
     }
 
     /**
-     * Gives a salt value of desired length
+     * Generates a salt value of desired length
      *
      * @param length - the desired length of salt value; we can use length 30
      * @return salt value of a desired length
      */
-    public static String getSalt(int length) {
-        StringBuilder returnValue = new StringBuilder(length);
+    public static String generateSalt(int length) {
+        StringBuilder saltValue = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
-            returnValue.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
+            saltValue.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
         }
-        return new String(returnValue);
+        return new String(saltValue);
     }
 
     /**
@@ -108,7 +108,7 @@ public class PasswordUtils {
      * Pre-condition: password must be valid as determined by validPassword() function
      * @return encrypted password
      */
-    public static String generateSecurePassword(String password, String salt) {
+    public static String generateEncryptedPassword(String password, String salt) {
 
         // exception is thrown if password is not valid,
         // must be caught and treated somehow perhaps by displaying the message
@@ -141,10 +141,10 @@ public class PasswordUtils {
         boolean verify = false;
 
         // Generate New secure password with the same salt
-        String newSecurePassword = generateSecurePassword(providedPassword, salt);
+        String test = generateEncryptedPassword(providedPassword, salt);
 
         // Check if two passwords are equal
-        verify = newSecurePassword.equals(securedPassword);
+        verify = test.equals(securedPassword);
 
         return verify;
     }
