@@ -82,7 +82,7 @@ public class OneM2MForwardCommunications extends IntentService {
 
     //Broadcast variables
     BroadcastReceiver locationsBroadcastReceiver,cancelTaxiRequestBroadcastReceiver,
-            callTaxiBroadcastReceiver;
+            callTaxiBroadcastReceiver,taxiArrivedBroadcastReceiver;
 
     //Logging layout check variables
     BroadcastReceiver layoutResponseBroadcastReceiver;
@@ -118,6 +118,7 @@ public class OneM2MForwardCommunications extends IntentService {
         createBroadcastReceiverLayoutResponse();
         createBroadcastReceiverTaxiReceived();
         createBroadcastReceiverCallTaxi();
+        createBroadcastReceiverTaxiArrived();
     }
 
     private void createBroadcastReceiverTaxiReceived() {
@@ -279,6 +280,33 @@ public class OneM2MForwardCommunications extends IntentService {
             System.err.println("Exception whilst subscribing");
             ex.printStackTrace();
         }
+    }
+
+    void createBroadcastReceiverTaxiArrived(){
+        taxiArrivedBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                OneM2MMqttJson VRU = new OneM2MMqttJson(oneM2MVRUAeRi, oneM2MVRUAePass,
+                        oneM2MVRUAeRn,userName);
+                try {
+                    publishAndLogMessage(onem2m,VRU.
+                                    CreateContainer(userName).toString(),0,
+                            oneM2MVRUReqTopic,LOGGING_NOTNEEDED,null,
+                            null, null);
+                } catch (MqttException e) {
+                    e.printStackTrace();
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                Log.d(TAG, "onReceive: TaxiArrivedBroadcast");
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("GpsActivity.TAXI_ARRIVED");
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                taxiArrivedBroadcastReceiver, intentFilter);
     }
 
     //Sets options for the MQTT client (Clean session, automatic reconnect etc). Sends this back to

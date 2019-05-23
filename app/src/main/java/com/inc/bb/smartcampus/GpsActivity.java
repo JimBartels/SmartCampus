@@ -505,6 +505,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
+    private void broadcastTaxiArrived(boolean taxiArrived) {
+        Intent intent = new Intent();
+        intent.setAction("GpsActivity.TAXI_ARRIVED");
+        Log.d(TAG, "broadcasting arrived");
+        intent.putExtra("loggingEnabled", taxiArrived);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+
     private void broadcastUploadLogs() {
         Intent intent = new Intent();
         intent.setAction("PilotLogging.upload");
@@ -923,7 +932,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             int deltameterinitial = deltameterinitialdoubble.intValue();
 
                             // Do the "lengthy" operation
-                            for (incr = 0; incr <= 85; incr = (100 - (deltameter*100/deltameterinitial))) {
+                            for (incr = 0; incr <= 95; incr = (100 - (deltameter*100/deltameterinitial))) {
                                 String deltametersstring = OneM2MBackwardCommunications.mMyAppsBundle
                                                     .getString("deltameters");
 
@@ -949,12 +958,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                                 // Prevents the app from crashing atm
                                 try {
                                     // Sleep for 5 seconds
-                                    Thread.sleep(5*1000);
+                                    Thread.sleep(1000);
                                 } catch (InterruptedException e) {
                                     Log.d(TAG, "sleep failure");
                                 }
                             }
+
                             // When the loop is finished, updates the notification
+                            broadcastTaxiArrived(true);
                             builder.setContentTitle("Vehicle Arrived")
                                     // Removes the progress bar
                                     .setProgress(0,0,false)
