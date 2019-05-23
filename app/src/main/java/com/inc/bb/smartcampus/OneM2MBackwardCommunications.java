@@ -262,7 +262,6 @@ public class OneM2MBackwardCommunications extends IntentService {
             JSONObject contentUsers = new JSONObject(messageCar.getJSONObject("m2m:rsp").getJSONObject("pc")
                     .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
             if(contentUsers.has("valid")){
-                Log.d(TAG, "oneM2MMessagesHandler: valid is in there");
                 String userId = contentUsers.getString("id");
                 broadcastTaxiCaller(userId,contentUsers.getDouble("longitude"),contentUsers.getDouble("latitude"),contentUsers.getString("valid"));
             }
@@ -271,13 +270,15 @@ public class OneM2MBackwardCommunications extends IntentService {
                 broadcastPathCancel();
             }
             else{
-            Log.d(TAG, "oneM2MMessagesHandler: " + contentUsers);
-                String userId = contentUsers.getString("id");
-                Double longitude = contentUsers.getDouble("lon");
-                Double latitude = contentUsers.getDouble("lat");
-                Log.d(TAG, "oneM2MMessagesHandler: " + userId);
-                broadcastUserData(userId, longitude, latitude);
-                //TODO Logging?
+                if(contentUsers.has("message")){}
+                else {
+                    //Log.d(TAG, "oneM2MMessagesHandler: " + contentUsers);
+                    String userId = contentUsers.getString("id");
+                    Double longitude = contentUsers.getDouble("lon");
+                    Double latitude = contentUsers.getDouble("lat");
+                    broadcastUserData(userId, longitude, latitude);
+                    //TODO Logging?
+                }
                 }
         }
 
@@ -325,7 +326,9 @@ public class OneM2MBackwardCommunications extends IntentService {
                         .getJSONArray("m2m:cin").getJSONObject(0).getString("con"));
                 noRTK = false;
                 Log.d(TAG, "oneM2MMessagesHandler: RTK");
-                Log.d(TAG, "oneM2MMessagesHandler: "+contentCar);
+                if(contentCar.has("message")){}
+                else{
+                //Log.d(TAG, "oneM2MMessagesHandler: "+contentCar);
                 lastRTK = System.currentTimeMillis();
                 String longitudeCarString = contentCar.getString("lon");
                 carLon = Double.parseDouble(longitudeCarString);
@@ -346,7 +349,7 @@ public class OneM2MBackwardCommunications extends IntentService {
                     logIntent.putExtra("runNumber", runNumber);
                     logIntent.putExtra("experimentNumber", experimentNumber);
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
-                }
+                }}
             }
                 /* String[] separated = contentCarString.split(",");
                 JSONObject carString =  new JSONObject();

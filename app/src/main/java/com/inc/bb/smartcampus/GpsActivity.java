@@ -302,6 +302,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceiverTaxiNotifcationNeeded();
         createBroadcastReceiverVRUData(); // the one used for heatmaps
         createBroadcastReceiverTaxiCaller();
+        createBroadcastReceiverTaxiArrivedCockpit();
     }
 
     
@@ -967,6 +968,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if(!b){
             polylineMP.remove();
         }
+        else{
 
         /*LatLng points[] =  new LatLng[4];
         points[0] = new LatLng(51.447893883296565,5.48882099800934);
@@ -987,6 +989,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                     .color(Color.BLUE));
             Log.d(TAG, "motionPlanningPath: ");
         }
+        }
+
     }
 
     //Puts car somewhere on the map, to be later called when coordinates change.
