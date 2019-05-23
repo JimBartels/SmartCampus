@@ -18,7 +18,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -37,8 +36,6 @@ import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -57,7 +54,6 @@ import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.TileOverlay;
-import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -68,9 +64,6 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.maps.android.heatmaps.Gradient;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.util.constants.MapViewConstants;
@@ -78,12 +71,8 @@ import org.osmdroid.views.util.constants.MapViewConstants;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 
 public class GpsActivity extends AppCompatActivity implements MapViewConstants, OnMapReadyCallback {
@@ -130,7 +119,8 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     BroadcastReceiver broadcastReceiver, broadcastReceiverCarRTK;
     BroadcastReceiver broadcastReceiverLayoutChecker;
     BroadcastReceiver broadcastReceiverCarDataHuawei;
-    BroadcastReceiver broadcastReceiverMotionplanningPath,broadcastReceiverVRU;
+    BroadcastReceiver broadcastReceiverMotionplanningPath,broadcastReceiverVRU,
+            broadcastReceiverTaxiArrivedCockpit;
 
 
     //Notification global variables
@@ -497,7 +487,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             MPlon[i]);
                 }
                 //Function that use the points in the rectangle for visualization of position and speed
-                motionPlanningPath(points);
+                motionPlanningPath(points, true);
             }
         };
         IntentFilter intentFilter = new IntentFilter();
@@ -520,6 +510,20 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         intentFilter.addAction("TaxiNotificationBoolean");
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 broadcastReceiverTaxiNotificationNeeded, intentFilter);
+
+    }
+
+    private void createBroadcastReceiverTaxiArrivedCockpit() {
+        broadcastReceiverTaxiArrivedCockpit = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                motionPlanningPath(null,false);
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("OneM2MBackward.TaxiArrived");
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                broadcastReceiverTaxiArrivedCockpit, intentFilter);
 
     }
 
@@ -946,20 +950,23 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         createBroadcastReceivers();
 
-        // heatmap stuff
+        /*// heatmap stuff
         LocationManager mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         // use both GPS and NETWORK provider as sometimes one of them is unreliable,
         // but both give good results
         // minimum distance = 2 meters
         // minimum time = 10, can be changed
         mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 2, loc);
-        mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10, 2, loc);
+        mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10, 2, loc);*/
     }
 
 
     // Removes last location of Huawei geofencing rectangle and adds the new location of the
     // rectangle in the map, this function accepts array of LatLng points.
-    private void motionPlanningPath(LatLng[] points) {
+    private void motionPlanningPath(LatLng[] points, boolean b) {
+        if(!b){
+            polylineMP.remove();
+        }
 
         /*LatLng points[] =  new LatLng[4];
         points[0] = new LatLng(51.447893883296565,5.48882099800934);

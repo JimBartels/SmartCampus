@@ -266,8 +266,9 @@ public class OneM2MBackwardCommunications extends IntentService {
                 String userId = contentUsers.getString("id");
                 broadcastTaxiCaller(userId,contentUsers.getDouble("longitude"),contentUsers.getDouble("latitude"),contentUsers.getString("valid"));
             }
-            if(contentUsers.has("Arrived")){
+            if(contentUsers.has("arrived")){
                 Log.d(TAG, "oneM2MMessagesHandler: Taxi Arrived");
+                broadcastPathCancel();
             }
             else{
             Log.d(TAG, "oneM2MMessagesHandler: " + contentUsers);
@@ -456,6 +457,12 @@ public class OneM2MBackwardCommunications extends IntentService {
                 Log.d(TAG, "Latency:" + latencyFromGPSTillReceive);
             }
         }*/
+    }
+
+    private void broadcastPathCancel() {
+        Intent intent = new Intent();
+        intent.setAction("OneM2MBackward.TaxiArrived");
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     private void broadcastTaxiCaller(String userId, Double longitude, Double latitude, String valid) {
