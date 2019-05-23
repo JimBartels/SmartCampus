@@ -54,6 +54,7 @@ import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.TileOverlay;
+import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -300,7 +301,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceiverCarDataRTK();
         createBroadcastReceiverCarDataHuawei();
         createBroadcastReceiverTaxiNotifcationNeeded();
-        createBroadcastReceiverVRUData(); // the one used for heatmaps
+//        createBroadcastReceiverVRUData(); // the one used for heatmaps
         createBroadcastReceiverTaxiCaller();
         createBroadcastReceiverTaxiArrivedCockpit();
     }
@@ -950,6 +951,24 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
 
         createBroadcastReceivers();
+
+        List<LatLng> data = new ArrayList<>();
+        data.add(new LatLng(51.448132, 5.489264));
+        data.add(new LatLng(51.448137, 5.489265));
+        data.add(new LatLng(51.448130, 5.489265));
+        data.add(new LatLng(51.448137, 5.489260));
+        data.add(new LatLng(51.448131, 5.489268));
+        data.add(new LatLng(51.448137, 5.489265));
+        data.add(new LatLng(51.448143, 5.489265));
+        data.add(new LatLng(51.448127, 5.489261));
+        data.add(new LatLng(51.448137, 5.489265));
+        data.add(new LatLng(51.448145, 5.489255));
+        data.add(new LatLng(51.448147, 5.489265));
+        data.add(new LatLng(51.448137, 5.489265));
+        data.add(new LatLng(51.448140, 5.489257));
+        data.add(new LatLng(51.448137, 5.489265));
+
+        initializeHeatMap(data, false);
 
         /*// heatmap stuff
         LocationManager mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -1609,8 +1628,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     // heatmaps start with yellow and slowly progress
     // towards red, so there are 4 possible concentrations
     int[] colors = {
-            Color.rgb(255,255,0),   // yellow
             Color.rgb(102, 225, 0), // green
+            Color.rgb(255,255,0),   // yellow
+
             Color.rgb(255,165,0), // orange
             Color.rgb(255, 0, 0)    // red
     };
@@ -1629,10 +1649,12 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         if (remove == true) {
             temp.remove();
         }
+        Log.d("heatmaps check", list.toString());
 
         // build the heatmaps
         HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).gradient(gradient).build();
 
+        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
         // add the tile overlays to the map and
         // assign this to a temporary variable, so it can be removed later if need be
         //temp =  mMap.addTileOverlay((new TileOverlayOptions()).tileProvider(mProvider));
