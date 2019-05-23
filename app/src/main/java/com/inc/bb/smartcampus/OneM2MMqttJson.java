@@ -156,7 +156,8 @@ public class OneM2MMqttJson {
         payload.put("rqi","TaxiArrived");
         payload.put("op", CREATE_OP);
         payload.put("ty", 4);
-        contentinstancecontent.put("con", "arrived: true");
+        String con = "{\"arrived\":true}";
+        contentinstancecontent.put("con",con);
         m2mcntrequester.put("m2m:cin", contentinstancecontent);
         payload.put("pc", m2mcntrequester);
         m2mrequester.put("m2m:rqp",payload);
