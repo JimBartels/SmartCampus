@@ -1653,6 +1653,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         // build the heatmaps
         HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).gradient(gradient).build();
+                mProvider.setRadius(50);
 
         mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
         // add the tile overlays to the map and
