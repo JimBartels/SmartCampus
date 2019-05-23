@@ -266,7 +266,7 @@ public class OneM2MBackwardCommunications extends IntentService {
                 String userId = contentUsers.getString("id");
                 broadcastTaxiCaller(userId,contentUsers.getDouble("longitude"),contentUsers.getDouble("latitude"),contentUsers.getString("valid"));
             }
-            if(contentUsers.has("arrived")  messageCar.getJSONObject("m2m:rsp").getString("rqi")){
+            if(messageCar.getJSONObject("m2m:rsp").getString("rqi").equals("")){
                 Log.d(TAG, "oneM2MMessagesHandler: Taxi Arrived");
                 broadcastPathCancel();
             }
