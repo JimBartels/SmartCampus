@@ -130,7 +130,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     BroadcastReceiver broadcastReceiver, broadcastReceiverCarRTK;
     BroadcastReceiver broadcastReceiverLayoutChecker;
     BroadcastReceiver broadcastReceiverCarDataHuawei;
-    BroadcastReceiver broadcastReceiverMotionplanningPath;
+    BroadcastReceiver broadcastReceiverMotionplanningPath,broadcastReceiverVRU;
 
 
     //Notification global variables
@@ -321,6 +321,23 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     private void createBroadcastReceiverVRUData() {
 //        just for test, this works correctly, thereby confirming that writing to firebase is correct
 //        mDatabase.child("users").child(userName).child("longitude").setValue("51.4555");
+         broadcastReceiverVRU = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                taxiNotificationNeeded = intent.getBooleanExtra("taxiNotificationNeeded",
+                        false);
+                buildVRUCircle(intent.getStringExtra("VRUId"),
+                        intent.getDoubleExtra("latitude",0.000),
+                        intent.getDoubleExtra("longitude",0.000));
+                Log.d(TAG, "onReceive: TaxiNotification" + taxiNotificationNeeded);
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("VRUData");
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                broadcastReceiverVRU, intentFilter);
+
+
 
         // listens for change in firebase data, and constructs heatmaps upon change
         postListener = new ValueEventListener() {

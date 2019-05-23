@@ -2,8 +2,8 @@ package com.inc.bb.smartcampus;
 
 import android.app.IntentService;
 import android.content.BroadcastReceiver;
-import android.content.Intent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
@@ -23,9 +23,6 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.UnsupportedEncodingException;
-import java.util.UUID;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -268,6 +265,9 @@ public class OneM2MBackwardCommunications extends IntentService {
                 Log.d(TAG, "oneM2MMessagesHandler: valid is in there");
                 String userId = contentUsers.getString("id");
                 broadcastTaxiCaller(userId,contentUsers.getDouble("longitude"),contentUsers.getDouble("latitude"),contentUsers.getString("valid"));
+            }
+            if(contentUsers.has("Arrived")){
+                Log.d(TAG, "oneM2MMessagesHandler: Taxi Arrived");
             }
             else{
             Log.d(TAG, "oneM2MMessagesHandler: " + contentUsers);
