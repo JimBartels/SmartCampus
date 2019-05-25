@@ -324,6 +324,7 @@ public class OneM2MBackwardCommunications extends IntentService {
                     logIntent.putExtra("username", userName);
                     logIntent.putExtra("runNumber", runNumber);
                     logIntent.putExtra("experimentNumber", experimentNumber);
+                    logIntent.putExtra("username",userName);
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
                 }
                 noRTK = false;
@@ -347,6 +348,7 @@ public class OneM2MBackwardCommunications extends IntentService {
                     logIntent.putExtra("uuid", carUuid);
                     logIntent.putExtra("username", userName);
                     logIntent.putExtra("runNumber", runNumber);
+                    logIntent.putExtra("username",userName);
                     logIntent.putExtra("experimentNumber", experimentNumber);
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
                 }
@@ -405,6 +407,7 @@ public class OneM2MBackwardCommunications extends IntentService {
                         logIntent.putExtra("uuid", carMPUuid);
                         logIntent.putExtra("username", userName);
                         logIntent.putExtra("runNumber", runNumber);
+                        logIntent.putExtra("username",userName);
                         logIntent.putExtra("experimentNumber", experimentNumber);
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
                     }

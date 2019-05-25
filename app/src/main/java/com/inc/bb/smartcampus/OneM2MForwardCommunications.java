@@ -601,8 +601,8 @@ public class OneM2MForwardCommunications extends IntentService {
                         logIntent.putExtra("messageType",messageType);
                         logIntent.putExtra("logmsg",logmsg);
                         logIntent.putExtra("uuid",uuid);
-                        logIntent.putExtra("generationTimeStamp",generationTimeStamp);
                         logIntent.putExtra("username",userName);
+                        logIntent.putExtra("generationTimeStamp",generationTimeStamp);
                         logIntent.putExtra("runNumber",runNumber);
                         logIntent.putExtra("experimentNumber",experimentNumber);
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(logIntent);
