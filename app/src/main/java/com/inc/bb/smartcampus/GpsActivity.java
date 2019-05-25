@@ -220,12 +220,6 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         setContentView(R.layout.activity_gps);
 
         //Assigning of logging layout elements
-        runNumberText = (EditText) findViewById(R.id.runNumber);
-        experimentNumberText = (EditText) findViewById(R.id.experimentNumber);
-        experimentNumberText.clearFocus();
-        runNumberText.clearFocus();
-        loggingSwitch = (Switch) findViewById(R.id.logSwitch);
-
         //Google maps support fragment assignment and intialization
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -296,7 +290,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
     private void createBroadcastReceivers() {
         createBroadcastReceiverMotionplanningPath();
-        createBroadcastReceiverLayoutChecker();
+        //createBroadcastReceiverLayoutChecker();
         createBroadcastReceiverResolutionGPS();
         createBroadcastReceiverCarDataRTK();
         createBroadcastReceiverCarDataHuawei();
@@ -533,7 +527,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         broadcastReceiverCarDataHuawei = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                handleCarNotificationHuawei(intent.getBooleanExtra("isInRectangle", false));
+               // handleCarNotificationHuawei(intent.getBooleanExtra("isInRectangle", false));
                 double[] rectangleLat = intent.getDoubleArrayExtra("rectangleLat");
                 double[] rectangleLon = intent.getDoubleArrayExtra("rectangleLon");
                 LatLng[] points = new LatLng[5];
@@ -613,30 +607,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     //Assigns listeners to when the buttom navigation is clicked, changing activity etc.
     private void setupBottomNavigationBar() {
         //BottomNavigationBar
-        final BottomNavigationView bottomNavigationView =
-                findViewById(R.id.bottom_navigation);
 
-        bottomNavigationView.setOnNavigationItemSelectedListener(
-                new BottomNavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.action_campus:
-                                hideFragment(campusCar);
-                                break;
-                            case R.id.action_car:
-                                if (campusCar == null) {
-                                    campusCar = new CampusCar();
-                                    addFragment(campusCar);
-                                }
-                                showFragment(campusCar);
-                                break;
-                            case R.id.action_settings:
-                                break;
-                        }
-                        return true;
-                    }
-                });
     }
 
     // Removes all fragments that are on the stack, fragments are stored on top of eachother on a
