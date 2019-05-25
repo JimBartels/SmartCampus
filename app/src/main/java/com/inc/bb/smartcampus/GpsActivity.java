@@ -1236,9 +1236,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
             } else if (carSpeed >= 2.8 && carSpeed <= 4.2) {
 
+                speedPolygon = mMap.addPolygon(new PolygonOptions()
+                        .add(pointsSpeed)
                 if (speedPolygon == null) {
-                    speedPolygon = mMap.addPolygon(new PolygonOptions()
-                            .add(pointsSpeed)
                             .zIndex(0)
                             .strokeColor(Color.LTGRAY)
                             .fillColor(Color.LTGRAY));
