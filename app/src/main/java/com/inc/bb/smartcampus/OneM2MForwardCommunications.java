@@ -202,6 +202,8 @@ public class OneM2MForwardCommunications extends IntentService {
     public void callTaxi() {
         try {
             String uuid = UUID.randomUUID().toString();
+            double longitude = 0.00000;
+            double latitude = 0.00000;
             JSONObject callTaxi = VRUgps.CreateContentInstanceCallTaxi(Latitude, Longitude, System.currentTimeMillis(),
                     userName,true,uuid);
             String data = callTaxi.getJSONObject("m2m:rqp").getJSONObject("pc").
