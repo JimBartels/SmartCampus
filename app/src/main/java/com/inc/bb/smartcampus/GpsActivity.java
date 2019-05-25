@@ -953,20 +953,20 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceivers();
 
         List<LatLng> data = new ArrayList<>();
-        data.add(new LatLng(51.448132, 5.489264));
-        data.add(new LatLng(51.448137, 5.489265));
-        data.add(new LatLng(51.448130, 5.489265));
-        data.add(new LatLng(51.448137, 5.489260));
-        data.add(new LatLng(51.448131, 5.489268));
-        data.add(new LatLng(51.448137, 5.489265));
-        data.add(new LatLng(51.448143, 5.489265));
-        data.add(new LatLng(51.448127, 5.489261));
-        data.add(new LatLng(51.448137, 5.489265));
-        data.add(new LatLng(51.448145, 5.489255));
-        data.add(new LatLng(51.448147, 5.489265));
-        data.add(new LatLng(51.448137, 5.489265));
-        data.add(new LatLng(51.448140, 5.489257));
-        data.add(new LatLng(51.448137, 5.489265));
+        data.add(new LatLng(51.474975, 5.624610));
+        data.add(new LatLng(51.474965, 5.624600));
+        data.add(new LatLng(51.474995, 5.624630));
+        data.add(new LatLng(51.474975, 5.624620));
+        data.add(new LatLng(51.474985, 5.624630));
+        data.add(new LatLng(51.474965, 5.624600));
+        data.add(new LatLng(51.474995, 5.624630));
+        data.add(new LatLng(51.474975, 5.624620));
+        data.add(new LatLng(51.474985, 5.624620));
+        data.add(new LatLng(51.474995, 5.624630));
+        data.add(new LatLng(51.474955, 5.624620));
+        data.add(new LatLng(51.474985, 5.624640));
+        data.add(new LatLng(51.474975, 5.624640));
+        data.add(new LatLng(51.474995, 5.624620));
 
         initializeHeatMap(data, false);
 
@@ -1237,11 +1237,14 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             } else if (carSpeed >= 2.8 && carSpeed <= 4.2) {
 
                 speedPolygon = mMap.addPolygon(new PolygonOptions()
-                        .add(pointsSpeed)
+                        .add(pointsSpeed));
                 if (speedPolygon == null) {
+                    speedPolygon = mMap.addPolygon(new PolygonOptions()
+                            .add(pointsSpeed)
                             .zIndex(0)
                             .strokeColor(Color.LTGRAY)
                             .fillColor(Color.LTGRAY));
+
                 }
 
                 //* else {
@@ -1653,7 +1656,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
         // build the heatmaps
         HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder().data(list).gradient(gradient).build();
-                mProvider.setRadius(50);
+                mProvider.setRadius(125);
 
         mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
         // add the tile overlays to the map and
