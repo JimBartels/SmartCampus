@@ -129,8 +129,8 @@ public class HuaweiCommunications extends IntentService implements okHttpPost.As
     // speed etc from last found location of the Google mfusedlocationclient.
     private void publishGpsData(Double latitude, Double longitude, Float Accuracy,
                                 Long formattedDate, String speedGPS, String manualBearing, String uuid) throws JSONException {
-        //lattitude = 51.474516;
-        //longitude = 5.623399;
+        latitude = 51.474516;
+        longitude = 5.623399;
         String formattedDateString = "UTC" + Long.toString(formattedDate);
         String conHuawei = "{\"type\":5,\"id\":" + username + ",\"timestampUtc\":" +
                 formattedDateString + ",\"lon\":" + longitude + ",\"lat\":"+ latitude +

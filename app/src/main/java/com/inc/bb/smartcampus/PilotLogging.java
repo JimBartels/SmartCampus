@@ -416,7 +416,6 @@ public class PilotLogging extends IntentService {
             Log.d(TAG, "uploadLogFilesFirebase: ");
             fileNameVector.elements();
             FirebaseStorage storage = FirebaseStorage.getInstance();
-
             for (Enumeration<String> e = fileNameVector.elements(); e.hasMoreElements(); ) {
                 String filename = e.nextElement();
                 String filePath = getApplicationContext().getFilesDir() + "/" + filename;
