@@ -85,6 +85,7 @@ public class PilotLogging extends IntentService {
                 Long generationTimeStamp = intent.getLongExtra("generationTimeStamp", (long) 0.0000);
                 runNumberText = intent.getStringExtra("runNumber");
                 experimentNumberText = intent.getStringExtra("experimentNumber");
+                userName = intent.getStringExtra("username");
                 pilotLogging(messageType,generationTimeStamp,logmsg,uuid);
             }
         };
@@ -103,6 +104,7 @@ public class PilotLogging extends IntentService {
                 String uuid = intent.getStringExtra("uuid");
                 experimentNumberText = intent.getStringExtra("experimentNumber");
                 runNumberText = intent.getStringExtra("runNumber");
+                userName = intent.getStringExtra("username");
                 pilotLogging(messageType,0,logmsg,uuid);
             }
         };
@@ -414,7 +416,6 @@ public class PilotLogging extends IntentService {
             Log.d(TAG, "uploadLogFilesFirebase: ");
             fileNameVector.elements();
             FirebaseStorage storage = FirebaseStorage.getInstance();
-
             for (Enumeration<String> e = fileNameVector.elements(); e.hasMoreElements(); ) {
                 String filename = e.nextElement();
                 String filePath = getApplicationContext().getFilesDir() + "/" + filename;
