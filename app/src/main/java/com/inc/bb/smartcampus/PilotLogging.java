@@ -70,7 +70,7 @@ public class PilotLogging extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG, "onHandleIntent: ");
         createBroadcastReceiverLoggingM2MFoward();
-        userName = intent.getStringExtra("userName");
+        userName = intent.getStringExtra("username");
         createBroadcastReceiverLoggingM2MBackward();
         createBroadcastReceiverUploadLogFiles();
     }
