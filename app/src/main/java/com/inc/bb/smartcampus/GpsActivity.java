@@ -1184,7 +1184,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
 
             //fills up the speedpolygon with different colours based on its speed
-            if (carSpeed < 2.8) {
+    /*        if (carSpeed < 2.8) {
 
                 if (speedPolygon == null) {
                     speedPolygon = mMap.addPolygon(new PolygonOptions()
@@ -1306,7 +1306,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                             .fillColor(Color.RED));
 
                 }
-            }
+            }*/
         }
     }
 
