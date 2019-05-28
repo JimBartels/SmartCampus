@@ -894,7 +894,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             // or other notification behaviors after this
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
-            Log.d("CreateNotificationChannel: ", "success");
+            Log.d("CreateNotChannel: ", "success");
         }
     }
 
