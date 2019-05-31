@@ -22,7 +22,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
-import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
@@ -30,7 +29,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -70,6 +68,7 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -145,6 +144,9 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
     //Logging layout widgets
     EditText runNumberText, experimentNumberText;
     Switch loggingSwitch;
+
+    //Vehicle speed textview
+    TextView vehicleSpeed;
 
     //Car notifications
     Uri AUTONOMOUS_CAR_25M_NOTIFICATION_SOUND;
@@ -1181,6 +1183,13 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
             Double lat2_3 = points[0].latitude - (DeltaLat * 360 / 40075000);
             Double lon2_3 = points[0].longitude - (Deltalong * 360 / 40075000);
             pointsSpeed[3] = new LatLng(lat2_3, lon2_3);
+
+            //sets vehicleSpeed in activity_gps.xml to value obtained from car
+            TextView vehicleSpeed = (TextView) findViewById(R.id.vehicleSpeed);
+            String VEHICLE_SPEED = Long.valueOf(Math.round(carSpeed*3.6)) + " km/h";
+            vehicleSpeed.setText(VEHICLE_SPEED);
+
+
 
 
             //fills up the speedpolygon with different colours based on its speed
