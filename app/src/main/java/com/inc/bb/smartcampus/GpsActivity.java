@@ -68,7 +68,6 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.util.constants.MapViewConstants;
 
 import java.io.File;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -297,7 +296,7 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceiverCarDataRTK();
         createBroadcastReceiverCarDataHuawei();
         createBroadcastReceiverTaxiNotifcationNeeded();
-//        createBroadcastReceiverVRUData(); // the one used for heatmaps
+        createBroadcastReceiverVRUData();
         createBroadcastReceiverTaxiCaller();
         createBroadcastReceiverTaxiArrivedCockpit();
     }

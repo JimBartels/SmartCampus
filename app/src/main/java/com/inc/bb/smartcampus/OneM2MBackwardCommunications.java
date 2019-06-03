@@ -272,7 +272,7 @@ public class OneM2MBackwardCommunications extends IntentService {
             else{
                 if(contentUsers.has("message")){}
                 else {
-                    //Log.d(TAG, "oneM2MMessagesHandler: " + contentUsers);
+                    Log.d(TAG, "oneM2MMessagesHandler: " + contentUsers);
                     String userId = contentUsers.getString("id");
                     Double longitude = contentUsers.getDouble("lon");
                     Double latitude = contentUsers.getDouble("lat");
