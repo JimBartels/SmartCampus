@@ -368,10 +368,10 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
 
                 // only remove previous overlay if counter > 0
                 if (counter > 0) {
-                    initializeHeatMap(points, true);
+                  //  initializeHeatMap(points, true);
                 }
                 else {
-                    initializeHeatMap(points, false);
+                 //   initializeHeatMap(points, false);
                 }
                 counter++;
             }
@@ -925,20 +925,20 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
         createBroadcastReceivers();
 
         List<LatLng> data = new ArrayList<>();
-        data.add(new LatLng(51.474975, 5.624610));
-        data.add(new LatLng(51.474965, 5.624600));
-        data.add(new LatLng(51.474995, 5.624630));
-        data.add(new LatLng(51.474975, 5.624620));
-        data.add(new LatLng(51.474985, 5.624630));
-        data.add(new LatLng(51.474965, 5.624600));
-        data.add(new LatLng(51.474995, 5.624630));
-        data.add(new LatLng(51.474975, 5.624620));
-        data.add(new LatLng(51.474985, 5.624620));
-        data.add(new LatLng(51.474995, 5.624630));
-        data.add(new LatLng(51.474955, 5.624620));
-        data.add(new LatLng(51.474985, 5.624640));
-        data.add(new LatLng(51.474975, 5.624640));
-        data.add(new LatLng(51.474995, 5.624620));
+        data.add(new LatLng(51.475007, 5.623959));
+        data.add(new LatLng(51.475017, 5.623959));
+        data.add(new LatLng(51.475027, 5.623959));
+        data.add(new LatLng(51.475017, 5.623959));
+        data.add(new LatLng(51.474997, 5.623959));
+        data.add(new LatLng(51.474987, 5.623959));
+        data.add(new LatLng(51.475037, 5.623959));
+        data.add(new LatLng(51.475017, 5.623969));
+        data.add(new LatLng(51.475027, 5.623959));
+        data.add(new LatLng(51.475037, 5.623959));
+        data.add(new LatLng(51.475997, 5.623949));
+        data.add(new LatLng(51.475027, 5.623959));
+        data.add(new LatLng(51.475007, 5.623959));
+        data.add(new LatLng(51.475007, 5.623959));
 
         initializeHeatMap(data, false);
 
