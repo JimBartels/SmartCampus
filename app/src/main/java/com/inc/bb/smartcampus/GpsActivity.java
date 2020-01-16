@@ -437,13 +437,15 @@ public class GpsActivity extends AppCompatActivity implements MapViewConstants, 
                 double[] rectangleLat = intent.getDoubleArrayExtra("rectangleLat");
                 double[] rectangleLon = intent.getDoubleArrayExtra("rectangleLon");
                 LatLng[] points = new LatLng[5];
+                if (rectangleLat != null) {
                 for (int i = 0; i < rectangleLat.length; i++) {
                     points[i] = new LatLng(rectangleLat[i], rectangleLon[i]);
                 }
+
                 //Function that use the points in the rectangle for visualization of position and speed
                 speedPolygon(points);
                 geoFencingCarPolygon(points);
-            }
+            }}
         };
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("HuaweiCommunications.CAR_DATA");
